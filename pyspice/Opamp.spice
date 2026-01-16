@@ -1,0 +1,54 @@
+* 2-Stage Miller Compensated Opamp
+* Pins: VDD Vp Vn Vout Ibias VSS
+
+.subckt Opamp VDD Vp Vn Vout Ibias VSS
++ params: 
++ L_in=1 W_in=4 nf_in=4 m_in=1
++ L_load=1 W_load=4 nf_load=4 m_load=2
++ L_drive=1 W_drive=4 nf_drive=4 m_drive=7
++ L_tail=1 W_tail=4 nf_tail=4 m_tail=8
++ Cc=2p Rz=60
+
+* --- STAGE 1: Differential Pair ---
+* Input Pair (NMOS)
+XM1 net1 Vn Itail VSS sky130_fd_pr__nfet_01v8 L=1 W=4 nf=4 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29' pd='2*int((nf+1)/2) * (W/nf + 0.29)'
++ ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W' sa=0 sb=0 sd=0 mult=1 m=1
+
+XM2 Vouts1 Vp Itail VSS sky130_fd_pr__nfet_01v8 L=1 W=4 nf=4 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29' pd='2*int((nf+1)/2) * (W/nf + 0.29)'
++ ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W' sa=0 sb=0 sd=0 mult=1 m=1
+
+
+* Current Mirror Load (PMOS)
+XM3 net1 net1 VDD VDD sky130_fd_pr__pfet_01v8 L=1 W=4 nf=4 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29' pd='2*int((nf+1)/2) * (W/nf + 0.29)'
++ ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W' sa=0 sb=0 sd=0 mult=2 m=2
+
+
+XM4 Vouts1 net1 VDD VDD sky130_fd_pr__pfet_01v8 L=1 W=4 nf=4 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29' pd='2*int((nf+1)/2) * (W/nf + 0.29)'
++ ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W' sa=0 sb=0 sd=0 mult=2 m=2
+
+
+* Tail Current Source (NMOS)
+XM5 Itail Ibias VSS VSS sky130_fd_pr__nfet_01v8 L=1 W=4 nf=4 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29' pd='2*int((nf+1)/2) * (W/nf + 0.29)'
++ ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W' sa=0 sb=0 sd=0 mult=8 m=8
+
+
+* --- STAGE 2: Common Source Output ---
+* Drive Transistor (PMOS)
+XM6 Vout Vouts1 VDD VDD sky130_fd_pr__pfet_01v8 L=1 W=4 nf=4 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29' pd='2*int((nf+1)/2) * (W/nf + 0.29)'
++ ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W' sa=0 sb=0 sd=0 mult=7 m=7
+
+
+* Output Current Sink (NMOS - Mirror of Bias)
+XM7 Vout Ibias VSS VSS sky130_fd_pr__nfet_01v8 L=1 W=4 nf=4 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29' pd='2*int((nf+1)/2) * (W/nf + 0.29)'
++ ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W' sa=0 sb=0 sd=0 mult=8 m=8
+
+
+* --- Bias Diode ---
+XM8 Ibias Ibias VSS VSS sky130_fd_pr__nfet_01v8_lvt L=1.25 W=4.35 nf=4 ad=0.58p as=0.87p pd=5.16u ps=7.74u nrd=0.07 nrs=0.07 sa=0 sb=0 sd=0 mult=1 m=1
+
+
+* --- Compensation Network ---
+C1 Vout net_comp {Cc}
+R1 net_comp Vouts1 {Rz}
+
+.ends
