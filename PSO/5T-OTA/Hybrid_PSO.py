@@ -77,18 +77,26 @@ def get_W(gm1, gm2, L_1, L_2, ID):
     gm_ID_1 = gm1 / ID
     gm_ID_2 = gm2 / ID
 
-    try:
-        Vgs_2 = brentq(vgs_error, 0.3, 1.8, args=(gm_ID_2, L_2, 0))
-    except ValueError:
-        return None, None
-    # Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
-
     with silence_stdout():
-        JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-        JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+        try:
+            # # Method 1
+            # try:
+            #     Vgs_2 = brentq(vgs_error, 0.3, 1.8, args=(gm_ID_2, L_2, 0))
 
-        W_1 = ID / JD_1
-        W_2 = ID / JD_2
+            # # Method 2
+            # Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
+
+            # Method 3
+            Vgs_2 = PCH.lookupVGS(GM_ID=gm_ID_2, VSB=0, L=L_2)
+            Vgs_2 = PCH.lookupVGS(GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+        
+            JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+            JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+
+            W_1 = ID / JD_1
+            W_2 = ID / JD_2
+        except:
+            return None, None
 
     return W_1, W_2
 
@@ -96,28 +104,36 @@ def get_specVars(gm1, gm2, L_1, L_2, ID):
     gm_ID_1 = gm1 / ID
     gm_ID_2 = gm2 / ID
 
-    try:
-        Vgs_2 = brentq(vgs_error, 0.3, 1.8, args=(gm_ID_2, L_2, 0))
-    except ValueError:
-        return None, None, None, None, None, None
-    # Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
-
     with silence_stdout():
-        Cdd_1 = gm1 / NCH.lookup('GM_CDD', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-        Cdd_2 = gm2 / PCH.lookup('GM_CDD', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-        Cpar = Cdd_1 + Cdd_2
+        try:
+            # # Method 1
+            # try:
+            #     Vgs_2 = brentq(vgs_error, 0.3, 1.8, args=(gm_ID_2, L_2, 0))
 
-        Cgg_2 = gm2 / PCH.lookup('GM_CGG', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-        Cx = Cpar + Cgg_2
+            # # Method 2
+            # Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
 
-        JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-        JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+            # Method 3
+            Vgs_2 = PCH.lookupVGS(GM_ID=gm_ID_2, VSB=0, L=L_2)
+            Vgs_2 = PCH.lookupVGS(GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
 
-        W_1 = ID / JD_1
-        W_2 = ID / JD_2
+            Cdd_1 = gm1 / NCH.lookup('GM_CDD', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+            Cdd_2 = gm2 / PCH.lookup('GM_CDD', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+            Cpar = Cdd_1 + Cdd_2
 
-        gds_1 = gm1 / NCH.lookup('GM_GDS', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-        gds_2 = gm2 / PCH.lookup('GM_GDS', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+            Cgg_2 = gm2 / PCH.lookup('GM_CGG', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+            Cx = Cpar + Cgg_2
+
+            JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+            JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+
+            W_1 = ID / JD_1
+            W_2 = ID / JD_2
+
+            gds_1 = gm1 / NCH.lookup('GM_GDS', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+            gds_2 = gm2 / PCH.lookup('GM_GDS', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+        except:
+            return None, None, None, None, None, None
 
     return Cx, Cpar, W_1, W_2, gds_1, gds_2
 
@@ -217,7 +233,6 @@ def survivability_test(particle, verbose=False):
         print(f"  Area: {Area_active:.2f} μm²")
     
     return specs_met, Area_active, specs_dict
-
 
 # Generate particles for PSO
 def generate_particle(bounds, max_attempts=1000):
@@ -504,8 +519,8 @@ def main():
     
     pso = HybridPSO(
         bounds=bounds,
-        n_particles=20,
-        max_iterations=300,
+        n_particles=50,
+        max_iterations=10,
         w_max=0.8,
         w_min=0.5,
         c1=1.7,
