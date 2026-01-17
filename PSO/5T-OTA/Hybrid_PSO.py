@@ -1,9 +1,12 @@
+import time
+import os
+import sys
+from contextlib import contextmanager
 import numpy as np
 import matplotlib.pyplot as plt
 from pygmid import Lookup as lk
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
-import time
 
 NCH = lk('../../sky130_lookup/simulation/nfet_01v8.mat')
 PCH = lk('../../sky130_lookup/simulation/pfet_01v8.mat')
@@ -54,8 +57,20 @@ def getVGS_diode(device_type, target_gm_id, length):
     return vgs_required
 # ===============================
 
+@contextmanager
+def silence_stdout():
+    new_target = open(os.devnull, "w")
+    old_target = sys.stdout
+    sys.stdout = new_target
+    try:
+        yield
+    finally:
+        sys.stdout = old_target
+        new_target.close()
+
 def vgs_error(vgs_guess, target_gm_id, L, VSB):  # VGS solver function
-    vgs_calculated = PCH.lookupVGS(GM_ID=target_gm_id, VDS=vgs_guess, VSB=VSB, L=L)
+    with silence_stdout():
+        vgs_calculated = PCH.lookupVGS(GM_ID=target_gm_id, VDS=vgs_guess, VSB=VSB, L=L)
     return vgs_guess - vgs_calculated
 
 def get_W(gm1, gm2, L_1, L_2, ID):
@@ -68,11 +83,12 @@ def get_W(gm1, gm2, L_1, L_2, ID):
         return None, None
     # Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
 
-    JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-    JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+    with silence_stdout():
+        JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+        JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
 
-    W_1 = ID / JD_1
-    W_2 = ID / JD_2
+        W_1 = ID / JD_1
+        W_2 = ID / JD_2
 
     return W_1, W_2
 
@@ -86,21 +102,22 @@ def get_specVars(gm1, gm2, L_1, L_2, ID):
         return None, None, None, None, None, None
     # Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
 
-    Cdd_1 = gm1 / NCH.lookup('GM_CDD', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-    Cdd_2 = gm2 / PCH.lookup('GM_CDD', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-    Cpar = Cdd_1 + Cdd_2
+    with silence_stdout():
+        Cdd_1 = gm1 / NCH.lookup('GM_CDD', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+        Cdd_2 = gm2 / PCH.lookup('GM_CDD', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+        Cpar = Cdd_1 + Cdd_2
 
-    Cgg_2 = gm2 / PCH.lookup('GM_CGG', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-    Cx = Cpar + Cgg_2
+        Cgg_2 = gm2 / PCH.lookup('GM_CGG', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+        Cx = Cpar + Cgg_2
 
-    JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-    JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+        JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+        JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
 
-    W_1 = ID / JD_1
-    W_2 = ID / JD_2
+        W_1 = ID / JD_1
+        W_2 = ID / JD_2
 
-    gds_1 = gm1 / NCH.lookup('GM_GDS', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-    gds_2 = gm2 / PCH.lookup('GM_GDS', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
+        gds_1 = gm1 / NCH.lookup('GM_GDS', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
+        gds_2 = gm2 / PCH.lookup('GM_GDS', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
 
     return Cx, Cpar, W_1, W_2, gds_1, gds_2
 
@@ -127,8 +144,7 @@ def get_feasRegion(gm_ID, L_1, L_2, SR_spec, CL, Power_spec, GBW_spec):
 
     return gm1_min, gm1_max, gm2_min, gm2_max, L_1_min, L_1_max, L_2_min, L_2_max, ID_min, ID_max
 
-# we can check the feasibility
-
+# We can check the feasibility
 def survivability_test(particle, verbose=False):
     """
     This is to test if a particle meets all design specifications
@@ -203,8 +219,7 @@ def survivability_test(particle, verbose=False):
     return specs_met, Area_active, specs_dict
 
 
-# generate particles for PSO
-
+# Generate particles for PSO
 def generate_particle(bounds, max_attempts=1000):
     """
     bounds = [gm1_bounds, gm2_bounds, L1_bounds, L2_bounds, ID_bounds]
@@ -227,9 +242,9 @@ def generate_particle(bounds, max_attempts=1000):
     # If we reach here, couldn't generate valid particle
     return None, np.inf, None
 
-
-# Hybrid-PSO Algo.
-
+# ===================================
+# HYBRID-PSO ALGORITHM IMPLEMENTATION
+# ===================================
 class HybridPSO:
     def __init__(self, bounds, n_particles=50, max_iterations=100, 
                  w_max=0.8, w_min=0.5, c1=1.7, c2=1.7, max_velocity_updates=5):
@@ -458,8 +473,6 @@ class HybridPSO:
         plt.tight_layout()
         plt.savefig('pso_convergence.png', dpi=300, bbox_inches='tight')
 
-
-
 def main():
     
     # Define initial bounds based on specifications
@@ -492,7 +505,7 @@ def main():
     pso = HybridPSO(
         bounds=bounds,
         n_particles=20,
-        max_iterations=100,
+        max_iterations=300,
         w_max=0.8,
         w_min=0.5,
         c1=1.7,
@@ -503,8 +516,6 @@ def main():
     results = pso.optimize()
     
     end_time = time.time()
-    
-
     
     if results:
         print("\nOptimal Design Parameters: ")
@@ -536,7 +547,6 @@ def main():
 
         pso.plot_convergence()
         
-
         save_results_to_file(results)
         
     else:
