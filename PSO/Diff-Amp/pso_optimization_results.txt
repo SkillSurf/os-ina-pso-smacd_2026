@@ -1,0 +1,30 @@
+============================================================
+5T-OTA AREA OPTIMIZATION USING HYBRID PSO
+============================================================
+
+DESIGN SPECIFICATIONS:
+  VDD = 1.8 V
+  CL = 2.00 pF
+  Slew Rate ≥ 1.00 V/μs
+  GBW ≥ 1.00 MHz
+  Gain ≥ 14.00 dB
+  Power ≤ 10.00 μW
+
+OPTIMAL DESIGN PARAMETERS:
+  gm1 = 32.9899 μS
+  L_1 = 0.1500 μm
+  ID  = 1.9744 μA
+  RD  = 455.8412 kΩ
+  gm/ID_1 = 16.7091 S/A
+
+OPTIMAL TRANSISTOR SIZING:
+  W_1 = 0.4201 μm
+  L_1 = 0.1500 μm
+
+OPTIMAL AREA: 0.1260 μm²
+
+ACHIEVED SPECIFICATIONS:
+  Slew Rate = 3.9482 V/μs
+  GBW = 2.6249 MHz
+  Gain = 19.1090 dB
+  Power = 7.1077 μW
