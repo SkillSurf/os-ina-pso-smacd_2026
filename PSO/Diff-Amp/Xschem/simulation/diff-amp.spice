@@ -1,0 +1,97 @@
+** sch_path: /foss/designs/PROJECTS/os-ina-pso-mixdes_2026/PSO/Diff-Amp/Xschem/diff-amp.sch
+**.subckt diff-amp
+XM1 Vop Vip Vx Vx sky130_fd_pr__nfet_01v8 L=0.15 W=0.42 nf=1 ad=0.1218 as=0.1218 pd=1.42 ps=1.42 nrd=0.69047619047619
++ nrs=0.69047619047619 sa=0 sb=0 sd=0 mult=1 m=1
+XM2 Von Vin Vx Vx sky130_fd_pr__nfet_01v8 L=0.15 W=0.42 nf=1 ad=0.1218 as=0.1218 pd=1.42 ps=1.42 nrd=0.69047619047619
++ nrs=0.69047619047619 sa=0 sb=0 sd=0 mult=1 m=1
+R1 VDD Von 455.84k m=1
+R2 VDD Vop 455.84k m=1
+I0 Vx GND 3.9488u
+Vvip Vip GND dc 0.9 ac 1 sin(0 50m 1k)
+Vvin Vin GND dc 0.9 ac -1 sin(0 -50m 1k)
+C1 Vop Von 2p m=1
+**** begin user architecture code
+
+** opencircuitdesign pdks install
+.lib /foss/pdks/sky130A/libs.tech/combined/sky130.lib.spice tt
+
+
+
+.param temp=27
+.option savecurrents
+Vvdd VDD 0 1.8
+.control
+  save all
+  save @m.xm1.msky130_fd_pr__nfet_01v8[gm]
+  save @m.xm2.msky130_fd_pr__nfet_01v8[gm]
+  op
+  write diff-amp.raw
+.endc
+
+
+
+
+.control
+  tran 1u 5m
+  save all
+
+  let v_input_diff = v(vip) - v(vin)
+  let v_output_diff = v(vop) - v(von)
+
+  plot v_input_diff v_output_diff
+
+  meas tran v_in_pk  PP v_input_diff from=1m to=5m
+  meas tran v_out_pk PP v_output_diff from=1m to=5m
+
+  let voltage_gain = v_out_pk / v_in_pk
+  print voltage_gain
+.endc
+
+
+
+
+.control
+  alter Vvip pulse = [ 850m 950m 0 1n 1n 0.5m 1m 1 ]
+  alter Vvin pulse = [ 950m 850m 0 1n 1n 0.5m 1m 1 ]
+  tran 10n 520u 480u
+  save all
+
+  let v_diff = v(vop) - v(von)
+  plot v_diff
+
+  meas tran v_max FIND v_diff AT=520u
+  meas tran v_min FIND v_diff AT=490u
+
+  let v10 = v_min + 0.1*(v_max-v_min)
+  let v90 = v_max - 0.1*(v_max-v_min)
+  meas tran t10 WHEN v_diff=v10 RISE=1
+  meas tran t90 WHEN v_diff=v90 RISE=1
+
+  let slew_rate = ((v90 - v10) / (t90 - t10)) * 1e-6
+  print slew_rate
+.endc
+
+
+
+
+.control
+  ac dec 100 0.1 1G
+  save all
+
+  let diff_gain = (v(vop) - v(von)) / (v(vip) - v(vin))
+  let db_diff_gain = db(diff_gain)
+  let neg_deg_phase = 180*cph(v(von) - v(vop))/pi
+
+  meas ac gbw_freq WHEN db_diff_gain=0 FALL=1
+  let gbw_Mfreq = gbw_freq * 1e-6
+
+  plot db_diff_gain neg_deg_phase
+  print gbw_Mfreq
+.endc
+
+
+**** end user architecture code
+**.ends
+.GLOBAL GND
+.GLOBAL VDD
+.end
