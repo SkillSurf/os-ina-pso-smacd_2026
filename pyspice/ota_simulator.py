@@ -13,50 +13,65 @@ import PySpice.Logging.Logging as Logging
 logger = Logging.setup_logging()
 
 NgSpiceSharedModule.NgSpiceShared.NGSPICE_SUPPORTED_VERSION = 42 
-# ngspice = NgSpiceShared()
-
-# --- 1. Create a dummy .spice file for the OTA (Simulating your teammate's output) ---
-# with open('simple_ota.spice', 'w') as f:
-#     f.write('''
-# .SUBCKT my_ota in_p in_n out vdd vss
-# * Simple behavioral model of an OTA
-# G1 0 out in_p in_n 1m
-# R1 out 0 1Meg
-# C1 out 0 10pF
-# .ENDS
-#     ''')
 
 SIM_MODE = 'OP'     #Options: AC, TRANS, SLEW, OP
 
-def validate_environment(pdk_path):
-    print("--- PRE-FLIGHT VALIDATION ---")
-    
-    # Inject initialization commands directly to engine memory
-    # 'hsa' mode is required for sky130's complex math (int, limit, etc.)
-    ngspice.exec_command('set ngbehavior=hsa')
-    ngspice.exec_command('set xspice_empty_vector_replacement=0')
-    ngspice.exec_command('set stacksize=64') # Prevents memory crash on deep subcircuits
-    
-    # Warm-load the library
-    try:
-        ngspice.exec_command(f'lib {pdk_path} tt')
-        print(f"Successfully loaded PDK corner 'tt' from: {pdk_path}")
-    except Exception as e:
-        print(f"Error loading PDK: {e}")
-        return False
+def generate_spice_file(params):
+    """Generates a hard-coded Opamp.spice file to avoid parameter parsing errors."""
+    def get_geom_string(w, nf):
 
-    # Check if a specific model is loaded in memory
-    # We check for the basic 1.8V NFET subcircuit
-    test_model = "sky130_fd_pr__nfet_01v8"
-    listing = ngspice.exec_command('devhelp').lower()
+        w_val = float(w)
+        nf_val = int(nf)
+        
+        return (
+            f"W={w_val} nf={nf_val} "
+            f"ad='int(({nf_val}+1)/2) * {w_val}/{nf_val} * 0.29' "
+            f"as='int(({nf_val}+2)/2) * {w_val}/{nf_val} * 0.29' "
+            f"pd='2*int(({nf_val}+1)/2) * ({w_val}/{nf_val} + 0.29)' "
+            f"ps='2*int(({nf_val}+2)/2) * ({w_val}/{nf_val} + 0.29)' "
+            f"nrd='0.29 / {w_val}' nrs='0.29 / {w_val}'"
+        )
+
+    # Individual geometry strings for every group
+    g_in    = get_geom_string(params['W_in'], params['nf_in'])
+    g_load  = get_geom_string(params['W_load'], params['nf_load'])
+    g_tail  = get_geom_string(params['W_tail'], params['nf_tail'])
+    g_drive = get_geom_string(params['W_drive'], params['nf_drive'])
     
-    # Note: devhelp might be huge, so we also check the subcircuit table
-    if test_model in listing or "nfet" in listing:
-        print(f"Model Check: '{test_model}' appears to be recognized.")
-    else:
-        print(f"Warning: '{test_model}' not found in devhelp. Trying a test listing...")
-    
-    return True
+    # Using specific dimensions for XM8 to maintain bias stability
+    g_bias  = get_geom_string(params.get('W_bias', 4.35), params.get('nf_bias', 4))
+
+    content = f"""* 2-Stage Miller Compensated Opamp (Auto-generated)
+.subckt Opamp VDD Vp Vn Vout Ibias VSS
+
+* --- STAGE 1: Differential Pair ---
+XM1 net1 Vn Itail VSS sky130_fd_pr__nfet_01v8 L={params['L_in']} {g_in} m={params['m_in']} sa=0 sb=0 sd=0 mult=1
+XM2 Vouts1 Vp Itail VSS sky130_fd_pr__nfet_01v8 L={params['L_in']} {g_in} m={params['m_in']} sa=0 sb=0 sd=0 mult=1
+
+* Current Mirror Load (PMOS)
+XM3 net1 net1 VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_load']} {g_load} m={params['m_load']} sa=0 sb=0 sd=0 mult=2
+XM4 Vouts1 net1 VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_load']} {g_load} m={params['m_load']} sa=0 sb=0 sd=0 mult=2
+
+* Tail Current Source (NMOS)
+XM5 Itail Ibias VSS VSS sky130_fd_pr__nfet_01v8 L={params['L_tail']} {g_tail} m={params['m_tail']} sa=0 sb=0 sd=0 mult=8
+
+* --- STAGE 2: Common Source Output ---
+XM6 Vout Vouts1 VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_drive']} {g_drive} m={params['m_drive']} sa=0 sb=0 sd=0 mult=7
+XM7 Vout Ibias VSS VSS sky130_fd_pr__nfet_01v8 L={params['L_tail']} {g_tail} m={params['m_tail']} sa=0 sb=0 sd=0 mult=8
+
+* --- Bias Diode ---
+XM8 Ibias Ibias VSS VSS sky130_fd_pr__nfet_01v8 L={params.get('L_bias', 1.25)} {g_bias} m=1 sa=0 sb=0 sd=0 mult=1
+
+* --- Compensation Network ---
+C1 Vout net_comp {params['Cc']}
+R1 net_comp Vouts1 {params['Rz']}
+
+.ends
+"""
+    with open('Opamp_dynamic.spice', 'w') as f:
+        f.write(content)
+
+
 
 def run_simulation(mode):
 
@@ -68,47 +83,38 @@ def run_simulation(mode):
 .param mc_mm_switch=0
 .param mc_pr_switch=0
 .lib /foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice tt
-.include /foss/designs/cmos_ina_sky130/Opamp.spice
+.include /foss/designs/cmos_ina_sky130/Opamp_dynamic.spice
 """
-
-    pdk_path = '/foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice'
+    # pdk_path = '/foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice'
     # circuit.lib('/foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice', 'tt')
-    # if not validate_environment(pdk_path):
-    #     return
-
     # circuit.include('Opamp.spice')
 
-    opamp_params = {
-        'W_in': 4, 'L_in': 1, 'nf_in': 4, 'm_in': 2,
-        'W_load': 4, 'L_load': 1, 'nf_load': 4, 'm_load': 4,
-        'W_drive': 4, 'L_drive': 1, 'nf_drive': 4, 'm_drive': 7,
-        'W_tail': 4, 'L_tail': 1, 'nf_tail': 4, 'm_tail': 8,
-        'Cc': '2pF', 'Rz': 60
-    }
-
-    # circuit.X('OTA1', 'my_ota', 'VDD', 'Vp', 'Vn', 'Vout', 'VSS')
-    circuit.X('X1', 'Opamp', 'VDD', 'Vp', 'Vn', 'Vout', 'Ibias', 'VSS', 
-          L_in=1.0@u_um, W_in=4.0@u_um, nf_in=4, m_in=1,
-          L_load=1.0@u_um, W_load=4.0@u_um, nf_load=4, m_load=2,
-          L_drive=1.0@u_um, W_drive=4.0@u_um, nf_drive=4, m_drive=7,
-          L_tail=1.0@u_um, W_tail=4.0@u_um, nf_tail=4, m_tail=8,
-          Cc=2.0@u_pF, Rz=60)
-    circuit.C('load', 'Vout', 'VSS', 5@u_pF)
-
+    circuit.X('X1', 'Opamp', 'VDD', 'Vp', 'Vn', 'Vout', 'Ibias', 'VSS')
+    
     circuit.V('vdd', 'VDD', circuit.gnd, 1.8@u_V)
     circuit.V('vss', 'VSS', circuit.gnd, 0@u_V)
     circuit.I('bias', 'VDD', 'Ibias', 5@u_uA)
+    circuit.C('load', 'Vout', 'VSS', 1@u_pF) # Per Specification Table
+    circuit.R('dc_fix', 'Vout', 'VSS', 10@u_MOhm) # High-Z load for OP stability
 
-    # circuit.V('gnd_link', 'GND', circuit.gnd, 0@u_V)
 
     if mode == 'AC':        # Define AC Input (Differential)
         circuit.V('input', 'Vp', 'Vn', 'dc 0.9 AC 1')
         circuit.V('cm', 'Vn', circuit.gnd, 0.9@u_V)
 
         simulator = circuit.simulator(simulator='ngspice-subprocess', temperature=25)
-        print(simulator.ngspice.listing())
 
-        analysis = simulator.ac(start_frequency=1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
+        try:
+            analysis = simulator.ac(start_frequency=1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
+        except Exception as e:
+            print("\n--- NGSPICE ERROR LOG ---")
+            print(str(simulator))
+            print(e)
+            raise e
+        
+        op_analysis = simulator.operating_point()
+        i_total = abs(float(op_analysis.branches['vvdd'][0]))
+        power_uw = i_total * 1.8 * 1e6  # Power = VDD * I_total
 
         freq = np.array(analysis.frequency)
         gain_db = 20 * np.log10(np.absolute(analysis.out))
@@ -121,6 +127,26 @@ def run_simulation(mode):
 
         print(f"\n--- AC ANALYSIS RESULTS ---")
         print(f"Calculated DC Gain: {dc_gain:.2f} dB | Calculated GBW: {gbw/1e6:.2f} MHz | Calculated PM: {phase_margin:.2f} degrees")
+
+        # Comparing with the specs
+        specs = {
+            "Open-loop gain": {"val": dc_gain, "target": 70, "unit": "dB", "op": ">="},
+            "GBW": {"val": gbw/1e6, "target": 30, "unit": "MHz", "op": ">="},
+            "Phase Margin": {"val": pm, "target": 60, "unit": "deg", "op": ">"},
+            "Power Total": {"val": power_uw, "target": 500, "unit": "uW", "op": "<="}
+        }
+
+        print(f"\n--- Results for L={design_params['L_in']}, W={design_params['W_in']} ---")
+        all_passed = True
+        for key, s in specs.items():
+            passed = (s['val'] >= s['target']) if s['op'] == ">=" else (s['val'] <= s['target'])
+            if s['op'] == ">": passed = s['val'] > s['target']
+            
+            status = "PASS" if passed else "FAIL"
+            if not passed: all_passed = False
+            print(f"{key}: {s['val']:.2f}{s['unit']} (Target: {s['op']}{s['target']}) -> {status}")
+        
+        return all_passed
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
@@ -212,20 +238,51 @@ def run_simulation(mode):
         plt.savefig('Slewrate_positive_openloop.png')
         plt.show()
 
-# op_params = {
-#     'mult_in': 1,
-#     'mult_load': 2,
-#     'mult_5': 8,
-#     'mult_6': 7,
-#     'mult_7_10': 11,
-#     'mult_8': 1,
-#     'mult_9_11': 6,
-#     'cap_mf': 2,
-#     'r_w': 0.04,
-#     'r_l': 60
-# }
+params = {
+    'W_in': 4, 'L_in': 1, 'nf_in': 4, 'm_in': 1,
+    'W_load': 4, 'L_load': 1, 'nf_load': 4, 'm_load': 2,
+    'W_drive': 4, 'L_drive': 1, 'nf_drive': 4, 'm_drive': 7,
+    'W_tail': 4, 'L_tail': 1, 'nf_tail': 4, 'm_tail': 8,
+    'W_bias': 4.35, 'L_bias': 1.25, 'nf_bias': 4, 'm_bias': 1,
+    'Cc': '2pF', 'Rz': 60
+}
 
-# run_simulation(op_params,SIM_MODE)
+generate_spice_file(params)
+
+run_simulation('AC')
 run_simulation('OP')
-# run_simulation('TRANS')
-# run_simulation('SLEW')
+run_simulation('TRANS')
+run_simulation('SLEW')
+
+
+
+
+# def validate_environment(pdk_path):
+#     print("--- PRE-FLIGHT VALIDATION ---")
+    
+#     # Inject initialization commands directly to engine memory
+#     # 'hsa' mode is required for sky130's complex math (int, limit, etc.)
+#     ngspice.exec_command('set ngbehavior=hsa')
+#     ngspice.exec_command('set xspice_empty_vector_replacement=0')
+#     ngspice.exec_command('set stacksize=64') # Prevents memory crash on deep subcircuits
+    
+#     # Warm-load the library
+#     try:
+#         ngspice.exec_command(f'lib {pdk_path} tt')
+#         print(f"Successfully loaded PDK corner 'tt' from: {pdk_path}")
+#     except Exception as e:
+#         print(f"Error loading PDK: {e}")
+#         return False
+
+#     # Check if a specific model is loaded in memory
+#     # We check for the basic 1.8V NFET subcircuit
+#     test_model = "sky130_fd_pr__nfet_01v8"
+#     listing = ngspice.exec_command('devhelp').lower()
+    
+#     # Note: devhelp might be huge, so we also check the subcircuit table
+#     if test_model in listing or "nfet" in listing:
+#         print(f"Model Check: '{test_model}' appears to be recognized.")
+#     else:
+#         print(f"Warning: '{test_model}' not found in devhelp. Trying a test listing...")
+    
+#     return True

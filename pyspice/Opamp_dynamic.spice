@@ -1,0 +1,26 @@
+* 2-Stage Miller Compensated Opamp (Auto-generated)
+.subckt Opamp VDD Vp Vn Vout Ibias VSS
+
+* --- STAGE 1: Differential Pair ---
+XM1 net1 Vn Itail VSS sky130_fd_pr__nfet_01v8 L=1 W=4.0 nf=4 ad='int((4+1)/2) * 4.0/4 * 0.29' as='int((4+2)/2) * 4.0/4 * 0.29' pd='2*int((4+1)/2) * (4.0/4 + 0.29)' ps='2*int((4+2)/2) * (4.0/4 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' m=1 sa=0 sb=0 sd=0 mult=1
+XM2 Vouts1 Vp Itail VSS sky130_fd_pr__nfet_01v8 L=1 W=4.0 nf=4 ad='int((4+1)/2) * 4.0/4 * 0.29' as='int((4+2)/2) * 4.0/4 * 0.29' pd='2*int((4+1)/2) * (4.0/4 + 0.29)' ps='2*int((4+2)/2) * (4.0/4 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' m=1 sa=0 sb=0 sd=0 mult=1
+
+* Current Mirror Load (PMOS)
+XM3 net1 net1 VDD VDD sky130_fd_pr__pfet_01v8 L=1 W=4.0 nf=4 ad='int((4+1)/2) * 4.0/4 * 0.29' as='int((4+2)/2) * 4.0/4 * 0.29' pd='2*int((4+1)/2) * (4.0/4 + 0.29)' ps='2*int((4+2)/2) * (4.0/4 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' m=2 sa=0 sb=0 sd=0 mult=2
+XM4 Vouts1 net1 VDD VDD sky130_fd_pr__pfet_01v8 L=1 W=4.0 nf=4 ad='int((4+1)/2) * 4.0/4 * 0.29' as='int((4+2)/2) * 4.0/4 * 0.29' pd='2*int((4+1)/2) * (4.0/4 + 0.29)' ps='2*int((4+2)/2) * (4.0/4 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' m=2 sa=0 sb=0 sd=0 mult=2
+
+* Tail Current Source (NMOS)
+XM5 Itail Ibias VSS VSS sky130_fd_pr__nfet_01v8 L=1 W=4.0 nf=4 ad='int((4+1)/2) * 4.0/4 * 0.29' as='int((4+2)/2) * 4.0/4 * 0.29' pd='2*int((4+1)/2) * (4.0/4 + 0.29)' ps='2*int((4+2)/2) * (4.0/4 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' m=8 sa=0 sb=0 sd=0 mult=8
+
+* --- STAGE 2: Common Source Output ---
+XM6 Vout Vouts1 VDD VDD sky130_fd_pr__pfet_01v8 L=1 W=4.0 nf=4 ad='int((4+1)/2) * 4.0/4 * 0.29' as='int((4+2)/2) * 4.0/4 * 0.29' pd='2*int((4+1)/2) * (4.0/4 + 0.29)' ps='2*int((4+2)/2) * (4.0/4 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' m=7 sa=0 sb=0 sd=0 mult=7
+XM7 Vout Ibias VSS VSS sky130_fd_pr__nfet_01v8 L=1 W=4.0 nf=4 ad='int((4+1)/2) * 4.0/4 * 0.29' as='int((4+2)/2) * 4.0/4 * 0.29' pd='2*int((4+1)/2) * (4.0/4 + 0.29)' ps='2*int((4+2)/2) * (4.0/4 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' m=8 sa=0 sb=0 sd=0 mult=8
+
+* --- Bias Diode ---
+XM8 Ibias Ibias VSS VSS sky130_fd_pr__nfet_01v8 L=1.25 W=4.35 nf=4 ad='int((4+1)/2) * 4.35/4 * 0.29' as='int((4+2)/2) * 4.35/4 * 0.29' pd='2*int((4+1)/2) * (4.35/4 + 0.29)' ps='2*int((4+2)/2) * (4.35/4 + 0.29)' nrd='0.29 / 4.35' nrs='0.29 / 4.35' m=1 sa=0 sb=0 sd=0 mult=1
+
+* --- Compensation Network ---
+C1 Vout net_comp 2pF
+R1 net_comp Vouts1 60
+
+.ends
