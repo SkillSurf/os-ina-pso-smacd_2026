@@ -1,0 +1,92 @@
+** sch_path: /foss/designs/os-ina-pso-mixdes_2026/Xschem Simulations/FDDA/FDDA.sch
+**.subckt FDDA
+XMP1 net5 Vpp net1 VDD sky130_fd_pr__pfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP2 net6 Vpn net1 VDD sky130_fd_pr__pfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP3 net6 Vnp net2 VDD sky130_fd_pr__pfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP4 net5 Vnn net2 VDD sky130_fd_pr__pfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP5 net3 Vcmfb VDD VDD sky130_fd_pr__pfet_01v8 L=L_2 W=W_2 nf=1 ad='int((1 + 1)/2) * W_2 / 1 * 0.29' as='int((1 + 2)/2) * W_2 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_2 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_2 / 1 + 0.29)' nrd='0.29 / W_2 ' nrs='0.29 / W_2 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP6 net4 Vcmfb VDD VDD sky130_fd_pr__pfet_01v8 L=L_2 W=W_2 nf=1 ad='int((1 + 1)/2) * W_2 / 1 * 0.29' as='int((1 + 2)/2) * W_2 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_2 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_2 / 1 + 0.29)' nrd='0.29 / W_2 ' nrs='0.29 / W_2 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP7 Von Vb4 net3 VDD sky130_fd_pr__pfet_01v8 L=L_3 W=W_3 nf=1 ad='int((1 + 1)/2) * W_3 / 1 * 0.29' as='int((1 + 2)/2) * W_3 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_3 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_3 / 1 + 0.29)' nrd='0.29 / W_3 ' nrs='0.29 / W_3 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP8 Vop Vb4 net4 VDD sky130_fd_pr__pfet_01v8 L=L_3 W=W_3 nf=1 ad='int((1 + 1)/2) * W_3 / 1 * 0.29' as='int((1 + 2)/2) * W_3 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_3 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_3 / 1 + 0.29)' nrd='0.29 / W_3 ' nrs='0.29 / W_3 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP11 net1 Vb1 VDD VDD sky130_fd_pr__pfet_01v8 L=L_6 W=W_6 nf=1 ad='int((1 + 1)/2) * W_6 / 1 * 0.29' as='int((1 + 2)/2) * W_6 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_6 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_6 / 1 + 0.29)' nrd='0.29 / W_6 ' nrs='0.29 / W_6 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP12 net2 Vb1 VDD VDD sky130_fd_pr__pfet_01v8 L=L_6 W=W_6 nf=1 ad='int((1 + 1)/2) * W_6 / 1 * 0.29' as='int((1 + 2)/2) * W_6 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_6 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_6 / 1 + 0.29)' nrd='0.29 / W_6 ' nrs='0.29 / W_6 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN3 Von Vb3 net5 GND sky130_fd_pr__nfet_01v8 L=L_4 W=W_4 nf=1 ad='int((1 + 1)/2) * W_4 / 1 * 0.29' as='int((1 + 2)/2) * W_4 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_4 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_4 / 1 + 0.29)' nrd='0.29 / W_4 ' nrs='0.29 / W_4 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN4 Vop Vb3 net6 GND sky130_fd_pr__nfet_01v8 L=L_4 W=W_4 nf=1 ad='int((1 + 1)/2) * W_4 / 1 * 0.29' as='int((1 + 2)/2) * W_4 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_4 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_4 / 1 + 0.29)' nrd='0.29 / W_4 ' nrs='0.29 / W_4 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN9 net5 Vb2 GND GND sky130_fd_pr__nfet_01v8 L=L_5 W=W_5 nf=1 ad='int((1 + 1)/2) * W_5 / 1 * 0.29' as='int((1 + 2)/2) * W_5 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_5 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_5 / 1 + 0.29)' nrd='0.29 / W_5 ' nrs='0.29 / W_5 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN10 net6 Vb2 GND GND sky130_fd_pr__nfet_01v8 L=L_5 W=W_5 nf=1 ad='int((1 + 1)/2) * W_5 / 1 * 0.29' as='int((1 + 2)/2) * W_5 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_5 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_5 / 1 + 0.29)' nrd='0.29 / W_5 ' nrs='0.29 / W_5 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+Vvpp Vpp GND dc 0.9 ac 1 sin(0 2m 1k)
+Vvpn Vpn GND dc 0.9 ac -1 sin(0 2m 1k)
+Vvnp Vnp GND dc 0.9 ac 1 sin(0 2m 1k)
+Vvnn Vnn GND dc 0.9 ac -1 sin(0 2m 1k)
+Vvb1 Vb1 GND dc 0.9
+Vvb2 Vb2 GND dc 0.9
+Vvb3 Vb3 GND dc 0.9
+Vvb4 Vb4 GND dc 0.9
+Vvb5 Vcmfb GND dc 0.9
+**** begin user architecture code
+
+** opencircuitdesign pdks install
+.lib /foss/pdks/sky130A/libs.tech/combined/sky130.lib.spice tt
+
+
+
+.param temp=27
+.option savecurrents
+Vvdd VDD 0 1.8
+.param Vcm = 0.9
+.param W_1=4
+.param L_1=0.4
+.param W_2=4
+.param L_2=0.4
+.param W_3=4
+.param L_3=0.4
+.param W_4=7
+.param L_4=1
+.param W_5=3
+.param L_5=1
+.param W_6=4
+.param L_6=0.4
+.control
+  save all
+  save @m.xm1.msky130_fd_pr__nfet_01v8[gm]
+  save @m.xm2.msky130_fd_pr__nfet_01v8[gm]
+  save @m.xm3.msky130_fd_pr__pfet_01v8[gm]
+  save @m.xm4.msky130_fd_pr__pfet_01v8[gm]
+  op
+  write 5t-ota.raw
+.endc
+
+
+**** end user architecture code
+**.ends
+.GLOBAL VDD
+.GLOBAL GND
+.end
