@@ -1,0 +1,32 @@
+* FDDA (Auto-generated)
+.subckt FDDA VDD Vpp Vpn Vnp Vnn Vcmfb Vb1 Vb2 Vb3 Vb4 Von Vop
+XMP1 net5 Vpp net1 VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP2 net6 Vpn net1 VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP3 net6 Vnp net2 VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP4 net5 Vnn net2 VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP5 net3 Vcmfb VDD VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP6 net4 Vcmfb VDD VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP7 Von Vb4 net3 VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP8 Vop Vb4 net4 VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP11 net1 Vb1 VDD VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMP12 net2 Vb1 VDD VDD sky130_fd_pr__pfet_01v8 L=0.4 W=4.0 nf=1 ad='int((1+1)/2) * 4.0/1 * 0.29' as='int((1+2)/2) * 4.0/1 * 0.29' pd='2*int((1+1)/2) * (4.0/1 + 0.29)' ps='2*int((1+2)/2) * (4.0/1 + 0.29)' nrd='0.29 / 4.0' nrs='0.29 / 4.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN3 Von Vb3 net5 GND sky130_fd_pr__nfet_01v8 L=1 W=7.0 nf=1 ad='int((1+1)/2) * 7.0/1 * 0.29' as='int((1+2)/2) * 7.0/1 * 0.29' pd='2*int((1+1)/2) * (7.0/1 + 0.29)' ps='2*int((1+2)/2) * (7.0/1 + 0.29)' nrd='0.29 / 7.0' nrs='0.29 / 7.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN4 Vop Vb3 net6 GND sky130_fd_pr__nfet_01v8 L=1 W=7.0 nf=1 ad='int((1+1)/2) * 7.0/1 * 0.29' as='int((1+2)/2) * 7.0/1 * 0.29' pd='2*int((1+1)/2) * (7.0/1 + 0.29)' ps='2*int((1+2)/2) * (7.0/1 + 0.29)' nrd='0.29 / 7.0' nrs='0.29 / 7.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN9 net5 Vb2 GND GND sky130_fd_pr__nfet_01v8 L=1 W=3.0 nf=1 ad='int((1+1)/2) * 3.0/1 * 0.29' as='int((1+2)/2) * 3.0/1 * 0.29' pd='2*int((1+1)/2) * (3.0/1 + 0.29)' ps='2*int((1+2)/2) * (3.0/1 + 0.29)' nrd='0.29 / 3.0' nrs='0.29 / 3.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+XMN10 net6 Vb2 GND GND sky130_fd_pr__nfet_01v8 L=1 W=3.0 nf=1 ad='int((1+1)/2) * 3.0/1 * 0.29' as='int((1+2)/2) * 3.0/1 * 0.29' pd='2*int((1+1)/2) * (3.0/1 + 0.29)' ps='2*int((1+2)/2) * (3.0/1 + 0.29)' nrd='0.29 / 3.0' nrs='0.29 / 3.0' sa=0 sb=0 sd=0
++ mult=1 m=1
+
+.ends
