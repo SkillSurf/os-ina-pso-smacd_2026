@@ -1,0 +1,4 @@
+
+Checking parameters for BSIM 4.5 model xx1.xm8:sky130_fd_pr__nfet_01v8__model.22
+Fatal: Dsub = -0.0488181 is negative.
+Warning: Pdibl2 = -0.00130078 is negative.

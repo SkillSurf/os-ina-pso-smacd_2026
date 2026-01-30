@@ -63,13 +63,13 @@ XMP11 net1 Vb1 VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_6']} {g_6} sa=0 sb=0
 + mult=1 m=1
 XMP12 net2 Vb1 VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_6']} {g_6} sa=0 sb=0 sd=0
 + mult=1 m=1
-XMN3 Von Vb3 net5 GND sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
+XMN3 Von Vb3 net5 0 sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
 + mult=1 m=1
-XMN4 Vop Vb3 net6 GND sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
+XMN4 Vop Vb3 net6 0 sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
 + mult=1 m=1
-XMN9 net5 Vb2 GND GND sky130_fd_pr__nfet_01v8 L={params['L_5']} {g_5} sa=0 sb=0 sd=0
+XMN9 net5 Vb2 0 0 sky130_fd_pr__nfet_01v8 L={params['L_5']} {g_5} sa=0 sb=0 sd=0
 + mult=1 m=1
-XMN10 net6 Vb2 GND GND sky130_fd_pr__nfet_01v8 L={params['L_5']} {g_5} sa=0 sb=0 sd=0
+XMN10 net6 Vb2 0 0 sky130_fd_pr__nfet_01v8 L={params['L_5']} {g_5} sa=0 sb=0 sd=0
 + mult=1 m=1
 
 .ends
@@ -104,23 +104,26 @@ set no_note
     circuit.X('X1', 'FDDA', 'VDD', 'Vpp', 'Vpn', 'Vnp', 'Vnn', 'Vcmfb', 'Vb1', 'Vb2', 'Vb3', 'Vb4', 'Von', 'Vop')
     
     circuit.V('vdd', 'VDD', circuit.gnd, 1.8@u_V)
-    circuit.V('vb1', 'Vb1', circuit.gnd, 0.9@u_V)
-    circuit.V('vb2', 'Vb2', circuit.gnd, 0.9@u_V)
-    circuit.V('vb3', 'Vb3', circuit.gnd, 0.9@u_V)
-    circuit.V('vb4', 'Vb4', circuit.gnd, 0.9@u_V)
-    circuit.V('vb5', 'Vcmfb', circuit.gnd, 0.9@u_V)
-    # circuit.V('gnd', 'GND', circuit.gnd, 0.01@u_V)
+    circuit.V('vb1', 'Vb1', circuit.gnd, 0.776@u_V)
+    circuit.V('vb2', 'Vb2', circuit.gnd, 0.665@u_V)
+    circuit.V('vb3', 'Vb3', circuit.gnd, 0.898@u_V)
+    circuit.V('vb4', 'Vb4', circuit.gnd, 0.579@u_V)
+    # circuit.V('vb5', 'Vcmfb', circuit.gnd, 0.762@u_V)
+    circuit.R('rcm1', 'Vop', 'Vcm_sense', 1@u_MOhm)
+    circuit.R('rcm2', 'Von', 'Vcm_sense', 1@u_MOhm)
+    circuit.V('vcm', 'Vcmfb', 'Vcm_sense', 0@u_V)
     
     circuit.C('load_p', 'Vop', circuit.gnd, 1@u_pF)
     circuit.C('load_n', 'Von', circuit.gnd, 1@u_pF)
-    # circuit.R('dc_fix', 'Vout', 'VSS', 10@u_MOhm) # High-Z load for OP stability
+    
+
 
 
     if mode == 'AC':        # Define AC Input (Differential)
-        circuit.V('vpp', 'Vpp', circuit.gnd, 'dc 0.9 ac 1')
-        circuit.V('vpn', 'Vpn', circuit.gnd, 'dc 0.9 ac -1')
-        circuit.V('vnp', 'Vnp', circuit.gnd, 'dc 0.9 ac 1')
-        circuit.V('vnn', 'Vnn', circuit.gnd, 'dc 0.9 ac -1')
+        circuit.V('vpp', 'Vpp', circuit.gnd, 'dc 0.9 ac 0.5')
+        circuit.V('vpn', 'Vpn', circuit.gnd, 'dc 0.9 ac -0.5')
+        circuit.V('vnp', 'Vnp', circuit.gnd, 'dc 0.9 ac -0.5')
+        circuit.V('vnn', 'Vnn', circuit.gnd, 'dc 0.9 ac 0.5')
 
         simulator = circuit.simulator(simulator='ngspice-subprocess', temperature=25)
 
@@ -141,10 +144,16 @@ set no_note
         print(f"DC Von: {float(op_analysis.nodes['Von'][0]):.3f} V")
 
         freq = np.array(analysis.frequency)
-        v_diff = analysis.nodes['Vop'] - analysis.nodes['Von']
-        gain_db = 20 * np.log10(np.absolute(v_diff))
-        phase_deg = np.angle(v_diff, deg=True)        # Use deg=True here because built-in bode_diagram expects degrees
-        mag_db = 20 * np.log10(np.absolute(v_diff))
+        vout = analysis.nodes['Vop'] - analysis.nodes['Von']
+        vin  = (analysis.nodes['Vpp'] - analysis.nodes['Vpn'])
+
+        gain = vout / vin
+        gain_db = 20 * np.log10(np.abs(gain))
+        phase_deg = np.angle(gain, deg=True)
+
+        # gain_db = 20 * np.log10(np.absolute(v_diff))
+        # phase_deg = np.angle(v_diff, deg=True)        # Use deg=True here because built-in bode_diagram expects degrees
+        mag_db = 20 * np.log10(np.absolute(gain))
         dc_gain = mag_db[0]
         gbw = np.interp(0, mag_db[::-1], freq[::-1])
         phase_at_gbw = np.interp(gbw, freq, phase_deg)
@@ -163,6 +172,26 @@ set no_note
 
         print(f"\n--- Results for L={params['L_1']}, W={params['W_1']} ---")
         all_passed = True
+        
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+        ax1.semilogx(freq, gain_db, color='blue', marker='.', linestyle='-')
+        ax1.set_ylabel('Gain (dB)')
+        ax1.grid(True, which="both", ls="-")
+        ax1.set_title("Bode Diagram of Biomedical INA")
+
+        ax2.semilogx(freq, phase_deg, color='blue', marker='.', linestyle='-')
+        ax2.set_ylabel('Phase (Degrees)')
+        ax2.set_xlabel('Frequency (Hz)')
+        ax2.grid(True, which="both", ls="-")
+
+        ax1.axhline(y=0, color='red', linestyle='--') 
+        ax2.axhline(y=-180, color='red', linestyle='--') 
+
+        plt.savefig('Gain_and_GBW_plot.png')
+        plt.tight_layout()
+        plt.show()
+
         for key, s in specs.items():
             passed = (s['val'] >= s['target']) if s['op'] == ">=" else (s['val'] <= s['target'])
             if s['op'] == ">": passed = s['val'] > s['target']
@@ -170,25 +199,6 @@ set no_note
             status = "PASS" if passed else "FAIL"
             if not passed: all_passed = False
             print(f"{key}: {s['val']:.2f}{s['unit']} (Target: {s['op']}{s['target']}) -> {status}")
-
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-
-            ax1.semilogx(freq, gain_db, color='blue', marker='.', linestyle='-')
-            ax1.set_ylabel('Gain (dB)')
-            ax1.grid(True, which="both", ls="-")
-            ax1.set_title("Bode Diagram of Biomedical INA")
-
-            ax2.semilogx(freq, phase_deg, color='blue', marker='.', linestyle='-')
-            ax2.set_ylabel('Phase (Degrees)')
-            ax2.set_xlabel('Frequency (Hz)')
-            ax2.grid(True, which="both", ls="-")
-
-            ax1.axhline(y=0, color='red', linestyle='--') 
-            ax2.axhline(y=-180, color='red', linestyle='--') 
-
-            plt.savefig('Gain_and_GBW_plot.png')
-            plt.tight_layout()
-            plt.show()
 
         return all_passed
     
@@ -218,8 +228,10 @@ set no_note
         print(f"I-Quiescent : {abs(iq)*1e6:.2f} uA")
 
     elif mode == 'TRANS':
-        circuit.V('in_p', 'Vpp', circuit.gnd, 'SIN(0.9V 1mV 100Hz)') 
-        circuit.V('in_n', 'Vnn', circuit.gnd, 'SIN(0.9V -1mV 100Hz)')
+        circuit.V('vpp', 'Vpp', circuit.gnd, 'SIN(0.9V 1mV 100Hz)') 
+        circuit.V('vpn', 'Vpn', circuit.gnd, 'SIN(0.9V -1mV 100Hz)')
+        circuit.V('vnn', 'Vnn', circuit.gnd, 'dc 0.9')
+        circuit.V('vnp', 'Vnp', circuit.gnd, 'dc 0.9')
         # circuit.V('cm', 'cm_node', circuit.gnd, 0.9@u_V)
 
         simulator = circuit.simulator()
@@ -264,12 +276,12 @@ set no_note
         plt.show()
 
 params = {
-    'W_1': 4, 'L_1': 0.4, 'nf_1': 1, 'm_1': 1,
-    'W_2': 4, 'L_2': 0.4, 'nf_2': 1, 'm_2': 1,
-    'W_3': 4, 'L_3': 0.4, 'nf_3': 1, 'm_3': 1,
-    'W_4': 7, 'L_4': 1, 'nf_4': 1, 'm_4': 1,
-    'W_5': 3, 'L_5': 1, 'nf_5': 1, 'm_5': 1,
-    'W_6': 4, 'L_6': 0.4, 'nf_6': 1, 'm_6': 1,
+    'W_1': 1, 'L_1': 1, 'nf_1': 1, 'm_1': 88,
+    'W_2': 1, 'L_2': 1, 'nf_2': 1, 'm_2': 88,
+    'W_3': 1, 'L_3': 1, 'nf_3': 1, 'm_3': 88,
+    'W_4': 1, 'L_4': 1, 'nf_4': 1, 'm_4': 14,
+    'W_5': 1, 'L_5': 1, 'nf_5': 1, 'm_5': 28,
+    'W_6': 1, 'L_6': 1, 'nf_6': 1, 'm_6': 176,
 }
 
 generate_spice_file(params)
