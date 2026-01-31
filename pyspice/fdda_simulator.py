@@ -77,6 +77,45 @@ XMN10 net6 Vb2 0 0 sky130_fd_pr__nfet_01v8 L={params['L_5']} {g_5} sa=0 sb=0 sd=
     with open('fdda.spice', 'w') as f:
         f.write(content)
 
+def generate_cmfb(params):
+    def get_geom_string(w, nf):
+
+        w_val = float(w)
+        nf_val = int(nf)
+        
+        return (
+            f"W={w_val} nf={nf_val} "
+            f"ad='int(({nf_val}+1)/2) * {w_val}/{nf_val} * 0.29' "
+            f"as='int(({nf_val}+2)/2) * {w_val}/{nf_val} * 0.29' "
+            f"pd='2*int(({nf_val}+1)/2) * ({w_val}/{nf_val} + 0.29)' "
+            f"ps='2*int(({nf_val}+2)/2) * ({w_val}/{nf_val} + 0.29)' "
+            f"nrd='0.29 / {w_val}' nrs='0.29 / {w_val}'"
+        )
+
+    # Individual geometry strings for every group
+    g_1  = get_geom_string(params['W_1'], params['nf_1'])
+    g_4  = get_geom_string(params['W_4'], params['nf_4'])
+    g_5  = get_geom_string(params['W_5'], params['nf_5'])
+    g_6  = get_geom_string(params['W_6'], params['nf_6'])
+
+    content=f"""*CMFB auto generated
+.subckt CMFB VDD Vop Von Vcm Vb2 Vcmfb
+
+XMP9 n1 n1 VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_1']} {g_1} sa=0 sb=0 sd=0
+XMP10 n2 n2 VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_1']} {g_1} sa=0 sb=0 sd=0
+XMP13 Vcmfb Vcmfb VDD VDD sky130_fd_pr__pfet_01v8 L={params['L_6']} {g_6} sa=0 sb=0 sd=0
+XMN1 n1 Vop  nt1 0 sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
+XMN2 Vcmfb Vcm  nt1 0 sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
+XMN5 Vcmfb Vcm  nt2 0 sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
+XMN6 n2 Von  nt2 0 sky130_fd_pr__nfet_01v8 L={params['L_4']} {g_4} sa=0 sb=0 sd=0
+XMN7 nt1 Vb2 0 0 sky130_fd_pr__nfet_01v8 L={params['L_5']} {g_5} sa=0 sb=0 sd=0
+XMN8 nt2 Vb2 0 0 sky130_fd_pr__nfet_01v8 L={params['L_5']} {g_5} sa=0 sb=0 sd=0
+
+.ends CMFB
+
+"""
+    with open('cmfb.spice', 'w') as f:
+        f.write(content)
 
 
 def run_simulation(mode):
@@ -96,25 +135,28 @@ set no_note
 .param mc_pr_switch=0
 .lib /foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice tt
 .include /foss/designs/os-ina-pso-mixdes_2026/pyspice/fdda.spice
+.include /foss/designs/os-ina-pso-mixdes_2026/pyspice/cmfb.spice
 """
     # pdk_path = '/foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice'
     # circuit.lib('/foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice', 'tt')
     # circuit.include('Opamp.spice')
 
     circuit.X('X1', 'FDDA', 'VDD', 'Vpp', 'Vpn', 'Vnp', 'Vnn', 'Vcmfb', 'Vb1', 'Vb2', 'Vb3', 'Vb4', 'Von', 'Vop')
+    circuit.X('X2', 'CMFB', 'VDD', 'Vop', 'Von', 'Vcm', 'Vb2', 'Vcmfb')
     
     circuit.V('vdd', 'VDD', circuit.gnd, 1.8@u_V)
     circuit.V('vb1', 'Vb1', circuit.gnd, 0.776@u_V)
     circuit.V('vb2', 'Vb2', circuit.gnd, 0.665@u_V)
     circuit.V('vb3', 'Vb3', circuit.gnd, 0.898@u_V)
     circuit.V('vb4', 'Vb4', circuit.gnd, 0.579@u_V)
-    # circuit.V('vb5', 'Vcmfb', circuit.gnd, 0.762@u_V)
-    circuit.R('rcm1', 'Vop', 'Vcm_sense', 1@u_MOhm)
-    circuit.R('rcm2', 'Von', 'Vcm_sense', 1@u_MOhm)
-    circuit.V('vcm', 'Vcmfb', 'Vcm_sense', 0@u_V)
+    circuit.V('vcm', 'Vcm', circuit.gnd, 0.9@u_V)
+    # circuit.V('vcmfb', 'Vcmfb', circuit.gnd, 0.76@u_V)
+    # circuit.R('rcm1', 'Vop', 'Vcm_sense', 1@u_MOhm)
+    # circuit.R('rcm2', 'Von', 'Vcm_sense', 1@u_MOhm)
+    # circuit.V('vcm', 'Vcmfb', 'Vcm_sense', 0@u_V)
     
-    circuit.C('load_p', 'Vop', circuit.gnd, 1@u_pF)
-    circuit.C('load_n', 'Von', circuit.gnd, 1@u_pF)
+    circuit.C('load_p', 'Vop', circuit.gnd, 2@u_pF)
+    circuit.C('load_n', 'Von', circuit.gnd, 2@u_pF)
     
 
 
@@ -142,6 +184,7 @@ set no_note
         # Check DC levels before looking at AC results
         print(f"DC Vop: {float(op_analysis.nodes['Vop'][0]):.3f} V")
         print(f"DC Von: {float(op_analysis.nodes['Von'][0]):.3f} V")
+        print(f"DC Vcmfb: {float(op_analysis.nodes['Vcmfb'][0]):.3f} V")
 
         freq = np.array(analysis.frequency)
         vout = analysis.nodes['Vop'] - analysis.nodes['Von']
@@ -228,29 +271,40 @@ set no_note
         print(f"I-Quiescent : {abs(iq)*1e6:.2f} uA")
 
     elif mode == 'TRANS':
-        circuit.V('vpp', 'Vpp', circuit.gnd, 'SIN(0.9V 1mV 100Hz)') 
-        circuit.V('vpn', 'Vpn', circuit.gnd, 'SIN(0.9V -1mV 100Hz)')
-        circuit.V('vnn', 'Vnn', circuit.gnd, 'dc 0.9')
-        circuit.V('vnp', 'Vnp', circuit.gnd, 'dc 0.9')
-        # circuit.V('cm', 'cm_node', circuit.gnd, 0.9@u_V)
+        # 1. Define Differential Inputs (Pair 1 active, Pair 2 grounded at DC)
+        # Using 10mV amplitude to see a clear output without railing 1.8V
+        circuit.V('vpp', 'Vpp', circuit.gnd, 'SIN(0.9V 10mV 100Hz)') 
+        circuit.V('vpn', 'Vpn', circuit.gnd, 'SIN(0.9V -10mV 100Hz)')
+        
+        # Pair 2 stays at Common Mode
+        circuit.V('vnp', 'Vnp', circuit.gnd, '0.9V')
+        circuit.V('vnn', 'Vnn', circuit.gnd, '0.9V')
 
-        simulator = circuit.simulator()
-        analysis = simulator.transient(step_time=10@u_us, end_time=50@u_ms)
+        simulator = circuit.simulator(simulator='ngspice-subprocess')
+        # Simulate for 3 full cycles of 100Hz (30ms)
+        analysis = simulator.transient(step_time=50@u_us, end_time=30@u_ms)
 
+        # 2. Extract results using lowercase node names
         time = np.array(analysis.time)
-        vout = np.array(analysis.out)
-        vin_p = np.array(analysis.in_p)
-        vin_n = np.array(analysis.in_n)
+        vop = np.array(analysis.nodes['Vop'])
+        von = np.array(analysis.nodes['Von'])
+        vpp = np.array(analysis.nodes['Vpp'])
+        vpn = np.array(analysis.nodes['Vpn'])
+        
+        v_out_diff = vop - von
+        v_in_diff = vpp - vpn
 
         print(f"\n--- TRANSIENT ANALYSIS ---")
         plt.figure(figsize=(10, 6))
-        plt.plot(time * 1e3, vout, label='Output (Vout)') # Changed to ms for 50Hz
-        plt.plot(time * 1e3, vin_p - vin_n, label='Input (Vin_diff)', linestyle='--')
+        
+        # Plot Differential Output and Input
+        plt.plot(time * 1e3, v_out_diff, label='Differential Output (Vop-Von)', color='blue')
+        plt.plot(time * 1e3, v_in_diff, label='Differential Input (Vpp-Vpn)', color='red', linestyle='--')
         
         plt.xlabel("Time (ms)")
         plt.ylabel("Voltage (V)")
         plt.legend()
-        plt.title("Transient Analysis: 100Hz Differential Response")
+        plt.title("FDDA Transient Response: 100Hz Differential Sine Wave")
         plt.grid(True)
         plt.savefig('Transient_analysis.png')
         plt.show()
@@ -258,7 +312,7 @@ set no_note
     elif mode == 'SLEW':
         circuit.V('input_p', 'Vpp', circuit.gnd, 'PULSE(0.9V 1.1V 150n 1n 1n 2500n 5000n)')
         circuit.V('input_n', 'Vnn', circuit.gnd, 'PULSE(0.9V 0.7V 150n 1n 1n 2500n 5000n)')
-        simulator = circuit.simulator()
+        simulator = circuit.simulator(simulator='ngspice-subprocess')
         analysis = simulator.transient(step_time=10@u_ns, end_time=50@u_us)
         
         time = np.array(analysis.time)
@@ -285,10 +339,11 @@ params = {
 }
 
 generate_spice_file(params)
+generate_cmfb(params)
 
 run_simulation('AC')
 # run_simulation('OP')
-# run_simulation('TRANS')
+run_simulation('TRANS')
 # run_simulation('SLEW')
 
 
