@@ -1,0 +1,38 @@
+DESIGN SPECIFICATIONS:
+  VDD = 1.8 V
+  CL = 2.00 pF
+  Slew Rate ≥ 1.00 V/μs
+  GBW ≥ 1.00 MHz
+  Gain ≥ 38.00 dB
+  Phase Margin ≥ 65.00°
+  Power ≤ 10.00 μW
+
+VARIABLE TYPES:
+  Continuous: gm1, gm2, ID
+  Discrete: L_1, L_2 ∈ {0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00, 2.00, 3.00} μm
+
+OPTIMAL DESIGN PARAMETERS:
+  gm1     = 22.711380 μS
+  gm2     = 14.155414 μS
+  L_1     = 0.60 μm
+  L_2     = 0.50 μm
+  ID      = 1.816604 μA
+  gm/ID_1 = 12.502110 S/A
+  gm/ID_2 = 7.792241 S/A
+
+OPTIMAL TRANSISTOR SIZING:
+  W_1 = 0.420192 μm
+  W_2 = 0.442510 μm
+  L_1 = 0.60 μm
+  L_2 = 0.50 μm
+
+OPTIMAL AREA: 0.946740 μm²
+
+ACHIEVED SPECIFICATIONS:
+  Slew Rate    = 1.816159 V/μs
+  GBW          = 1.806872 MHz
+  Gain         = 38.599072 dB
+  Phase Margin = 89.987100°
+  Power        = 6.539774 μW
+
+OPTIMIZATION TIME: 2362.04 seconds

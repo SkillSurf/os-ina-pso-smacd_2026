@@ -8,8 +8,8 @@ from pygmid import Lookup as lk
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
-NCH = lk('../../sky130_lookup/simulation/nfet_01v8.mat')
-PCH = lk('../../sky130_lookup/simulation/pfet_01v8.mat')
+NCH = lk('../../../sky130_lookup/simulation/nfet_01v8.mat')
+PCH = lk('../../../sky130_lookup/simulation/pfet_01v8.mat')
 
 # ===================
 # 5T-OTA DESIGN SPECS
@@ -519,8 +519,8 @@ def main():
     
     pso = HybridPSO(
         bounds=bounds,
-        n_particles=50,
-        max_iterations=10,
+        n_particles=20,
+        max_iterations=20,
         w_max=0.8,
         w_min=0.5,
         c1=1.7,
