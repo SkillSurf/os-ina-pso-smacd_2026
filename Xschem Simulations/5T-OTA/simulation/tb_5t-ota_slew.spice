@@ -1,0 +1,65 @@
+** sch_path: /foss/designs/PROJECTS/os-ina-pso-mixdes_2026/Xschem Simulations/5T-OTA/tb_5t-ota_slew.sch
+**.subckt tb_5t-ota_slew
+XM1 Vx Vip Vc Vc sky130_fd_pr__nfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XM2 Vout Vout Vc Vc sky130_fd_pr__nfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+I0 Vc GND ID
+Vvip Vip GND pulse(1.8 0 0 10p 10p 20u 40u 1)
+C1 GND Vout 2p m=1
+XM3 Vx Vx VDD VDD sky130_fd_pr__pfet_01v8 L=L_2 W=W_2 nf=1 ad='int((1 + 1)/2) * W_2 / 1 * 0.29' as='int((1 + 2)/2) * W_2 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_2 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_2 / 1 + 0.29)' nrd='0.29 / W_2 ' nrs='0.29 / W_2 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XM4 Vout Vx VDD VDD sky130_fd_pr__pfet_01v8 L=L_2 W=W_2 nf=1 ad='int((1 + 1)/2) * W_2 / 1 * 0.29' as='int((1 + 2)/2) * W_2 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_2 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_2 / 1 + 0.29)' nrd='0.29 / W_2 ' nrs='0.29 / W_2 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+**** begin user architecture code
+
+** opencircuitdesign pdks install
+.lib /foss/pdks/sky130A/libs.tech/combined/sky130.lib.spice tt
+
+
+
+.param temp=25
+.option savecurrents
+Vvdd VDD 0 1.8
+.param W_1=0.42
+.param W_2=0.42
+.param L_1=0.5
+.param L_2=0.6
+.param ID=2.3916u
+.control
+  save all
+  op
+  write tb_5t-ota_slew.raw
+.endc
+
+
+
+
+.control
+  tran 10n 30u 10u
+  save all
+
+  plot v(vip) v(vout)
+
+  meas tran v_max FIND v(vout) AT=29u
+  meas tran v_min FIND v(vout) AT=11u
+
+  let v10 = v_min + (0.1*(v_max-v_min))
+  let v90 = v_max - (0.1*(v_max-v_min))
+  meas tran t10 WHEN v(vout)=v10 RISE=1
+  meas tran t90 WHEN v(vout)=v90 RISE=1
+
+  let slew_rate = ((v90 - v10) / (t90 - t10)) * 1e-6
+  print slew_rate
+.endc
+
+
+**** end user architecture code
+**.ends
+.GLOBAL GND
+.GLOBAL VDD
+.end

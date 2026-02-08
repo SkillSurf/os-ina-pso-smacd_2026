@@ -1,0 +1,70 @@
+** sch_path: /foss/designs/PROJECTS/os-ina-pso-mixdes_2026/Xschem Simulations/5T-OTA/tb_5t-ota_ac.sch
+**.subckt tb_5t-ota_ac
+XM1 Vx Vip Vc Vc sky130_fd_pr__nfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XM2 Vout Vin Vc Vc sky130_fd_pr__nfet_01v8 L=L_1 W=W_1 nf=1 ad='int((1 + 1)/2) * W_1 / 1 * 0.29' as='int((1 + 2)/2) * W_1 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_1 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_1 / 1 + 0.29)' nrd='0.29 / W_1 ' nrs='0.29 / W_1 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+I0 Vc GND ID
+Vvip Vip GND dc 0.9 ac 0.5
+Vvin Vin GND dc 0.9 ac -0.5
+C1 GND Vout 2p m=1
+XM3 Vx Vx VDD VDD sky130_fd_pr__pfet_01v8 L=L_2 W=W_2 nf=1 ad='int((1 + 1)/2) * W_2 / 1 * 0.29' as='int((1 + 2)/2) * W_2 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_2 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_2 / 1 + 0.29)' nrd='0.29 / W_2 ' nrs='0.29 / W_2 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+XM4 Vout Vx VDD VDD sky130_fd_pr__pfet_01v8 L=L_2 W=W_2 nf=1 ad='int((1 + 1)/2) * W_2 / 1 * 0.29' as='int((1 + 2)/2) * W_2 / 1 * 0.29'
++ pd='2*int((1 + 1)/2) * (W_2 / 1 + 0.29)' ps='2*int((1 + 2)/2) * (W_2 / 1 + 0.29)' nrd='0.29 / W_2 ' nrs='0.29 / W_2 ' sa=0 sb=0 sd=0
++ mult=1 m=1
+**** begin user architecture code
+
+** opencircuitdesign pdks install
+.lib /foss/pdks/sky130A/libs.tech/combined/sky130.lib.spice tt
+
+
+
+.param temp=25
+.option savecurrents
+Vvdd VDD 0 1.8
+.param W_1=0.42
+.param W_2=0.42
+.param L_1=0.5
+.param L_2=0.6
+.param ID=2.3916u
+.control
+  save all
+  op
+  write tb_5t-ota_ac.raw
+.endc
+
+
+
+
+.control
+  ac dec 20 0.1 1G
+  save all
+
+  let gain = v(vout) / (v(vip) - v(vin))
+  let db_gain = db(gain)
+  let deg_phase = 180*cph(v(vout))/pi
+
+  meas ac gain_DC FIND db_gain AT=1
+
+  meas ac gbw_freq WHEN db_gain=0 FALL=1
+  let gbw_Mfreq = gbw_freq * 1e-6
+
+  meas ac pm_deg FIND deg_phase AT=gbw_freq
+  let pm = 180 + pm_deg
+
+  plot db_gain deg_phase
+  print gain_DC
+  print gbw_Mfreq
+  print pm
+.endc
+
+
+**** end user architecture code
+**.ends
+.GLOBAL GND
+.GLOBAL VDD
+.end
