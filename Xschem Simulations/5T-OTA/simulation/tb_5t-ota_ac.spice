@@ -30,7 +30,7 @@ Vvdd VDD 0 1.8
 .param W_2=0.42
 .param L_1=0.5
 .param L_2=0.6
-.param ID=2.3916u
+.param ID=4.7832u
 .control
   save all
   op

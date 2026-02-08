@@ -102,7 +102,7 @@ Vvdd VDD 0 1.8
 .param W_2=0.42
 .param L_1=0.5
 .param L_2=0.6
-.param ID=2.3916u
+.param ID=4.7832u
 .control
   save all
   op
@@ -138,7 +138,7 @@ value="
   print pm
 .endc
 "}
-C {devices/launcher.sym} -540 -150 0 0 {name=h15
+C {devices/launcher.sym} -550 -160 0 0 {name=h15
 descr="Annotate OP" 
 tclcommand="set show_hidden_texts 1; xschem annotate_op"
 }
