@@ -1,132 +1,13 @@
 import time
-import os
-import sys
-from contextlib import contextmanager
 import numpy as np
 import matplotlib.pyplot as plt
-from pygmid import Lookup as lk
-from scipy.interpolate import interp1d
-from scipy.optimize import brentq
 
 from specs import *
-
-NCH = lk('../../sky130_lookup/simulation/nfet_01v8.mat')
-PCH = lk('../../sky130_lookup/simulation/pfet_01v8.mat')
+from gmID_sizing import *
 
 L_DISCRETE_VALUES = np.array([0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 
                                0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 
                                0.90, 1.00, 2.00, 3.00])
-
-# ===============================
-# LUT FOR DIODE CONNECTED DEVICES
-# ===============================
-vgs_sweep = np.arange(0.05, VDD+0.1, 0.01)
-
-# Function to create diode-connected LUT
-def diode_connected_lut(device_data, vgs_sweep):
-    L_values = np.unique(device_data['L'])
-    diode_lut = {}
-
-    for l_val in L_values:
-        gm_id = device_data.lookup('GM_ID', L=l_val, VGS=vgs_sweep, VDS=vgs_sweep, VSB=0)
-        diode_lut[l_val] = np.diag(gm_id)
-
-    return diode_lut
-
-# Create LUTs for diode-connected NMOS and PMOS
-nch_results = diode_connected_lut(NCH, vgs_sweep)
-pch_results = diode_connected_lut(PCH, vgs_sweep)
-
-# Function to get VGS for a target gm/ID
-def getVGS_diode(device_type, target_gm_id, length):
-    if device_type.lower() == 'nmos':
-        gm_id_vec = nch_results[length]
-    elif device_type.lower() == 'pmos':
-        gm_id_vec = pch_results[length]
-    else:
-        raise ValueError("Device type must be 'nmos' or 'pmos'.")
-
-    get_vgs = interp1d(gm_id_vec, vgs_sweep, kind='linear', bounds_error=False)
-    vgs_required = get_vgs(target_gm_id)
-    return vgs_required
-# ===============================
-
-@contextmanager
-def silence_stdout():
-    new_target = open(os.devnull, "w")
-    old_target = sys.stdout
-    sys.stdout = new_target
-    try:
-        yield
-    finally:
-        sys.stdout = old_target
-        new_target.close()
-
-def get_W(gm1, gm2, L_1, L_2, ID):
-    gm_ID_1 = gm1 / ID
-    gm_ID_2 = gm2 / ID
-
-    with silence_stdout():
-        try:
-            Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
-        
-            JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-            JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-
-            W_1 = ID / JD_1
-            W_2 = ID / JD_2
-        except:
-            return None, None
-
-    return W_1, W_2
-
-def get_specVars(gm1, gm2, L_1, L_2, ID):
-    gm_ID_1 = gm1 / ID
-    gm_ID_2 = gm2 / ID
-
-    with silence_stdout():
-        try:
-            Vgs_2 = getVGS_diode('PMOS', gm_ID_2, L_2)
-
-            Cdd_1 = gm1 / NCH.lookup('GM_CDD', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-            Cdd_2 = gm2 / PCH.lookup('GM_CDD', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-            Cpar = Cdd_1 + Cdd_2
-
-            Cgg_2 = gm2 / PCH.lookup('GM_CGG', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-            Cx = Cpar + Cgg_2
-
-            JD_1 = NCH.lookup('ID_W', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-            JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-
-            W_1 = ID / JD_1
-            W_2 = ID / JD_2
-
-            gds_1 = gm1 / NCH.lookup('GM_GDS', GM_ID=gm_ID_1, VDS=VDD/2, VSB=0, L=L_1)
-            gds_2 = gm2 / PCH.lookup('GM_GDS', GM_ID=gm_ID_2, VDS=Vgs_2, VSB=0, L=L_2)
-        except:
-            return None, None, None, None, None, None
-
-    return Cx, Cpar, W_1, W_2, gds_1, gds_2
-
-def get_feasRegion(gm_ID, L_discrete_values, SR_spec, CL, Power_spec, GBW_spec):
-    gm_ID_min = gm_ID[0]
-    gm_ID_max = gm_ID[1]
-
-    ID_min = SR_spec * CL / 2
-    ID_max = Power_spec / VDD / 2
-
-    gm1_min_GBW = 2 * np.pi * GBW_spec * CL
-    gm1_min_gmID = gm_ID_min * ID_min
-    gm1_min = max(gm1_min_GBW, gm1_min_gmID)
-    gm1_max = gm_ID_max * ID_max
-
-    gm2_min = gm_ID_min * ID_min
-    gm2_max = gm_ID_max * ID_max
-
-    L_available = L_discrete_values
-    n_L_values = len(L_available)
-
-    return gm1_min, gm1_max, gm2_min, gm2_max, L_available, n_L_values, ID_min, ID_max
 
 def survivability_test(particle, verbose=False):
     """
@@ -458,7 +339,7 @@ class HybridMixedPSO:
         L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
         L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
         
-        W_1, W_2 = get_W(gm1, gm2, L_1, L_2, ID)
+        W_1, W_2, _, _, _ = get_W(gm1, gm2, L_1, L_2, ID)
         
         results = {
             'optimal_particle': {
@@ -544,8 +425,6 @@ class HybridMixedPSO:
         print(f"\nConvergence plot saved to {save_path}")
 
 def main():
-    
-    gm_ID_range = (3, 20)
     
     gm1_min, gm1_max, gm2_min, gm2_max, L_available, n_L_values, ID_min, ID_max = \
         get_feasRegion(gm_ID_range, L_DISCRETE_VALUES, SR_spec, CL, Power_spec, GBW_spec)
