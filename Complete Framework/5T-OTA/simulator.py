@@ -13,33 +13,24 @@ logger = Logging.setup_logging()
 ##############################################################
 def generate_spice(params):
 
+    # Read the SPICE template file
+    with open('ref.spice', 'r') as f:
+        template = f.read()
+
+    # Inject the parameters into the placeholders in the SPICE template
+    spice = template.format(
     # Extract parameters
-    W_1 = params['W_1']
-    L_1 = params['L_1']
-    W_2 = params['W_2']
-    L_2 = params['L_2']
-    IDD = 2 * params['ID']
+    W_1 = params['W_1'],
+    L_1 = params['L_1'],
+    W_2 = params['W_2'],
+    L_2 = params['L_2'],
+    IDD = 2 * params['ID'],
+    Template = 'Auto-Generated'
+    )
 
     # Generate the SPICE content with the extracted parameters
-    content = f"""* 5T_OTA (Auto-generated)
-.subckt 5T_OTA VDD Vout Vin Vip VSS
-XM1 Vx Vip Vc Vc sky130_fd_pr__nfet_01v8 L={L_1} W={W_1} nf=1 ad='int((1 + 1)/2) * {W_1} / 1 * 0.29' as='int((1 + 2)/2) * {W_1} / 1 * 0.29'
-+ pd='2*int((1 + 1)/2) * ({W_1} / 1 + 0.29)' ps='2*int((1 + 2)/2) * ({W_1} / 1 + 0.29)' nrd='0.29 / {W_1} ' nrs='0.29 / {W_1} ' sa=0
-+ sb=0 sd=0 mult=1 m=1
-XM2 Vout Vin Vc Vc sky130_fd_pr__nfet_01v8 L={L_1} W={W_1} nf=1 ad='int((1 + 1)/2) * {W_1} / 1 * 0.29' as='int((1 + 2)/2) * {W_1} / 1 * 0.29'
-+ pd='2*int((1 + 1)/2) * ({W_1} / 1 + 0.29)' ps='2*int((1 + 2)/2) * ({W_1} / 1 + 0.29)' nrd='0.29 / {W_1} ' nrs='0.29 / {W_1} ' sa=0
-+ sb=0 sd=0 mult=1 m=1
-I0 Vc VSS {IDD}u
-XM3 Vx Vx VDD VDD sky130_fd_pr__pfet_01v8 L={L_2} W={W_2} nf=1 ad='int((1 + 1)/2) * {W_2} / 1 * 0.29' as='int((1 + 2)/2) * {W_2} / 1 * 0.29'
-+ pd='2*int((1 + 1)/2) * ({W_2} / 1 + 0.29)' ps='2*int((1 + 2)/2) * ({W_2} / 1 + 0.29)' nrd='0.29 / {W_2} ' nrs='0.29 / {W_2} ' sa=0
-+ sb=0 sd=0 mult=1 m=1
-XM4 Vout Vx VDD VDD sky130_fd_pr__pfet_01v8 L={L_2} W={W_2} nf=1 ad='int((1 + 1)/2) * {W_2} / 1 * 0.29' as='int((1 + 2)/2) * {W_2} / 1 * 0.29'
-+ pd='2*int((1 + 1)/2) * ({W_2} / 1 + 0.29)' ps='2*int((1 + 2)/2) * ({W_2} / 1 + 0.29)' nrd='0.29 / {W_2} ' nrs='0.29 / {W_2} ' sa=0
-+ sb=0 sd=0 mult=1 m=1
-.ends
-"""
     with open('5t_ota.spice', 'w') as f:
-        f.write(content)
+        f.write(spice)
 
 ######################################################
 # Runs the specified simulation mode (AC, OP, or SLEW)

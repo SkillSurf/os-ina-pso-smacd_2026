@@ -12,27 +12,27 @@ VARIABLE TYPES:
   Discrete: L_1, L_2 ∈ {0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00, 2.00, 3.00} μm
 
 OPTIMAL DESIGN PARAMETERS:
-  gm1     = 26.947632 μS
-  gm2     = 15.549542 μS
-  L_1     = 0.70 μm
-  L_2     = 0.50 μm
-  ID      = 2.140027 μA
-  gm/ID_1 = 12.592190 S/A
-  gm/ID_2 = 7.266048 S/A
+  gm1     = 17.375215 μS
+  gm2     = 8.800626 μS
+  L_1     = 0.40 μm
+  L_2     = 0.70 μm
+  ID      = 1.019456 μA
+  gm/ID_1 = 17.043618 S/A
+  gm/ID_2 = 8.632671 S/A
 
 OPTIMAL TRANSISTOR SIZING:
-  W_1 = 0.587728 μm
-  W_2 = 0.448379 μm
-  L_1 = 0.70 μm
-  L_2 = 0.50 μm
+  W_1 = 0.439533 μm
+  W_2 = 0.427403 μm
+  L_1 = 0.40 μm
+  L_2 = 0.70 μm
 
-OPTIMAL AREA: 1.271198 μm²
+OPTIMAL AREA: 0.949991 μm²
 
 ACHIEVED SPECIFICATIONS:
-  Slew Rate    = 2.139376 V/μs
-  GBW          = 2.143771 MHz
-  Gain         = 38.911866 dB
-  Phase Margin = 89.984884°
-  Power        = 7.704099 μW
+  Slew Rate    = 1.019203 V/μs
+  GBW          = 1.382332 MHz
+  Gain         = 38.528618 dB
+  Phase Margin = 89.980750°
+  Power        = 3.670041 μW
 
-OPTIMIZATION TIME: 34.34 seconds
+OPTIMIZATION TIME: 146.38 seconds
