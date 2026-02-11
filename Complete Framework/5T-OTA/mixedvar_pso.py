@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 from specs import *
 from gmID_sizing import *
+from simulator import evaluate_design
 
 L_DISCRETE_VALUES = np.array([0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 
                                0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 
@@ -553,16 +554,15 @@ def save_results_to_file(results, opt_time):
     
     print("Results saved to pso_hybrid_mixed_results.txt")
 
-    # Write to params file for easy access (Note that this is only for testng purposes.)
-    with open('params.py', 'w', encoding='utf-8') as f:
-        f.write("# Optimal design parameters from PSO optimization\n")
-        f.write(f"L_1 = {results['optimal_particle']['L_1']}\n")
-        f.write(f"L_2 = {results['optimal_particle']['L_2']}\n")
-        f.write(f"ID = {results['optimal_particle']['ID'] * 1e6}\n")
-        f.write(f"W_1 = {results['optimal_sizing']['W_1']}\n")
-        f.write(f"W_2 = {results['optimal_sizing']['W_2']}")
+    #################################################
+    # Evaluate the optimal design using the simulator
+    #################################################
+    result = evaluate_design(results['optimal_sizing']['W_1'], results['optimal_sizing']['L_1'],
+                             results['optimal_sizing']['W_2'], results['optimal_sizing']['L_2'],
+                             (results['optimal_particle']['ID'] * 1e6))
     
-    print("Parameters saved to params.py")
+    print(f"Design passed? {result}")
+    #################################################
 
 if __name__ == "__main__":
     results = main()

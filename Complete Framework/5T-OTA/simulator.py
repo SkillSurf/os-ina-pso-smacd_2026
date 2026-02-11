@@ -4,13 +4,9 @@ import PySpice.Logging.Logging as Logging
 from PySpice.Spice.Netlist import Circuit
 from PySpice.Unit import *
 
-from params import *
 from specs import *
 
 logger = Logging.setup_logging()
-
-params = {'W_1': W_1, 'L_1': L_1, 'W_2': W_2, 'L_2': L_2, 'ID': ID}
-measurement_results = {}
 
 ##############################################################
 # Generates a hard-coded SPICE file in OPEN-LOOP configuration
@@ -48,7 +44,7 @@ XM4 Vout Vx VDD VDD sky130_fd_pr__pfet_01v8 L={L_2} W={W_2} nf=1 ad='int((1 + 1)
 ######################################################
 # Runs the specified simulation mode (AC, OP, or SLEW)
 ######################################################
-def run_simulation(mode, measurement_results=measurement_results):
+def run_simulation(mode, measurement_results):
 
     circuit = Circuit('5T_OTA Simulation')
     circuit.raw_spice ="""
@@ -178,10 +174,35 @@ def check_specs(measurement_results):
 
     return specs_met
 
-generate_spice(params)
-run_simulation('AC')
-run_simulation('OP')
-run_simulation('SLEW')
+#############################################################
+# Top-level function to evaluate a design given the variables
+#############################################################
+def evaluate_design(W_1, L_1, W_2, L_2, ID):
+    """
+    Accepts the 5 generated variables, runs the simulation, 
+    and returns the binary result.
+    """
+    
+    # Pack inputs into the dictionary
+    current_params = {'W_1': W_1, 'L_1': L_1, 'W_2': W_2, 'L_2': L_2, 'ID': ID}
+    
+    # Create a new results dictionary for this specific run
+    current_results = {}
 
-specs_met = check_specs(measurement_results)
-print(measurement_results)
+    # Run the sequence
+    try:
+        generate_spice(current_params)
+        
+        # Pass the local 'current_results' dict to your simulation functions
+        run_simulation('AC', measurement_results=current_results)
+        run_simulation('OP', measurement_results=current_results)
+        run_simulation('SLEW', measurement_results=current_results)
+        
+        # Check specs and return result
+        specs_met = check_specs(current_results)
+        print(current_results) # Debug: Print results for this iteration
+        return specs_met
+        
+    except Exception as e:
+        print(f"Simulation failed for params {current_params}: {e}")
+        return False # Return as an infeasible solution
