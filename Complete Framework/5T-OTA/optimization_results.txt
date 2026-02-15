@@ -1,0 +1,39 @@
+======================================================================
+5T OTA OPTIMIZATION RESULTS
+======================================================================
+
+DESIGN SPECIFICATIONS:
+  VDD = 1.8 V
+  CL = 2.00 pF
+  Slew Rate ≥ 1.00 V/μs
+  GBW ≥ 1.00 MHz
+  Gain ≥ 38.00 dB
+  Phase Margin ≥ 65.00°
+  Power ≤ 10.00 μW
+
+OPTIMAL DESIGN PARAMETERS:
+  gm1     = 15.554243 μS
+  gm2     = 11.779523 μS
+  L_1     = 0.90 μm
+  L_2     = 0.60 μm
+  ID      = 1.000000 μA
+  gm/ID_1 = 15.554243 S/A
+  gm/ID_2 = 11.779523 S/A
+
+OPTIMAL TRANSISTOR SIZING:
+  W_1 = 0.669492 μm
+  W_2 = 0.826918 μm
+  L_1 = 0.90 μm
+  L_2 = 0.60 μm
+
+OPTIMAL AREA: 2.197387 μm²
+
+ACHIEVED SPECIFICATIONS:
+  Slew Rate    = 0.999579 V/μs
+  GBW          = 1.237246 MHz
+  Gain         = 40.591446 dB
+  Phase Margin = 89.979355°
+  Power        = 3.600000 μW
+
+OPTIMIZATION TIME: 6368.86 seconds
+FINAL SIMULATOR CHECK: PASSED

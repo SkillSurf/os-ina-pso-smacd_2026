@@ -9,7 +9,7 @@ from PySpice.Unit import *
 
 logger = Logging.setup_logging()
 
-params = {'W_1': 0.42, 'L_1': 0.5, 'W_2': 0.42, 'L_2': 0.6, 'ID': '4.7832u'}
+params = {'W_1': 0.67, 'L_1': 0.9, 'W_2': 0.83, 'L_2': 0.6, 'ID': '2u'}
 
 # Generates a hard-coded SPICE file in OPEN-LOOP configuration
 def generate_spice(params):

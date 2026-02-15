@@ -1,6 +1,3 @@
-import os
-import sys
-from contextlib import contextmanager
 import numpy as np
 from scipy.interpolate import interp1d
 from pygmid import Lookup as lk
@@ -93,8 +90,6 @@ def get_feasRegion(gm_ID, L_discrete_values, SR_spec, CL, Power_spec, GBW_spec):
 
 NCH = lk('../../sky130_lookup/simulation/nfet_01v8.mat')
 PCH = lk('../../sky130_lookup/simulation/pfet_01v8.mat')
-
-gm_ID_range = (3, 20)
 
 vgs_sweep = np.arange(0.05, VDD+0.1, 0.01)
 

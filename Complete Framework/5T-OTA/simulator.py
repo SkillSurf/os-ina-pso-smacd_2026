@@ -6,7 +6,7 @@ from PySpice.Unit import *
 
 from specs import *
 
-logger = Logging.setup_logging()
+logger = Logging.setup_logging(logging_level='CRITICAL')
 
 ##############################################################
 # Generates a hard-coded SPICE file in OPEN-LOOP configuration
@@ -68,12 +68,6 @@ set no_note
         try:
             analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
         except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
             raise e
 
         freq = np.array(analysis.frequency)
@@ -103,12 +97,6 @@ set no_note
         try:
             analysis = simulator.operating_point()
         except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
             raise e
 
         iq = float(analysis.branches['vvdd'][0])
@@ -127,12 +115,6 @@ set no_note
         try:
             analysis = simulator.transient(step_time=10@u_ns, end_time=20@u_us)
         except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
             raise e
 
         time = np.array(analysis.time)
@@ -176,13 +158,15 @@ def evaluate_design(W_1, L_1, W_2, L_2, ID):
     
     # Pack inputs into the dictionary
     current_params = {'W_1': W_1, 'L_1': L_1, 'W_2': W_2, 'L_2': L_2, 'ID': ID}
+    # Round all parameters to 2 decimal places
+    rounded_params = {k: round(v, 2) for k, v in current_params.items()}
     
     # Create a new results dictionary for this specific run
     current_results = {}
 
     # Run the sequence
     try:
-        generate_spice(current_params)
+        generate_spice(rounded_params)
         
         # Pass the local 'current_results' dict to your simulation functions
         run_simulation('AC', measurement_results=current_results)
@@ -191,9 +175,7 @@ def evaluate_design(W_1, L_1, W_2, L_2, ID):
         
         # Check specs and return result
         specs_met = check_specs(current_results)
-        print(current_results) # Debug: Print results for this iteration
-        return specs_met
+        return specs_met, current_results
         
-    except Exception as e:
-        print(f"Simulation failed for params {current_params}: {e}")
-        return False # Return as an infeasible solution
+    except Exception as e:  # Simulation failed for params
+        return False, None # Return as an infeasible solution
