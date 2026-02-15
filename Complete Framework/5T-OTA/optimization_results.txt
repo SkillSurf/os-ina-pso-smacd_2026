@@ -12,28 +12,28 @@ DESIGN SPECIFICATIONS:
   Power ≤ 10.00 μW
 
 OPTIMAL DESIGN PARAMETERS:
-  gm1     = 15.554243 μS
-  gm2     = 11.779523 μS
-  L_1     = 0.90 μm
-  L_2     = 0.60 μm
-  ID      = 1.000000 μA
-  gm/ID_1 = 15.554243 S/A
-  gm/ID_2 = 11.779523 S/A
+  gm1     = 48.31 μS
+  gm2     = 23.27 μS
+  L_1     = 0.70 μm
+  L_2     = 0.90 μm
+  ID      = 2.71 μA
+  gm/ID_1 = 17.82 S/A
+  gm/ID_2 = 8.58 S/A
 
 OPTIMAL TRANSISTOR SIZING:
-  W_1 = 0.669492 μm
-  W_2 = 0.826918 μm
-  L_1 = 0.90 μm
-  L_2 = 0.60 μm
+  W_1 = 2.53 μm
+  W_2 = 1.43 μm
+  L_1 = 0.70 μm
+  L_2 = 0.90 μm
 
-OPTIMAL AREA: 2.197387 μm²
+OPTIMAL AREA: 6.11 μm²
 
 ACHIEVED SPECIFICATIONS:
-  Slew Rate    = 0.999579 V/μs
-  GBW          = 1.237246 MHz
-  Gain         = 40.591446 dB
-  Phase Margin = 89.979355°
-  Power        = 3.600000 μW
+  Slew Rate    = 2.62 V/μs
+  GBW          = 3.75 MHz
+  Gain         = 38.91 dB
+  Phase Margin = 90.08°
+  Power        = 9.76 μW
 
-OPTIMIZATION TIME: 6368.86 seconds
+OPTIMIZATION TIME: 521.17 seconds
 FINAL SIMULATOR CHECK: PASSED

@@ -1,9 +1,10 @@
 import numpy as np
 
-# 5T OTA design specifications and parameters
+# 5T OTA design parameters
 VDD = 1.8
 CL  = 2e-12
 
+# 5T OTA design specifications
 SR_spec = 1e6
 GBW_spec = 1e6
 Gain_spec_dB = 38
@@ -12,8 +13,8 @@ PM_spec = 65
 Power_spec = 10e-6
 
 # Mixed Variable Hybrid-PSO parameters
-N_PARTICLES = 10
-MAX_ITERATIONS = 40
+N_PARTICLES = 5
+MAX_ITERATIONS = 2
 MAX_VELOCITY_UPDATES = 3
 
 # Range of sizing variables

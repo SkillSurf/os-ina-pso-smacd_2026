@@ -1,4 +1,6 @@
 import numpy as np
+from gmID_sizing import get_W
+from simulator import evaluate_design
 from survivability_check import survivability_test, L_DISCRETE_VALUES
 
 def generate_particle(cont_bounds, n_L_values, max_attempts=1000):
@@ -20,6 +22,39 @@ def generate_particle(cont_bounds, n_L_values, max_attempts=1000):
     
     return None, np.inf, None
 
+def generate_initial_particle(cont_bounds, n_L_values, max_attempts=1000):
+
+    for attempt in range(max_attempts):
+        gm1 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
+        gm2 = np.random.uniform(cont_bounds[1][0], cont_bounds[1][1])
+        ID = np.random.uniform(cont_bounds[2][0], cont_bounds[2][1])
+        
+        L_1_idx = np.random.randint(0, n_L_values)
+        L_2_idx = np.random.randint(0, n_L_values)
+        
+        particle = np.array([gm1, gm2, L_1_idx, L_2_idx, ID])
+        passed, area, specs = survivability_test(particle)
+
+        L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
+        L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
+        W_1, W_2, _, _, _ = get_W(gm1, gm2, L_1, L_2, ID)
+
+        if passed and W_1 is not None and W_2 is not None:
+            sim_passed, meas = evaluate_design(W_1, L_1, W_2, L_2, ID*1e6)
+            specs['SR'] = meas['SR_meas']
+            specs['GBW'] = meas['GBW_meas']
+            specs['Gain_dB'] = meas['Gain_meas_dB']
+            specs['Gain'] = 10**(meas['Gain_meas_dB']/20)
+            specs['PM'] = meas['PM_meas']
+            specs['Power'] = meas['Power_meas']
+        else:
+            sim_passed = False
+        
+        if sim_passed:
+            return particle, area, specs
+    
+    return None, np.inf, None
+
 def generate_N_particles(cont_bounds, n_L_values, N, verbose=False):
 
     particles = []
@@ -30,7 +65,7 @@ def generate_N_particles(cont_bounds, n_L_values, N, verbose=False):
         print(f"Generating {N} valid particles...")
     
     for i in range(N):
-        particle, area, specs = generate_particle(cont_bounds, n_L_values)
+        particle, area, specs = generate_initial_particle(cont_bounds, n_L_values)
         
         if particle is not None:
             particles.append(particle)
