@@ -14,7 +14,7 @@ Power_spec = 10e-6
 
 # Mixed Variable Hybrid-PSO parameters
 N_PARTICLES = 5
-MAX_ITERATIONS = 2
+MAX_ITERATIONS = 20
 MAX_VELOCITY_UPDATES = 3
 
 # Range of sizing variables

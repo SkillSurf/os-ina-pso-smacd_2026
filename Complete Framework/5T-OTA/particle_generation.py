@@ -41,16 +41,16 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=1000):
 
         if passed and W_1 is not None and W_2 is not None:
             sim_passed, meas = evaluate_design(W_1, L_1, W_2, L_2, ID*1e6)
+        else:
+            sim_passed = False
+        
+        if sim_passed:
             specs['SR'] = meas['SR_meas']
             specs['GBW'] = meas['GBW_meas']
             specs['Gain_dB'] = meas['Gain_meas_dB']
             specs['Gain'] = 10**(meas['Gain_meas_dB']/20)
             specs['PM'] = meas['PM_meas']
             specs['Power'] = meas['Power_meas']
-        else:
-            sim_passed = False
-        
-        if sim_passed:
             return particle, area, specs
     
     return None, np.inf, None

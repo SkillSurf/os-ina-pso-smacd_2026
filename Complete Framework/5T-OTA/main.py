@@ -211,11 +211,11 @@ def main():
     
     if final_results is not None:
         print("\nPerformance Specifications:")
-        print(f"  Slew Rate:    {final_results['SR_meas']*1e-6:.2f} V/μs    (spec: ≥{SR_spec*1e-6:.2f})")
-        print(f"  GBW:          {final_results['GBW_meas']*1e-6:.2f} MHz     (spec: ≥{GBW_spec*1e-6:.2f})")
+        print(f"  Slew Rate:    {final_results['SR_meas']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
+        print(f"  GBW:          {final_results['GBW_meas']*1e-6:.2f} MHz      (spec: ≥{GBW_spec*1e-6:.2f})")
         print(f"  Gain:         {final_results['Gain_meas_dB']:.2f} dB      (spec: ≥{Gain_spec_dB:.2f})")
         print(f"  Phase Margin: {final_results['PM_meas']:.2f}°        (spec: ≥{PM_spec:.2f})")
-        print(f"  Power:        {final_results['Power_meas']*1e6:.2f} μW      (spec: ≤{Power_spec*1e6:.2f})")
+        print(f"  Power:        {final_results['Power_meas']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
     
     print(f"\nOptimization Time: {optimization_time:.2f} seconds")
     

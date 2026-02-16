@@ -143,7 +143,8 @@ def check_specs(measurement_results):
     specs_met = (measurement_results['Gain_meas_dB'] >= Gain_spec_dB and
                  measurement_results['GBW_meas'] >= GBW_spec and
                  measurement_results['PM_meas'] >= PM_spec and
-                 measurement_results['Power_meas'] <= Power_spec)
+                 measurement_results['Power_meas'] <= Power_spec and
+                 measurement_results['SR_meas'] >= SR_spec)
 
     return specs_met
 
