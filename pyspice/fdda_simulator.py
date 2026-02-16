@@ -17,7 +17,7 @@ NgSpiceSharedModule.NgSpiceShared.NGSPICE_SUPPORTED_VERSION = 42
 SIM_MODE = 'OP'     #Options: AC, TRANS, SLEW, OP
 
 def generate_spice_file(params):
-    """Generates a hard-coded Opamp.spice file to avoid parameter parsing errors."""
+    """Generates hard-coded .spice files to avoid parameter parsing errors."""
     def get_geom_string(w, nf):
 
         w_val = float(w)
@@ -147,6 +147,7 @@ XMN15 Vb4 Vb2 0 0 sky130_fd_pr__nfet_01v8 L=2 W=5
         f.write(content)
 
 
+#Main simulation code
 def run_simulation(mode):
 
     circuit = Circuit('FDDA Simulation')
@@ -169,29 +170,17 @@ def run_simulation(mode):
 .include /foss/designs/os-ina-pso-mixdes_2026/pyspice/bias.spice
 
 """
-    # pdk_path = '/foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice'
-    # circuit.lib('/foss/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice', 'tt')
-    # circuit.include('Opamp.spice')
 
     circuit.X('X1', 'FDDA', 'VDD', 'Vpp', 'Vpn', 'Vnp', 'Vnn', 'Vcmfb', 'Vb1', 'Vb2', 'Vb3', 'Vb4', 'Von', 'Vop')
     circuit.X('X2', 'CMFB', 'VDD', 'Vop', 'Von', 'Vcm', 'Vb2', 'Vcmfb')
     circuit.X('X3', 'BIAS', 'VDD', 'Vb1', 'Vb2', 'Vb3', 'Vb4')
     
     circuit.V('vdd', 'VDD', circuit.gnd, 1.8@u_V)
-    # circuit.V('vb1', 'Vb1', circuit.gnd, 0.776@u_V)
-    # circuit.V('vb2', 'Vb2', circuit.gnd, 0.665@u_V)
-    # circuit.V('vb3', 'Vb3', circuit.gnd, 0.898@u_V)
-    # circuit.V('vb4', 'Vb4', circuit.gnd, 0.579@u_V)
     circuit.V('vcm', 'Vcm', circuit.gnd, 0.9@u_V)
-    # circuit.V('vcmfb', 'Vcmfb', circuit.gnd, 0.76@u_V)
-    # circuit.R('rcm1', 'Vop', 'Vcm_sense', 1@u_MOhm)
-    # circuit.R('rcm2', 'Von', 'Vcm_sense', 1@u_MOhm)
-    # circuit.V('vcm', 'Vcmfb', 'Vcm_sense', 0@u_V)
     
     circuit.C('load_p', 'Vop', circuit.gnd, 0.5@u_pF)
     circuit.C('load_n', 'Von', circuit.gnd, 0.5@u_pF)
     
-
 
 
     if mode == 'AC':        # Define AC Input (Differential)
@@ -199,9 +188,6 @@ def run_simulation(mode):
         circuit.V('vpn', 'Vpn', circuit.gnd, 'dc 0 ac -0.5')
         circuit.V('vnp', 'Vnp', circuit.gnd, 'dc 0 ac -0.5')
         circuit.V('vnn', 'Vnn', circuit.gnd, 'dc 0 ac 0.5')
-        # circuit.R('rnnop', 'Vnn', 'Vop', 10@u_kOhm)
-        # circuit.R('ropon', 'Vop', 'Von', 60@u_kOhm)
-        # circuit.R('ronnp', 'Von', 'Vnp', 10@u_kOhm)
 
         simulator = circuit.simulator(simulator='ngspice-subprocess', temperature=25)
 
@@ -212,7 +198,7 @@ def run_simulation(mode):
             print(str(simulator))
             print(e)
             raise e
-        # .options noopiter
+
         op_analysis = simulator.operating_point()
 
         # Check DC levels before looking at AC results
@@ -232,17 +218,18 @@ def run_simulation(mode):
         print(f"Current net5: {float(op_analysis.branches['v.xx1.vmeas2'][0])*1e6:.3f} uA")
         print(f"Current net6: {float(op_analysis.branches['v.xx1.vmeas3'][0])*1e6:.3f} uA")
 
+        #write all the node voltage values to a file
         with open('simulation_results.txt', 'w') as f:
             f.write("--- NODE VOLTAGES AT START FREQUENCY ---\n")
             f.write(f"{'Node Name':<20} | {'Voltage (V)':<10}\n")
             f.write("-" * 35 + "\n")
 
             for node_name in op_analysis.nodes:
-                # Get the complex value and print magnitude
                 voltage_complex = op_analysis.nodes[node_name][0]
                 magnitude = float(np.abs(voltage_complex))
                 f.write(f"{node_name:<20} | {magnitude:.6f} V\n")
 
+        # AC analysis - open loop DC gain, GBW, PM
         freq = np.array(analysis.frequency)
         vout = analysis.nodes['Vop'] - analysis.nodes['Von']
         vin  = (analysis.nodes['Vpp'] - analysis.nodes['Vpn'])-(analysis.nodes['Vnp'] - analysis.nodes['Vnn'])
@@ -251,7 +238,6 @@ def run_simulation(mode):
         gain_db = 20*np.log10(np.abs(gain))
         phase_deg = np.angle(gain, deg=True)
 
-        # mag_db = 20 * np.log10(np.absolute(gain))
         dc_gain = gain_db[0]
         gbw = np.interp(0, gain_db[::-1], freq[::-1])
         phase_at_gbw = np.interp(gbw, freq, phase_deg)
@@ -265,9 +251,6 @@ def run_simulation(mode):
         circuit.V('vpn', 'Vpn', circuit.gnd, 'dc 0 ac 1')
         circuit.V('vnp', 'Vnp', circuit.gnd, 'dc 0 ac 1')
         circuit.V('vnn', 'Vnn', circuit.gnd, 'dc 0 ac 1')
-        # circuit.R('rnnop', 'Vnn', 'Vop', 10@u_kOhm)
-        # circuit.R('ropon', 'Vop', 'Von', 60@u_kOhm)
-        # circuit.R('ronnp', 'Von', 'Vnp', 10@u_kOhm)
 
         simulator = circuit.simulator(simulator='ngspice-subprocess', temperature=25)
 
@@ -319,23 +302,17 @@ def run_simulation(mode):
         ax1.grid(True, which="both", ls="-")
         ax1.set_title("Bode Diagram of Biomedical INA")
 
-        ax2.semilogx(freq, gain_cm_db, color='red', marker='.', linestyle='-')
-        ax2.set_ylabel('Gain cm (db)')
+        ax2.semilogx(freq, phase_deg, color='green', marker='.', linestyle='-')
+        ax2.set_ylabel('phase (degree)')
         ax2.set_xlabel('Frequency (Hz)')
         ax2.grid(True, which="both", ls="-")
 
-        # ax3.semilogx(freq, phase_margin, color='green', marker='.', linestyle='-')
-        # ax3.set_ylabel('Phase')
-        # ax3.set_xlabel('Frequency (Hz)')
-        # ax3.grid(True, which="both", ls="-")
-
         ax1.axhline(y=0, color='red', linestyle='--')
         ax2.axhline(y=0, color='red', linestyle='--')  
-        # ax3.axhline(y=-180, color='red', linestyle='--') 
 
         plt.savefig('Gain_and_GBW_plot.png')
         plt.tight_layout()
-        plt.show()
+        # plt.show()
 
         for key, s in specs.items():
             passed = (s['val'] >= s['target']) if s['op'] == ">=" else (s['val'] <= s['target'])
@@ -347,30 +324,6 @@ def run_simulation(mode):
 
         return all_passed
     
-    elif mode == 'OP':
-        circuit.V('vp', 'Vpp', circuit.gnd, 'SIN(0.9V 1mV 100kHz)')
-        circuit.V('vn', 'Vnn', circuit.gnd, 'SIN(0.9V 1mV 100kHz)')
-
-        simulator = circuit.simulator(simulator='ngspice-subprocess')
-
-        try:
-            analysis = simulator.operating_point()
-            print(f"Success! Vop: {analysis.nodes['Vop'][0]:.4f} V")
-        except Exception as e:
-            # If it fails, we finally look at the internal Ngspice error buffer
-            print("\n--- NGSPICE ERROR LOG ---")
-            print(str(simulator))
-            # Access the shared instance to see what went wrong inside
-            # print(NgSpiceShared.get_instance().stdout)
-            print(e)
-            raise e
-
-        iq = float(analysis.branches['vVDD'][0])
-        Vop = float(analysis.nodes['Vop'][0])
-
-        print(f"\n--- OPERATING POINT RESULTS ---")
-        print(f"Node 'Vop'  : {Vop:.4f} V")
-        print(f"I-Quiescent : {abs(iq)*1e6:.2f} uA")
 
     elif mode == 'TRANS':
         circuit.V('vpp', 'Vpp', circuit.gnd, 'SIN(0.9V 10mV 100Hz)') 
@@ -404,27 +357,101 @@ def run_simulation(mode):
         plt.title("FDDA Transient Response: 100Hz Differential Sine Wave")
         plt.grid(True)
         plt.savefig('Transient_analysis.png')
-        plt.show()
+        # plt.show()
 
     elif mode == 'SLEW':
-        circuit.V('input_p', 'Vpp', circuit.gnd, 'PULSE(0.9V 1.1V 150n 1n 1n 2500n 5000n)')
-        circuit.V('input_n', 'Vnn', circuit.gnd, 'PULSE(0.9V 0.7V 150n 1n 1n 2500n 5000n)')
+        circuit.V('vpp', 'Vpp', circuit.gnd, 'PULSE(0.9 1.0 10u 1n 1n 20u 40u)')
+        circuit.V('vpn', 'Vpn', circuit.gnd, 'PULSE(0.9 0.8 10u 1n 1n 20u 40u)') 
+        circuit.R('fback1', 'Vop', 'Vnp', 1@u_Ohm) 
+        circuit.R('fback2', 'Von', 'Vnn', 1@u_Ohm)
+        circuit.C('L1', 'Vop', circuit.gnd, 5@u_pF)
+        circuit.C('L2', 'Von', circuit.gnd, 5@u_pF)
+
         simulator = circuit.simulator(simulator='ngspice-subprocess')
-        analysis = simulator.transient(step_time=10@u_ns, end_time=50@u_us)
+        analysis = simulator.transient(step_time=100@u_ps, end_time=50@u_us, max_time=1@u_ns)
         
         time = np.array(analysis.time)
-        vout = np.array(analysis.out)
-        sr = np.max(np.diff(vout) / np.diff(time))
+        time = time.astype(float)
+
+        vop = np.array(analysis.nodes['Vop'])
+        von = np.array(analysis.nodes['Von'])
+        vpp = np.array(analysis.nodes['Vpp'])
+        vpn = np.array(analysis.nodes['Vpn'])
+
+        print("Vop DC:", float(vop[0]))
+        print("Von DC:", float(von[0]))
+        print("Vpp DC:", float(vpp[0]))
+        print("Vpn DC:", float(vpn[0]))
+
+        
+        vout = vop - von
+        vin = vpp - vpn
+        print("Vout:", vout)
+        print("Vin:", vin)
+
+        v_min = np.min(vout)
+        v_max = np.max(vout)
+
+        v_swing = float(v_max) - float(v_min)
+
+        print("Vout min:", v_min)
+        print("Vout max:", v_max)
+        print("Vout swing:", v_swing)
+
+        v_10 = float(v_min) + (0.1 * v_swing)
+        v_90 = float(v_max) - (0.1 * v_swing)
+        print("V_10:", v_10)
+        print("V_90:", v_90)
+
+        try:
+            # idx_10 = np.where(vout >= v_10)[0][0]
+            # idx_90 = np.where(vout >= v_90)[0][0]
+
+            # t_10 = time[idx_10]
+            # t_90 = time[idx_90]
+
+            # slew = (v_90 - v_10) / (t_90 - t_10)
+            # slew_us = slew / 1e6
+
+            idx_10 = np.where(vout >= v_10)[0][0]
+            idx_90 = np.where(vout >= v_90)[0][0]
+            
+            t_10, t_90 = time[idx_10], time[idx_90]
+            v_actual_10, v_actual_90 = vout[idx_10], vout[idx_90]
+
+            # 4. Calculate Slew Rate
+            slew = (v_actual_90 - v_actual_10) / (t_90 - t_10)
+            slew_us = slew / 1e6  # V/us
+            print(f"Measured Slew Rate: {slew_us:.2f} V/us")
+        except IndexError:
+            print("Error: The output didn't reach the 10%/90% thresholds. Check your gain/bias.")
+
+        # t_10 = np.interp(v_10, vout, time)
+        # t_90 = np.interp(v_90, vout, time)
+
+        # slew = (v_90 - v_10) / (t_90 - t_10)
+        # slew_us = slew / 1e6  # Convert to V/us
         
         print(f"\n--- SLEW RATE ---")
-        print(f"Measured Slew Rate: {sr/1e6:.2f} V/us")
+        print(f"Measured Slew Rate: {slew_us:.2f} V/us")
         
-        plt.plot(time*1e6, vout)
-        plt.xlabel("Time (us)")
-        plt.ylabel("Output (V)")
-        plt.title("Step Response")
-        plt.savefig('Slewrate_positive_openloop.png')
-        plt.show()
+
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+        ax1.plot(time, vin, color='blue', linestyle='-')
+        ax1.set_ylabel('Input Voltage (V)')
+        ax1.grid(True, which="both", ls="-")
+        ax1.set_title("Slew Response (positive closed loop)")
+
+        ax2.plot(time, vout, color='blue', linestyle='-')
+        ax2.set_ylabel('Output Voltage (V)')
+        ax2.set_xlabel('Time (s)')
+        ax2.grid(True, which="both", ls="-")
+
+        plt.xlim(9e-6, 15e-6)
+        plt.tight_layout()
+        plt.savefig('Slewrate_positive_closedloop.png')
+        # plt.show()
 
 params = {
     'W_1': 88, 'L_1': 1, 'nf_1': 1, 'm_1': 1,
@@ -439,10 +466,37 @@ generate_spice_file(params)
 generate_cmfb(params)
 generate_bias()
 
-run_simulation('AC')
+# run_simulation('AC')
 # run_simulation('OP')
 # run_simulation('TRANS')
-# run_simulation('SLEW')
+run_simulation('SLEW')
 
 
 
+
+
+
+# elif mode == 'OP':
+#         circuit.V('vp', 'Vpp', circuit.gnd, 'SIN(0.9V 1mV 100kHz)')
+#         circuit.V('vn', 'Vnn', circuit.gnd, 'SIN(0.9V 1mV 100kHz)')
+
+#         simulator = circuit.simulator(simulator='ngspice-subprocess')
+
+#         try:
+#             analysis = simulator.operating_point()
+#             print(f"Success! Vop: {analysis.nodes['Vop'][0]:.4f} V")
+#         except Exception as e:
+#             # If it fails, we finally look at the internal Ngspice error buffer
+#             print("\n--- NGSPICE ERROR LOG ---")
+#             print(str(simulator))
+#             # Access the shared instance to see what went wrong inside
+#             # print(NgSpiceShared.get_instance().stdout)
+#             print(e)
+#             raise e
+
+#         iq = float(analysis.branches['vVDD'][0])
+#         Vop = float(analysis.nodes['Vop'][0])
+
+#         print(f"\n--- OPERATING POINT RESULTS ---")
+#         print(f"Node 'Vop'  : {Vop:.4f} V")
+#         print(f"I-Quiescent : {abs(iq)*1e6:.2f} uA")
