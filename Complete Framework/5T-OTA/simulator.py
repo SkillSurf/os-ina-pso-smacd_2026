@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator
 
 import PySpice.Logging.Logging as Logging
 from PySpice.Spice.Netlist import Circuit
@@ -35,7 +37,7 @@ def generate_spice(params):
 ######################################################
 # Runs the specified simulation mode (AC, OP, or SLEW)
 ######################################################
-def run_simulation(mode, measurement_results):
+def run_simulation(mode, measurement_results, plots=False):
 
     circuit = Circuit('5T_OTA Simulation')
     circuit.raw_spice ="""
@@ -87,6 +89,28 @@ set no_note
         measurement_results['GBW_meas'] = gbw
         measurement_results['PM_meas'] = phase_margin
 
+
+        if plots:
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+            ax1.semilogx(freq, gain_db, color='blue', linestyle='-')
+            ax1.set_ylabel('Gain (dB)')
+            ax1.grid(True, which="both", ls="-")
+            ax1.set_title("Bode Plot of 5T-OTA")
+
+            ax2.semilogx(freq, phase_deg, color='blue', linestyle='-')
+            ax2.set_ylabel('Phase (Degrees)')
+            ax2.set_xlabel('Frequency (Hz)')
+            ax2.grid(True, which="both", ls="-")
+            locator = LogLocator(base=10.0, numticks=15)
+            ax2.xaxis.set_major_locator(locator)
+
+            ax1.axhline(y=0, color='red', linestyle='--') 
+            ax2.axhline(y=-180, color='red', linestyle='--') 
+
+            plt.savefig('Gain_and_GBW_plot.png')
+            plt.tight_layout()
+
     if mode == 'OP':
         # Define DC Inputs (Quiescent Points)
         circuit.V('vip', 'Vip', circuit.gnd, 'DC 0.9')
@@ -134,6 +158,22 @@ set no_note
 
         measurement_results['SR_meas'] = slew
 
+        if plots:
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+            ax1.plot(time, analysis.nodes['vip'], color='blue', linestyle='-')
+            ax1.set_ylabel('Input Voltage (V)')
+            ax1.grid(True, which="both", ls="-")
+            ax1.set_title("5T-OTA Slew Response")
+
+            ax2.plot(time, vout, color='blue', linestyle='-')
+            ax2.set_ylabel('Output Voltage (V)')
+            ax2.set_xlabel('Time (s)')
+            ax2.grid(True, which="both", ls="-")
+
+            plt.savefig('Slew_plot.png')
+            plt.tight_layout()
+
         return None
 
 ###################################################
@@ -151,7 +191,7 @@ def check_specs(measurement_results):
 #############################################################
 # Top-level function to evaluate a design given the variables
 #############################################################
-def evaluate_design(W_1, L_1, W_2, L_2, ID):
+def evaluate_design(W_1, L_1, W_2, L_2, ID, plots=False):
     """
     Accepts the 5 generated variables, runs the simulation, 
     and returns the binary result.
@@ -170,9 +210,9 @@ def evaluate_design(W_1, L_1, W_2, L_2, ID):
         generate_spice(rounded_params)
         
         # Pass the local 'current_results' dict to your simulation functions
-        run_simulation('AC', measurement_results=current_results)
-        run_simulation('OP', measurement_results=current_results)
-        run_simulation('SLEW', measurement_results=current_results)
+        run_simulation('AC', measurement_results=current_results, plots=plots)
+        run_simulation('OP', measurement_results=current_results, plots=plots)
+        run_simulation('SLEW', measurement_results=current_results, plots=plots)
         
         # Check specs and return result
         specs_met = check_specs(current_results)

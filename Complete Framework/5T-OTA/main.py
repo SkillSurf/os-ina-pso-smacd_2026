@@ -206,7 +206,7 @@ def main():
 
     # Final simulator verification    
     print("\nFinal Simulator Verification...")
-    final_check, final_results = evaluate_design(W_1, L_1, W_2, L_2, ID*1e6)
+    final_check, final_results = evaluate_design(W_1, L_1, W_2, L_2, ID*1e6, plots=True)
     print(f"Final design {'PASSED' if final_check else 'FAILED'} simulator check")
     
     if final_results is not None:

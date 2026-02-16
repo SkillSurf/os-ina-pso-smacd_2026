@@ -13,9 +13,9 @@ PM_spec = 65
 Power_spec = 10e-6
 
 # Mixed Variable Hybrid-PSO parameters
-N_PARTICLES = 5
-MAX_ITERATIONS = 20
-MAX_VELOCITY_UPDATES = 3
+N_PARTICLES = 20
+MAX_ITERATIONS = 100
+MAX_VELOCITY_UPDATES = 5
 
 # Range of sizing variables
 gm_ID_range = (3, 20)
