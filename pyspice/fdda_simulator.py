@@ -269,6 +269,8 @@ def run_simulation(mode):
         # gain_cm = vout_cm
         gain_cm_db = 20 * np.log10(np.abs(gain_cm))
 
+        cmrr_db = gain_db - gain_cm_db
+
         # finding the gain at the target freq of 1kHz
         target_freq = 1000  # 1kHz
         idx = (np.abs(freq - target_freq)).argmin()
@@ -282,18 +284,6 @@ def run_simulation(mode):
 
         print(f"\n--- AC ANALYSIS RESULTS ---")
         print(f"Calculated DC Gain: {dc_gain:.2f} dB | Calculated GBW: {gbw/1e6:.2f} MHz | Calculated PM: {phase_margin:.2f} degrees")
-
-        # Comparing with the specs
-        specs = {
-            "Open-loop gain": {"val": dc_gain, "target": 70, "unit": "dB", "op": ">="},
-            "GBW": {"val": gbw/1e6, "target": 30, "unit": "MHz", "op": ">="},
-            "Phase Margin": {"val": phase_margin, "target": 60, "unit": "deg", "op": ">"},
-            "CMRR": {"val": cmrr, "target": 120, "unit": "db", "op": ">"}
-            # "Power Total": {"val": power_uw, "target": 500, "unit": "uW", "op": "<="}
-        }
-
-        print(f"\n--- Results ---")
-        all_passed = True
         
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
@@ -314,16 +304,51 @@ def run_simulation(mode):
         plt.tight_layout()
         # plt.show()
 
+        fig, ax1 = plt.subplots(figsize=(12, 8))
+                
+        l1 = ax1.semilogx(freq, gain_db, label='Gain', color='red', linewidth=2)
+        l2 = ax1.semilogx(freq, cmrr_db, label='CMRR', color='green', linestyle='--')
+        ax1.set_xlabel("Frequency (Hz)")
+        ax1.set_ylabel("Magnitude (dB)", color='black')
+        ax1.grid(True, which="both", ls="-", alpha=0.5)
+
+        ax2 = ax1.twinx() 
+        l3 = ax2.semilogx(freq, phase_deg, label='Phase', color='blue', linestyle='-.')
+        ax2.set_ylabel("Phase (Degrees)", color='blue')
+                
+        lns = l1 + l2 + l3
+        labs = [l.get_label() for l in lns]
+        ax1.legend(lns, labs, loc='center right')
+
+        plt.title("Frequency response plot with Gain, Phase, CMRR for the FDDA circuit")
+        plt.tight_layout()
+        plt.savefig('Frequency_response.png')
+        # plt.show()
+
+        specs = {
+            "Open-loop gain": {"val": dc_gain, "target": 70, "unit": "dB", "op": ">="},
+            "GBW": {"val": gbw/1e6, "target": 30, "unit": "MHz", "op": ">="},
+            "Phase Margin": {"val": phase_margin, "target": 60, "unit": "deg", "op": ">"},
+            "CMRR": {"val": cmrr, "target": 120, "unit": "db", "op": ">"}
+                    # "Power Total": {"val": power_uw, "target": 500, "unit": "uW", "op": "<="}
+        }
+
+        print(f"\n--- Results ---")
+        all_passed = True
+
         for key, s in specs.items():
             passed = (s['val'] >= s['target']) if s['op'] == ">=" else (s['val'] <= s['target'])
             if s['op'] == ">": passed = s['val'] > s['target']
-            
+                    
             status = "PASS" if passed else "FAIL"
             if not passed: all_passed = False
             print(f"{key}: {s['val']:.2f}{s['unit']} (Target: {s['op']}{s['target']}) -> {status}")
 
+            with open('specs_comparison.txt', 'a') as f:
+                f.write(f"{key}: {s['val']:.2f}{s['unit']} (Target: {s['op']}{s['target']}) -> {status}\n")
+
         return all_passed
-    
+
 
     elif mode == 'TRANS':
         circuit.V('vpp', 'Vpp', circuit.gnd, 'SIN(0.9V 10mV 100Hz)') 
@@ -360,77 +385,72 @@ def run_simulation(mode):
         # plt.show()
 
     elif mode == 'SLEW':
-        circuit.V('vpp', 'Vpp', circuit.gnd, 'PULSE(0.9 1.0 10u 1n 1n 20u 40u)')
-        circuit.V('vpn', 'Vpn', circuit.gnd, 'PULSE(0.9 0.8 10u 1n 1n 20u 40u)') 
-        circuit.R('fback1', 'Vop', 'Vnp', 1@u_Ohm) 
-        circuit.R('fback2', 'Von', 'Vnn', 1@u_Ohm)
-        circuit.C('L1', 'Vop', circuit.gnd, 5@u_pF)
-        circuit.C('L2', 'Von', circuit.gnd, 5@u_pF)
+        circuit.V('vpp', 'Vpp', circuit.gnd, 'PULSE(0.9 1.5 10u 10n 10n 20u 40u)')
+        circuit.V('vpn', 'Vpn', circuit.gnd, 'PULSE(0.9 0.3 10u 10n 10n 20u 40u)') 
+        circuit.R('f1', 'Vop', 'Vnp', 1000@u_Ohm)
+        circuit.R('f2', 'Von', 'Vnn', 1000@u_Ohm)
+        circuit.C('L1', 'Vop', circuit.gnd, 1@u_pF)
+        circuit.C('L2', 'Von', circuit.gnd, 1@u_pF)
 
         simulator = circuit.simulator(simulator='ngspice-subprocess')
-        analysis = simulator.transient(step_time=100@u_ps, end_time=50@u_us, max_time=1@u_ns)
+        simulator.options('rshunt=1e12', 'method=gear', 'abstol=1e-12') # More stable for fast transitions
+        analysis = simulator.transient(step_time=1@u_ns, end_time=50@u_us, max_time=10@u_ns)
         
-        time = np.array(analysis.time)
-        time = time.astype(float)
+        time = np.array(analysis.time).astype(float)
+        vout = np.array(analysis.nodes['Vop']) - np.array(analysis.nodes['Von'])
+        vin  = np.array(analysis.nodes['Vpp']) - np.array(analysis.nodes['Vpn'])
+
+        mask = (time >= 9e-6) & (time <= 10.5e-6)
+        time_zoom = time[mask]
+        vout_zoom = vout[mask]
+        vin_zoom = vin[mask]
 
         vop = np.array(analysis.nodes['Vop'])
         von = np.array(analysis.nodes['Von'])
         vpp = np.array(analysis.nodes['Vpp'])
         vpn = np.array(analysis.nodes['Vpn'])
+        vnp = np.array(analysis.nodes['Vnp'])
+        vnn = np.array(analysis.nodes['Vnn'])
+        vcmfb = np.array(analysis.nodes['Vcmfb'])
 
         print("Vop DC:", float(vop[0]))
         print("Von DC:", float(von[0]))
         print("Vpp DC:", float(vpp[0]))
         print("Vpn DC:", float(vpn[0]))
-
-        
-        vout = vop - von
-        vin = vpp - vpn
-        print("Vout:", vout)
-        print("Vin:", vin)
-
-        v_min = np.min(vout)
-        v_max = np.max(vout)
-
-        v_swing = float(v_max) - float(v_min)
-
-        print("Vout min:", v_min)
-        print("Vout max:", v_max)
-        print("Vout swing:", v_swing)
-
-        v_10 = float(v_min) + (0.1 * v_swing)
-        v_90 = float(v_max) - (0.1 * v_swing)
-        print("V_10:", v_10)
-        print("V_90:", v_90)
+        print("Vnp DC:", float(vnp[0]))
+        print("Vnn DC:", float(vnn[0]))
+        print("Vcmfb DC:", float(vcmfb[0]))
+        print("Vout:", vout_zoom)
+        print("Vin:", vin_zoom)
 
         try:
-            # idx_10 = np.where(vout >= v_10)[0][0]
-            # idx_90 = np.where(vout >= v_90)[0][0]
-
-            # t_10 = time[idx_10]
-            # t_90 = time[idx_90]
-
-            # slew = (v_90 - v_10) / (t_90 - t_10)
-            # slew_us = slew / 1e6
-
-            idx_10 = np.where(vout >= v_10)[0][0]
-            idx_90 = np.where(vout >= v_90)[0][0]
+            v_min = np.min(vout_zoom)
+            v_max = np.max(vout_zoom)
+            v_swing = v_max - v_min
             
-            t_10, t_90 = time[idx_10], time[idx_90]
-            v_actual_10, v_actual_90 = vout[idx_10], vout[idx_90]
+            target_v_10 = v_min + (0.10 * v_swing)
+            target_v_90 = v_min + (0.90 * v_swing)
+
+            idx_10 = np.where(vout_zoom >= target_v_10)[0][0]
+            idx_90 = np.where(vout_zoom >= target_v_90)[0][0]
+            print("idx_10:", idx_10)
+            print("idx_90:", idx_90)
+            
+            t_10, t_90 = time_zoom[idx_10], time_zoom[idx_90]
+            v_actual_10, v_actual_90 = vout_zoom[idx_10], vout_zoom[idx_90]
+            print("t_10:", t_10)
+            print("t_90:", t_90)
+            print("vactual_10:", v_actual_10)
+            print("vactual_90:", v_actual_90)
 
             # 4. Calculate Slew Rate
             slew = (v_actual_90 - v_actual_10) / (t_90 - t_10)
             slew_us = slew / 1e6  # V/us
             print(f"Measured Slew Rate: {slew_us:.2f} V/us")
         except IndexError:
+            slew_us = 0
             print("Error: The output didn't reach the 10%/90% thresholds. Check your gain/bias.")
 
-        # t_10 = np.interp(v_10, vout, time)
-        # t_90 = np.interp(v_90, vout, time)
-
-        # slew = (v_90 - v_10) / (t_90 - t_10)
-        # slew_us = slew / 1e6  # Convert to V/us
         
         print(f"\n--- SLEW RATE ---")
         print(f"Measured Slew Rate: {slew_us:.2f} V/us")
@@ -438,20 +458,43 @@ def run_simulation(mode):
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
-        ax1.plot(time, vin, color='blue', linestyle='-')
+        ax1.plot(time_zoom * 1e6, vin_zoom, color='blue', linestyle='-')
         ax1.set_ylabel('Input Voltage (V)')
         ax1.grid(True, which="both", ls="-")
         ax1.set_title("Slew Response (positive closed loop)")
 
-        ax2.plot(time, vout, color='blue', linestyle='-')
+        ax2.plot(time_zoom * 1e6, vout_zoom, color='blue', linestyle='-')
         ax2.set_ylabel('Output Voltage (V)')
         ax2.set_xlabel('Time (s)')
         ax2.grid(True, which="both", ls="-")
 
-        plt.xlim(9e-6, 15e-6)
+        if slew_us > 0:
+            ax2.scatter([t_10*1e6, t_90*1e6], [v_actual_10, v_actual_90], color='black', zorder=5)
+
+        plt.xlim(9.5, 10.5)
         plt.tight_layout()
         plt.savefig('Slewrate_positive_closedloop.png')
         # plt.show()
+
+        all_passed = True
+
+        specs = {
+            "Slewrate": {"val": slew_us, "target": 1, "unit": "V/us", "op": ">"}
+        }
+
+        for key, s in specs.items():
+            passed = (s['val'] >= s['target']) if s['op'] == ">=" else (s['val'] <= s['target'])
+            if s['op'] == ">": passed = s['val'] > s['target']
+                    
+            status = "PASS" if passed else "FAIL"
+            if not passed: all_passed = False
+            print(f"{key}: {s['val']:.2f}{s['unit']} (Target: {s['op']}{s['target']}) -> {status}")
+
+            with open('specs_comparison.txt', 'a') as f:
+                f.write(f"{key}: {s['val']:.2f}{s['unit']} (Target: {s['op']}{s['target']}) -> {status}\n")
+
+        return all_passed
+        
 
 params = {
     'W_1': 88, 'L_1': 1, 'nf_1': 1, 'm_1': 1,
@@ -466,37 +509,7 @@ generate_spice_file(params)
 generate_cmfb(params)
 generate_bias()
 
-# run_simulation('AC')
-# run_simulation('OP')
-# run_simulation('TRANS')
+run_simulation('AC')
+run_simulation('TRANS')
 run_simulation('SLEW')
 
-
-
-
-
-
-# elif mode == 'OP':
-#         circuit.V('vp', 'Vpp', circuit.gnd, 'SIN(0.9V 1mV 100kHz)')
-#         circuit.V('vn', 'Vnn', circuit.gnd, 'SIN(0.9V 1mV 100kHz)')
-
-#         simulator = circuit.simulator(simulator='ngspice-subprocess')
-
-#         try:
-#             analysis = simulator.operating_point()
-#             print(f"Success! Vop: {analysis.nodes['Vop'][0]:.4f} V")
-#         except Exception as e:
-#             # If it fails, we finally look at the internal Ngspice error buffer
-#             print("\n--- NGSPICE ERROR LOG ---")
-#             print(str(simulator))
-#             # Access the shared instance to see what went wrong inside
-#             # print(NgSpiceShared.get_instance().stdout)
-#             print(e)
-#             raise e
-
-#         iq = float(analysis.branches['vVDD'][0])
-#         Vop = float(analysis.nodes['Vop'][0])
-
-#         print(f"\n--- OPERATING POINT RESULTS ---")
-#         print(f"Node 'Vop'  : {Vop:.4f} V")
-#         print(f"I-Quiescent : {abs(iq)*1e6:.2f} uA")

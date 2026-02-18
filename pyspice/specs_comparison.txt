@@ -1,0 +1,5 @@
+Open-loop gain: 71.57dB (Target: >=70) -> PASS
+GBW: 39.08MHz (Target: >=30) -> PASS
+Phase Margin: 66.84deg (Target: >60) -> PASS
+CMRR: 219.74db (Target: >120) -> PASS
+Slewrate: 7.03V/us (Target: >1) -> PASS
