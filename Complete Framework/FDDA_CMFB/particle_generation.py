@@ -19,7 +19,7 @@ def generate_particle(cont_bounds, n_L_values, max_attempts=1000):
         
         V_A = np.random.uniform(cont_bounds[3][0], cont_bounds[3][1])
         V_B = np.random.uniform(cont_bounds[4][0], cont_bounds[4][1])
-        V_C = np.random.uniform(max(cont_bounds[5][0], V_B), cont_bounds[5][1])
+        V_C = np.random.uniform((V_B + 0.1), cont_bounds[5][1])
         
         L_1_idx = np.random.randint(0, n_L_values)
         L_2_idx = np.random.randint(0, n_L_values)
@@ -37,7 +37,7 @@ def generate_particle(cont_bounds, n_L_values, max_attempts=1000):
     #     if passed:
     #         return particle, area, specs
     
-    # return None, np.inf, None
+    return None, np.inf, None
 
 def generate_initial_particle(cont_bounds, n_L_values, max_attempts=1000):
 
@@ -54,7 +54,7 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=1000):
         
         V_A = np.random.uniform(cont_bounds[3][0], cont_bounds[3][1])
         V_B = np.random.uniform(cont_bounds[4][0], cont_bounds[4][1])
-        V_C = np.random.uniform(max(cont_bounds[5][0], V_B), cont_bounds[5][1])
+        V_C = np.random.uniform((V_B + 0.1), cont_bounds[5][1])
         
         L_1_idx = np.random.randint(0, n_L_values)
         L_2_idx = np.random.randint(0, n_L_values)
@@ -86,7 +86,7 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=1000):
     #         specs['Power'] = meas['Power_meas']
     #         return particle, area, specs
     
-    # return None, np.inf, None
+    return None, np.inf, None
 
 def generate_N_particles(cont_bounds, n_L_values, N, verbose=False):
 
@@ -111,7 +111,7 @@ def generate_N_particles(cont_bounds, n_L_values, N, verbose=False):
     #             print(f"  Particle {i+1}/{N}: Failed to generate valid particle")
     #         return None, None, None
     
-    # return np.array(particles), np.array(areas), specs_list
+    return np.array(particles), np.array(areas), specs_list
 
 def refill_rejected_particles(particles, fitness, cont_bounds, n_L_values, rejected_mask):
 
@@ -132,4 +132,4 @@ def refill_rejected_particles(particles, fitness, cont_bounds, n_L_values, rejec
     #     else:
     #         print(f"    Particle {idx}: Failed to refill")
     
-    # return particles, fitness
+    return particles, fitness

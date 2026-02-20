@@ -32,9 +32,9 @@ MAX_VELOCITY_UPDATES = 5
 
 # Range of sizing variables
 gm_ID_range = (3, 20)
-V_A_range = (1, 1.7)
-V_B_range = (0.1, 0.8)
-V_C_range = (0.2, 1.7)
+V_A_range = ((Vout_DC + 0.1), (VDD - 0.1))
+V_B_range = (0.1, (Vout_DC - 0.1))
+V_C_range = ((V_B_range[0] + 0.1), (VDD - 0.1))
 L_DISCRETE_VALUES = np.array([0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 
                                0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 
                                0.90, 1.00, 2.00, 3.00])
