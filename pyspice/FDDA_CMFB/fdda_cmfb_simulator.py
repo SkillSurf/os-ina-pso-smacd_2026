@@ -1,3 +1,4 @@
+import os
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +7,33 @@ from matplotlib.ticker import FixedLocator, FixedFormatter
 import PySpice.Logging.Logging as Logging
 from PySpice.Spice.Netlist import Circuit
 from PySpice.Unit import *
+
+import PySpice.Spice.NgSpice.Shared as Shared
+dir = os.path.dirname(os.path.abspath(__file__))
+dll_path = os.path.join(dir, "..", "ngspice-42_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")
+Shared.NgSpiceShared.LIBRARY_PATH = os.path.abspath(dll_path)
+
+# =============================================================
+# To handle latest ngspice versions that crash on 'run' command
+# =============================================================
+# Save PySpice's original command execution function
+_original_exec_command = Shared.NgSpiceShared.exec_command
+
+# Define a custom, forgiving wrapper
+def _patched_exec_command(self, command, join_lines=True):
+    try:
+        return _original_exec_command(self, command, join_lines)
+    except Shared.NgSpiceCommandError as e:
+        # If the crash happened during the 'run' command, it's the stderr bug.
+        # We silently pass and let PySpice continue retrieving the vectors!
+        if command == 'run':
+            pass 
+        else:
+            raise e # If it's a real syntax error, crash normally
+
+# Apply the patch globally
+Shared.NgSpiceShared.exec_command = _patched_exec_command
+# =============================================================
 
 logger = Logging.setup_logging()
 
@@ -16,7 +44,7 @@ params = {'W_1': 88, 'L_1': 1,
           'W_5': 28, 'L_5': 1,
           'W_6': 176, 'L_6': 1,
           'W_7': 14, 'L_7': 1,
-          'W_8': 88, 'L_8': 0.5,
+          'W_8': 176, 'L_8': 1,
           'V_B1': 0.7454,
           'V_B2': 0.6351,
           'V_B3': 0.8571,
@@ -80,46 +108,35 @@ def run_simulation(mode):
     circuit.C('LOADP', 'V_OP', circuit.gnd, 2@u_pF)
     circuit.C('LOADN', 'V_ON', circuit.gnd, 2@u_pF)
 
+    # Series feedback with infinite inductor and parallel feedback with infinite capacitor (to ensure proper DC biasing)
+    circuit.L('LFB1', 'V_PN', 'V_OP', 4@u_GH)
+    circuit.L('LFB2', 'V_NN', 'V_ON', 4@u_GH)
+    circuit.C('CFB1', 'V_PN', circuit.gnd, 4@u_GF)
+    circuit.C('CFB2', 'V_NN', circuit.gnd, 4@u_GF)
+
+    # ============================================
+    # Performing DC Gain, GBW, and PM calculations
+    # ============================================
     if mode == 'AC':
-        # ============================================
-        # Performing DC Gain, GBW, and PM calculations
-        # ============================================
-        # Series feedback with infinite inductor (to ensure proper DC biasing)
-        circuit.L('LFB1', 'V_PN', 'V_OP', 4@u_GH)
-        circuit.L('LFB2', 'V_NN', 'V_ON', 4@u_GH)
         # Define AC Input (Differential)
         circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
-        circuit.V('VPN', 'V_PN', circuit.gnd, 'DC 0.9 AC -1')
         circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC -1')
-        circuit.V('VNN', 'V_NN', circuit.gnd, 'DC 0.9 AC 1')
 
         simulator = circuit.simulator(temperature=27, nominal_temperature=27)
+        simulator.options(klu=1)
 
-        try:
-            analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
-        except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
-            raise e
+        analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
 
         freq = np.array(analysis.frequency)
-        vout_dm_diff = analysis.nodes['v_op'] - analysis.nodes['v_on']
-        vout_dm_sing = analysis.nodes['v_op']
-        vin_dm  = (analysis.nodes['v_pp'] - analysis.nodes['v_pn']) - (analysis.nodes['v_np'] - analysis.nodes['v_nn'])
+        vout = analysis.nodes['v_op'] - analysis.nodes['v_on']
+        vin  = (analysis.nodes['v_pp'] - analysis.nodes['v_pn']) - (analysis.nodes['v_np'] - analysis.nodes['v_nn'])
 
-        gain_dm_diff = vout_dm_diff / vin_dm
-        gain_dm_sing = vout_dm_sing / vin_dm
-        gain_dm_diff_db = 20 * np.log10(np.abs(gain_dm_diff))
-        gain_dm_sing_db = 20 * np.log10(np.abs(gain_dm_sing))
+        gain = vout / vin
+        gain_db = 20 * np.log10(np.abs(gain))
+        phase_deg = np.angle(gain, deg=True)
 
-        phase_deg = np.angle(gain_dm_diff, deg=True)
-
-        dc_gain = gain_dm_diff_db[0]
-        gbw = np.interp(0, gain_dm_diff_db[::-1], freq[::-1])
+        dc_gain = gain_db[0]
+        gbw = np.interp(0, gain_db[::-1], freq[::-1])
         phase_at_gbw = np.interp(gbw, freq, phase_deg)
         phase_margin = 180 + phase_at_gbw
 
@@ -128,7 +145,7 @@ def run_simulation(mode):
         
         _, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
-        ax1.semilogx(freq, gain_dm_diff_db, color='blue', linestyle='-')
+        ax1.semilogx(freq, gain_db, color='blue', linestyle='-')
         ax1.set_ylabel('Gain (dB)')
         ax1.grid(True, which="both", ls="-")
         ax1.set_title("Bode Plot of FDDA-CMFB")
@@ -146,140 +163,20 @@ def run_simulation(mode):
         ax2.axhline(y=-180, color='red', linestyle='--') 
 
         plt.savefig('Gain_and_GBW_plot.png')
-        plt.tight_layout()
+        plt.tight_layout()       
 
-        # ===============================
-        # Performing the CMRR calculation
-        # ===============================
-        for name in ['VVPN', 'VVNP']:
-            circuit._elements.pop(name)
-        # Define AC Input (Common Mode)
-        circuit.V('VPN', 'V_PN', circuit.gnd, 'DC 0.9 AC 1')
-        circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC 1')
-
-        simulator = circuit.simulator(temperature=27, nominal_temperature=27)
-
-        try:
-            analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
-        except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
-            raise e
-        
-        freq = np.array(analysis.frequency)
-        vout_cm_sing = analysis.nodes['v_op']
-        vin_cm  = (analysis.nodes['v_pp'] + analysis.nodes['v_pn'] + analysis.nodes['v_np'] + analysis.nodes['v_nn']) / 4
-
-        gain_cm_sing = vout_cm_sing / vin_cm
-        gain_cm_sing_db = 20 * np.log10(np.abs(gain_cm_sing))
-
-        cmrr_db = gain_dm_sing_db - gain_cm_sing_db
-        # CMRR at 1kHz
-        cmrr_1k = np.interp(1e3, freq, cmrr_db)
-
-        print(f"\n--- CMRR ANALYSIS RESULTS ---")
-        print(f"CMRR at 1kHz: {cmrr_1k:.2f} dB")
-        
-        _, ax = plt.subplots(figsize=(12, 8))
-
-        ax.semilogx(freq, cmrr_db, color='blue', linestyle='-')
-        ax.set_ylabel('CMRR (dB)')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.grid(True, which="both", ls="-")
-        ax.set_title("CMRR Plot of FDDA-CMFB")
-
-        ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-        labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
-        ax.xaxis.set_major_locator(FixedLocator(ticks))
-        ax.xaxis.set_major_formatter(FixedFormatter(labels)) 
-
-        ax.axhline(y=0, color='red', linestyle='--') 
-
-        plt.savefig('CMRR_plot.png')
-        plt.tight_layout()
-
-        # ===============================
-        # Performing the PSRR calculation
-        # ===============================
-        for name in ['VVPP', 'VVPN', 'VVNP', 'VVNN']:
-            circuit._elements.pop(name)
-        # Define DC Inputs (Quiescent Points)
-        circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9')
-        circuit.V('VPN', 'V_PN', circuit.gnd, 'DC 0.9')
-        circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
-        circuit.V('VNN', 'V_NN', circuit.gnd, 'DC 0.9')
-        # Redefine VDD as AC source for PSRR analysis
-        circuit._elements.pop('VVDD')
-        circuit.V('VDDac', 'VDD', circuit.gnd, 'DC 1.8 AC 1')
-
-        simulator = circuit.simulator(temperature=25, nominal_temperature=25)
-
-        try:
-            analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
-        except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
-            raise e
-
-        freq = np.array(analysis.frequency)
-        vout_ps_sing = analysis.nodes['v_op']
-        vdd_ac  = analysis.nodes['vdd']
-
-        gain_ps_sing = vout_ps_sing / vdd_ac
-        gain_ps_sing_db = 20 * np.log10(np.abs(gain_ps_sing))
-
-        psrr_db = gain_dm_sing_db - gain_ps_sing_db
-        # PSRR at 1kHz
-        psrr_1k = np.interp(1e3, freq, psrr_db)
-
-        print(f"\n--- PSRR ANALYSIS RESULTS ---")
-        print(f"PSRR at 1kHz: {psrr_1k:.2f} dB")
-        
-        _, ax = plt.subplots(figsize=(12, 8))
-
-        ax.semilogx(freq, psrr_db, color='blue', linestyle='-')
-        ax.set_ylabel('PSRR (dB)')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.grid(True, which="both", ls="-")
-        ax.set_title("PSRR Plot of FDDA-CMFB")
-
-        ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-        labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
-        ax.xaxis.set_major_locator(FixedLocator(ticks))
-        ax.xaxis.set_major_formatter(FixedFormatter(labels))
-
-        # ax.axhline(y=0, color='red', linestyle='--')  
-
-        plt.savefig('PSRR_plot.png')
-        plt.tight_layout()
-
+    # ================================
+    # Performing the Power calculation
+    # ================================
     if mode == 'OP':
         # Define DC Inputs (Quiescent Points)
         circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9')
-        circuit.V('VPN', 'V_PN', circuit.gnd, 'DC 0.9')
         circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
-        circuit.V('VNN', 'V_NN', circuit.gnd, 'DC 0.9')
 
         simulator = circuit.simulator(temperature=27, nominal_temperature=27)
+        simulator.options(klu=1)
 
-        try:
-            analysis = simulator.operating_point()
-        except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
-            raise e
+        analysis = simulator.operating_point()
 
         iq = float(analysis.branches['vvdd'][0])
         Vout = float(analysis.nodes['v_op'][0])
@@ -290,7 +187,15 @@ def run_simulation(mode):
         print(f"Quiescent Current: {abs(iq)*1e6:.2f} uA")
         print(f"Power Consumption: {power*1e6:.2f} uW")
 
+    # ====================================
+    # Performing the Slew Rate calculation
+    # ====================================
     if mode == 'SLEW':
+        # Remove the series/parallel feedback inductors/capacitors for slew rate analysis
+        circuit._elements.pop('LLFB1')
+        circuit._elements.pop('LLFB2')
+        circuit._elements.pop('CCFB1')
+        circuit._elements.pop('CCFB2')
         # Form the closed-loop configuration (Unity gain)
         circuit.R('RFB1', 'V_PN', 'V_OP', 0@u_Ohm)
         circuit.R('RFB2', 'V_NN', 'V_ON', 0@u_Ohm)
@@ -299,18 +204,9 @@ def run_simulation(mode):
         circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 1.8 PULSE(1.8 0 10u 10p 10p 20u 40u)')
 
         simulator = circuit.simulator(temperature=27, nominal_temperature=27)
-        simulator.options(method='gear')
+        simulator.options(klu=1, method='gear')
 
-        try:
-            analysis = simulator.transient(step_time=10@u_ns, end_time=13@u_us, start_time=7@u_us, use_initial_condition=True)
-        except Exception as e:
-            print("--------------------------------")
-            print("REAL NGSPICE ERROR:")
-            # This grabs the internal log from the shared library
-            print(simulator.ngspice.stdout) 
-            print(simulator.ngspice.stderr)
-            print("--------------------------------")
-            raise e
+        analysis = simulator.transient(step_time=10@u_ns, end_time=13@u_us, start_time=7@u_us, use_initial_condition=True)
 
         time = np.array(analysis.time)
         vin = analysis.nodes['v_pp'] - analysis.nodes['v_np']
@@ -350,129 +246,150 @@ def run_simulation(mode):
         plt.savefig('Slew_plot.png')
         plt.tight_layout()
 
-    # if mode == 'PSRR':
-    #     # Form the closed-loop configuration (Unity gain)
-    #     circuit.V('VFB1', 'V_PN', 'V_OP', 0@u_V)
-    #     circuit.V('VFB2', 'V_NN', 'V_ON', 0@u_V)
-    #     # Define DC Inputs (Quiescent Points)
-    #     circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9')
-    #     circuit.V('VPN', 'V_PN', circuit.gnd, 'DC 0.9')
-    #     circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
-    #     circuit.V('VNN', 'V_NN', circuit.gnd, 'DC 0.9')
-    #     # Redefine VDD as AC source for PSRR analysis
-    #     circuit._elements.pop('VVDD')
-    #     circuit.V('VDD', 'VDD', circuit.gnd, 'DC 1.8 AC 1')
+    # ===============================
+    # Performing the PSRR calculation
+    # ===============================
+    if mode == 'PSRR':
+        # # Redefine the circuit with mismatch for CMRR analysis
+        # circuit._elements.pop('XX1')
+        # circuit.X('X1', 'FDDA_PSRR', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
 
-    #     simulator = circuit.simulator(temperature=25, nominal_temperature=25)
+        # Define AC Input (Differential)
+        circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
+        circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC -1')
 
-    #     try:
-    #         analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
-    #     except Exception as e:
-    #         print("--------------------------------")
-    #         print("REAL NGSPICE ERROR:")
-    #         # This grabs the internal log from the shared library
-    #         print(simulator.ngspice.stdout) 
-    #         print(simulator.ngspice.stderr)
-    #         print("--------------------------------")
-    #         raise e
+        sim_dm = circuit.simulator(temperature=27, nominal_temperature=27)
+        sim_dm.options(klu=1)
 
-    #     freq = np.array(analysis.frequency)
-    #     vout = analysis.nodes['v_op'] - analysis.nodes['v_on']
-    #     vdd_ac  = analysis.nodes['vdd']
+        dm_analysis = sim_dm.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
 
-    #     psrr = abs(vdd_ac / vout)
-    #     psrr_db = 20 * np.log10(np.abs(psrr))
+        freq = np.array(dm_analysis.frequency)
+        vout_dm = dm_analysis.nodes['v_op'] - dm_analysis.nodes['v_on']
+        vin_dm  = (dm_analysis.nodes['v_pp'] - dm_analysis.nodes['v_pn']) - (dm_analysis.nodes['v_np'] - dm_analysis.nodes['v_nn'])
 
-    #     # PSRR at 1kHz
-    #     psrr_1k = np.interp(1e3, freq, psrr_db)
+        gain_dm = vout_dm / vin_dm
+        gain_dm_db = 20 * np.log10(np.abs(gain_dm))
 
-    #     print(f"\n--- PSRR ANALYSIS RESULTS ---")
-    #     print(f"PSRR at 1kHz: {psrr_1k:.2f} dB")
+        for name in ['VVPP', 'VVNP']:
+            circuit._elements.pop(name)
+        # Define DC Inputs (Quiescent Points)
+        circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9')
+        circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
+        # Redefine VDD as AC source for PSRR analysis
+        circuit._elements.pop('VVDD')
+        circuit.V('VDDac', 'VDD', circuit.gnd, 'DC 1.8 AC 1')
+
+        sim_ps = circuit.simulator(temperature=27, nominal_temperature=27)
+        sim_ps.options(klu=1)
+
+        ps_analysis = sim_ps.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
+
+        freq = np.array(ps_analysis.frequency)
+        vout_ps = ps_analysis.nodes['v_op'] - ps_analysis.nodes['v_on']
+        vdd_ac  = ps_analysis.nodes['vdd']
+
+        gain_ps = vout_ps / vdd_ac
+        gain_ps_db = 20 * np.log10(np.abs(gain_ps))
+
+        psrr_db = gain_dm_db - gain_ps_db
+        # PSRR at 1kHz
+        psrr_1k = np.interp(1e3, freq, psrr_db)
+
+        print(f"\n--- PSRR ANALYSIS RESULTS ---")
+        print(f"PSRR at 1kHz: {psrr_1k:.2f} dB")
         
-    #     _, ax = plt.subplots(figsize=(12, 8))
+        _, ax = plt.subplots(figsize=(12, 8))
 
-    #     ax.semilogx(freq, psrr_db, color='blue', linestyle='-')
-    #     ax.set_ylabel('PSRR (dB)')
-    #     ax.set_xlabel('Frequency (Hz)')
-    #     ax.grid(True, which="both", ls="-")
-    #     ax.set_title("PSRR Plot of FDDA-CMFB")
+        ax.semilogx(freq, psrr_db, color='blue', linestyle='-')
+        ax.set_ylabel('PSRR (dB)')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.grid(True, which="both", ls="-")
+        ax.set_title("PSRR Plot of FDDA-CMFB")
 
-    #     ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-    #     labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
-    #     ax.xaxis.set_major_locator(FixedLocator(ticks))
-    #     ax.xaxis.set_major_formatter(FixedFormatter(labels))
+        ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
+        labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
+        ax.xaxis.set_major_locator(FixedLocator(ticks))
+        ax.xaxis.set_major_formatter(FixedFormatter(labels))
 
-    #     ax.axhline(y=0, color='red', linestyle='--')  
+        ax.axhline(y=0, color='red', linestyle='--')  
 
-    #     plt.savefig('PSRR_plot.png')
-    #     plt.tight_layout()
+        plt.savefig('PSRR_plot.png')
+        plt.tight_layout()
 
-    # if mode == 'CMRR':
-    #     # Form the closed-loop configuration (Unity gain)
-    #     circuit.V('VFB1', 'V_PN', 'V_OP', 0@u_V)
-    #     circuit.V('VFB2', 'V_NN', 'V_ON', 0@u_V)
-    #     # Define DC Inputs (Quiescent Points)
-    #     circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
-    #     # circuit.V('VPN', 'V_PN', circuit.gnd, 'DC 0.9')
-    #     circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC 1')
-    #     # circuit.V('VNN', 'V_NN', circuit.gnd, 'DC 0.9')
+    # ===============================
+    # Performing the CMRR calculation
+    # ===============================
+    if mode == 'CMRR':
+        # # Redefine the circuit with mismatch for CMRR analysis
+        # circuit._elements.pop('XX1')
+        # circuit.X('X1', 'FDDA_CMRR', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
 
-    #     simulator = circuit.simulator(temperature=27, nominal_temperature=27)
-    #     simulator.options(gmin=1e-8)
+        # Define AC Input (Differential)
+        circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
+        circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC -1')
 
-    #     try:
-    #         analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
-    #     except Exception as e:
-    #         print("--------------------------------")
-    #         print("REAL NGSPICE ERROR:")
-    #         # This grabs the internal log from the shared library
-    #         print(simulator.ngspice.stdout) 
-    #         print(simulator.ngspice.stderr)
-    #         print("--------------------------------")
-    #         raise e
+        sim_dm = circuit.simulator(temperature=27, nominal_temperature=27)
+        sim_dm.options(klu=1)
 
-    #     freq = np.array(analysis.frequency)
-    #     vout = analysis.nodes['v_op'] - analysis.nodes['v_on']
-    #     vin_cm  = (analysis.nodes['v_pp'] + analysis.nodes['v_np']) / 2
+        dm_analysis = sim_dm.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
 
-    #     cmrr = abs(vout / vin_cm)
-    #     cmrr_db = 20 * np.log10(np.abs(cmrr))
+        freq = np.array(dm_analysis.frequency)
+        vout_dm = dm_analysis.nodes['v_op'] - dm_analysis.nodes['v_on']
+        vin_dm  = (dm_analysis.nodes['v_pp'] - dm_analysis.nodes['v_pn']) - (dm_analysis.nodes['v_np'] - dm_analysis.nodes['v_nn'])
 
-    #     # CMRR at 1kHz
-    #     cmrr_1k = np.interp(1e3, freq, cmrr_db)
+        gain_dm = vout_dm / vin_dm
+        gain_dm_db = 20 * np.log10(np.abs(gain_dm))
 
-    #     print(f"\n--- CMRR ANALYSIS RESULTS ---")
-    #     print(f"CMRR at 1kHz: {cmrr_1k:.2f} dB")
+        circuit._elements.pop('VVNP')
+        # Define AC Input (Common Mode)
+        circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC 1')
+
+        sim_cm = circuit.simulator(temperature=27, nominal_temperature=27)
+        sim_cm.options(klu=1)
+
+        cm_analysis = sim_cm.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
         
-    #     _, ax = plt.subplots(figsize=(12, 8))
+        freq = np.array(cm_analysis.frequency)
+        vout_cm = cm_analysis.nodes['v_op'] - cm_analysis.nodes['v_on']
+        vin_cm  = (cm_analysis.nodes['v_pp'] + cm_analysis.nodes['v_pn'] + cm_analysis.nodes['v_np'] + cm_analysis.nodes['v_nn']) / 4
 
-    #     ax.semilogx(freq, cmrr_db, color='blue', linestyle='-')
-    #     ax.set_ylabel('CMRR (dB)')
-    #     ax.set_xlabel('Frequency (Hz)')
-    #     ax.grid(True, which="both", ls="-")
-    #     ax.set_title("CMRR Plot of FDDA-CMFB")
+        gain_cm = vout_cm / vin_cm
+        gain_cm_db = 20 * np.log10(np.abs(gain_cm))
 
-    #     ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-    #     labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
-    #     ax.xaxis.set_major_locator(FixedLocator(ticks))
-    #     ax.xaxis.set_major_formatter(FixedFormatter(labels))
+        cmrr_db = gain_dm_db - gain_cm_db
+        # CMRR at 1kHz
+        cmrr_1k = np.interp(1e3, freq, cmrr_db)
+        
+        print(f"\n--- CMRR ANALYSIS RESULTS ---")
+        print(f"CMRR at 1kHz: {cmrr_1k:.2f} dB")
+        
+        _, ax = plt.subplots(figsize=(12, 8))
 
-    #     # ax.axhline(y=0, color='red', linestyle='--')  
+        ax.semilogx(freq, cmrr_db, color='blue', linestyle='-')
+        ax.set_ylabel('CMRR (dB)')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.grid(True, which="both", ls="-")
+        ax.set_title("CMRR Plot of FDDA-CMFB")
 
-    #     plt.savefig('CMRR_plot.png')
-    #     plt.tight_layout()
+        ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
+        labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
+        ax.xaxis.set_major_locator(FixedLocator(ticks))
+        ax.xaxis.set_major_formatter(FixedFormatter(labels)) 
 
-        return None
+        # ax.axhline(y=0, color='red', linestyle='--') 
+
+        plt.savefig('CMRR_plot.png')
+        plt.tight_layout()
 
 # Measure start time
 start_time = time()
 
 generate_spice(params)
 run_simulation('AC')
-# run_simulation('OP')
-# run_simulation('SLEW')
-# run_simulation('PSRR')
-# run_simulation('CMRR')
+run_simulation('OP')
+run_simulation('SLEW')
+run_simulation('PSRR')
+run_simulation('CMRR')
 
 # Measure end time and calculate elapsed time
 end_time = time()
