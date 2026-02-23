@@ -175,6 +175,7 @@ def run_simulation(mode):
 
         simulator = circuit.simulator(temperature=27, nominal_temperature=27)
         simulator.options(klu=1)
+        simulator.save_currents = True
 
         analysis = simulator.operating_point()
 
@@ -186,6 +187,26 @@ def run_simulation(mode):
         print(f"Output DC Voltage: {Vout:.5f} V")
         print(f"Quiescent Current: {abs(iq)*1e6:.2f} uA")
         print(f"Power Consumption: {power*1e6:.2f} uW")
+
+        # Write all operating point values to a text file
+        with open('op_results.txt', 'w') as f:
+            f.write("Operating Point Analysis Results:\n")
+            f.write(f"Output DC Voltage (V_OP): {Vout:.5f} V\n")
+            f.write(f"Quiescent Current (I_Q): {abs(iq)*1e6:.2f} uA\n")
+            f.write(f"Power Consumption: {power*1e6:.2f} uW\n")
+            f.write("\nDetailed Node Voltages:\n")
+            for node in analysis.nodes:
+                voltage = float(analysis.nodes[node][0])
+                f.write(f"{node}: {voltage:.5f} V\n")
+            f.write("\nDetailed Branch Currents:\n")
+            for branch in analysis.branches:
+                current = float(analysis.branches[branch][0])
+                f.write(f"{branch}: {current*1e6:.2f} uA\n")
+            f.write("\nInternal Parameters:\n")
+            for key in analysis.internal_parameters:
+                if len(analysis[key]) > 0:
+                    current = float(analysis[key].item())
+                    f.write(f"{key}: {current*1e6:.2f} uA\n")        
 
     # ====================================
     # Performing the Slew Rate calculation
@@ -381,6 +402,59 @@ def run_simulation(mode):
         plt.savefig('CMRR_plot.png')
         plt.tight_layout()
 
+    # =================================
+    # Performing a TRANSIENT simulation
+    # =================================
+    if mode == 'TRANSIENT':
+        # Remove the series/parallel feedback inductors/capacitors for slew rate analysis
+        circuit._elements.pop('LLFB1')
+        circuit._elements.pop('LLFB2')
+        circuit._elements.pop('CCFB1')
+        circuit._elements.pop('CCFB2')
+        # Form the closed-loop configuration (Unity gain)
+        circuit.R('RFB1', 'V_PN', 'V_OP', 5@u_MOhm)
+        circuit.R('RFB2', 'V_NN', 'V_ON', 5@u_MOhm)
+        circuit.R('RGND1', 'V_PN', 'V_NP', 1@u_MOhm)
+        circuit.R('RGND2', 'V_NN', 'V_NP', 1@u_MOhm)
+        # Define Sine Input (Differential) on top of DC bias
+        circuit.V('VPP', 'V_PP', 'V_NP', 'SINE(0 10m 1k)')
+        circuit.V('VREF', 'V_NP', circuit.gnd, 0.9@u_V)
+
+        simulator = circuit.simulator(temperature=27, nominal_temperature=27)
+        simulator.options(klu=1, method='gear')
+
+        analysis = simulator.transient(step_time=10@u_us, end_time=2@u_ms, use_initial_condition=True)
+
+        time = np.array(analysis.time)
+        vin = analysis.nodes['v_pp'] - analysis.nodes['v_np']
+        vout = analysis.nodes['v_op'] - analysis.nodes['v_on']
+        
+        vin_pp = np.ptp(vin)    # Peak-to-peak voltage of the input
+        vout_pp = np.ptp(vout)  # Peak-to-peak voltage of the output
+        gain = vout_pp / vin_pp
+
+        print(f"\n--- TRANSIENT ANALYSIS RESULTS ---")
+        print(f"Measured gain: {gain:.2f}")
+        
+        _, ax = plt.subplots(figsize=(12, 8))
+
+        ax.plot(time*1e3, vin*1e3, color='red', linestyle='--')
+        ax.grid(True, which="both", ls="-")
+        ax.set_title("FDDA-CMFB Time Domain Response")
+
+        ax.plot(time*1e3, vout*1e3, color='blue', linestyle='--')
+        ax.set_ylabel('Voltage (mV)')
+        ax.set_xlabel('Time (ms)')
+        ax.grid(True, which="both", ls="-")
+
+        # legend
+        ax.plot([], [], color='red', linestyle='--', label='Input (Differential)')
+        ax.plot([], [], color='blue', linestyle='--', label='Output (Differential)')
+        ax.legend(loc='upper right')
+
+        plt.savefig('Transient_plot.png')
+        plt.tight_layout()
+        
 # Measure start time
 start_time = time()
 
@@ -390,6 +464,7 @@ run_simulation('OP')
 run_simulation('SLEW')
 run_simulation('PSRR')
 run_simulation('CMRR')
+run_simulation('TRANSIENT')
 
 # Measure end time and calculate elapsed time
 end_time = time()
