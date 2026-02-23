@@ -158,10 +158,10 @@ def survivability_test(particle, verbose=False):
     specs_dict = {
         'SR': SR_calc,
         'GBW': GBW_calc,
-        'Gain': Gain_dc_calc,
         'Gain_dB': 20*np.log10(Gain_dc_calc),
         'PM': PM_calc,
         'Power': Power_calc,
+        'CMRR_db': 20*np.log10(CMRR_calc),
         'Area': Area_active,
         'W_1': W['W_1'], 'L_1': L['L_1'],
         'W_2': W['W_2'], 'L_2': L['L_2'],

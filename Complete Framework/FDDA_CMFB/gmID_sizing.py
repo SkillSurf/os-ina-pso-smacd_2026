@@ -1,5 +1,3 @@
-import numpy as np
-from scipy.interpolate import interp1d
 from pygmid import Lookup as lk
 
 from specs import *
