@@ -1,6 +1,6 @@
 import numpy as np
 
-from gmID_sizing import get_A, get_specVars
+from gmID_sizing import get_Area, get_specVars
 from specs import *
 
 # ==========================================================================
@@ -9,7 +9,7 @@ from specs import *
 def survivability_test(particle, verbose=False):
     """
     Test if a particle meets all design specifications
-    particle = [gm_ID_1, ..., gm_ID_6, L_1_idx, ..., L_8_idx, I_T, I_X, V_A, V_B, V_C]
+    particle = [gm_ID_1, ..., gm_ID_6, L_1_idx, ..., L_6_idx, I_T, V_A, V_B]
     """
     gm_ID_1 = particle[0]
     gm_ID_2 = particle[1]
@@ -17,19 +17,17 @@ def survivability_test(particle, verbose=False):
     gm_ID_4 = particle[3]
     gm_ID_5 = particle[4]
     gm_ID_6 = particle[5]
+
     L_1_idx = particle[6]
     L_2_idx = particle[7]
     L_3_idx = particle[8]
     L_4_idx = particle[9]
     L_5_idx = particle[10]
     L_6_idx = particle[11]
-    L_7_idx = particle[12]
-    L_8_idx = particle[13]
-    I_T = particle[14]
-    I_X = particle[15]
-    V_A = particle[16]
-    V_B = particle[17]
-    V_C = particle[18]
+
+    I_T = particle[12]
+    V_A = particle[13]
+    V_B = particle[14]
 
     L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
     L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -37,23 +35,15 @@ def survivability_test(particle, verbose=False):
     L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
     L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
     L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
-    L_7 = L_DISCRETE_VALUES[int(L_7_idx)]
-    L_8 = L_DISCRETE_VALUES[int(L_8_idx)]
 
     gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 'gm_ID_4': gm_ID_4,
              'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
 
-    Vds = {'Vds_1': V_C - V_B, 'Vds_2': VDD - V_A, 'Vds_3': V_A - Vout_DC, 'Vds_4': Vout_DC - V_B,
-           'Vds_5': V_B, 'Vds_6': VDD - V_C}
+    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
 
-    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6, 'L_7': L_7, 'L_8': L_8}
-
-    ID = { 'ID_1': I_T / 2, 'ID_2': I_X, 'ID_3': I_X, 'ID_4': I_X, 'ID_5': I_X + I_T, 'ID_6': I_T,
-          'ID_7': (I_X + I_T) / 2, 'ID_8': I_X + I_T}
-
-    W, gm, gds, C, Vgs, gamma, flicker = get_specVars(gm_ID, Vds, L, ID)
+    W, L, gm, gds, C, Vgs, gamma, flicker, ID = get_specVars(gm_ID, L, V_A, V_B, I_T)
     
-    if any(w is None for w in W.values()):
+    if W is None or any(w is None for w in W.values()):
         return False, np.inf, None
 
     # ===================
@@ -69,7 +59,7 @@ def survivability_test(particle, verbose=False):
     # ==================================
     # Gain-Bandwidth Product Calculation
     # ==================================
-    C_load = (2 * CL) + C['Cdd_3'] + C['Cdd_4']
+    C_load = (2 * CL) + C['Cdd_3'] + C['Cdd_4'] + C['Cgg_7']
     GBW_rads = Gm_dm / C_load
     GBW_calc = GBW_rads / (2 * np.pi)
     
@@ -85,46 +75,46 @@ def survivability_test(particle, verbose=False):
     # =====================
     # Slew Rate Calculation
     # =====================
-    SR_calc = ID['ID_6'] / C_load
+    SR_calc = 2 * ID['ID_6'] / C_load
     
     # =================
     # Power Calculation
     # =================
     Power_calc = 4 * ID['ID_5'] * VDD
     
-    # ================================
-    # Input Referred Noise Calculation
-    # ================================
-    noise_1 = 4 * (((4 * k * temp * gamma['gamma_1']) / gm['gm_1']) + (flicker['flicker_1'] / gm['gm_1'] / freq))
-    noise_5 = 2 * (((4 * k * temp * gamma['gamma_5'] * gm['gm_5']) / (gm['gm_1'] ** 2)) + ((flicker['flicker_5'] / freq) * (gm['gm_5'] / (gm['gm_1'] ** 2))))
-    noise_2 = 2 * (((4 * k * temp * gamma['gamma_2'] * gm['gm_2']) / (gm['gm_1'] ** 2)) + ((flicker['flicker_2'] / freq) * (gm['gm_2'] / (gm['gm_1'] ** 2))))
-    noise_calc = np.sqrt(noise_1 + noise_5 + noise_2)
+    # # ================================
+    # # Input Referred Noise Calculation
+    # # ================================
+    # noise_1 = 4 * (((4 * k * temp * gamma['gamma_1']) / gm['gm_1']) + (flicker['flicker_1'] / gm['gm_1'] / freq))
+    # noise_5 = 2 * (((4 * k * temp * gamma['gamma_5'] * gm['gm_5']) / (gm['gm_1'] ** 2)) + ((flicker['flicker_5'] / freq) * (gm['gm_5'] / (gm['gm_1'] ** 2))))
+    # noise_2 = 2 * (((4 * k * temp * gamma['gamma_2'] * gm['gm_2']) / (gm['gm_1'] ** 2)) + ((flicker['flicker_2'] / freq) * (gm['gm_2'] / (gm['gm_1'] ** 2))))
+    # noise_calc = np.sqrt(noise_1 + noise_5 + noise_2)
     
-    # ================
-    # CMRR Calculation
-    # ================
-    C_tail = C['Cdd_6'] + (2 * C['Css_1'])
-    Z_tail = np.abs(1 / (gds['gds_6'] + (1j * 2 * np.pi * freq * C_tail)))
-    Gm_cm = 1 / Z_tail
+    # # ================
+    # # CMRR Calculation
+    # # ================
+    # C_tail = C['Cdd_6'] + (2 * C['Css_1'])
+    # Z_tail = np.abs(1 / (gds['gds_6'] + (1j * 2 * np.pi * freq * C_tail)))
+    # Gm_cm = 1 / Z_tail
 
-    Rparr_cm = 1 / (gds['gds_5'] + (1 / ((0.5 / gds['gds_1']) + ((1 / gds['gds_6']) * (1 + (gm['gm_1'] / gds['gds_1']))))))
-    Rout_B_cm = (1 / gds['gds_4']) + ((1 + (gm['gm_4'] / gds['gds_4'])) * Rparr_cm)
-    Rout_cm = (Rout_A * Rout_B_cm) / (Rout_A + Rout_B_cm)
-    Zout_cm = abs(1 / ((1 / Rout_cm) + (1j * 2 * np.pi * freq * C_load)))
-    Gain_cm_open = Gm_cm * Zout_cm
+    # Rparr_cm = 1 / (gds['gds_5'] + (1 / ((0.5 / gds['gds_1']) + ((1 / gds['gds_6']) * (1 + (gm['gm_1'] / gds['gds_1']))))))
+    # Rout_B_cm = (1 / gds['gds_4']) + ((1 + (gm['gm_4'] / gds['gds_4'])) * Rparr_cm)
+    # Rout_cm = (Rout_A * Rout_B_cm) / (Rout_A + Rout_B_cm)
+    # Zout_cm = abs(1 / ((1 / Rout_cm) + (1j * 2 * np.pi * freq * C_load)))
+    # Gain_cm_open = Gm_cm * Zout_cm
 
-    Lgain_cmfb = abs((gm['gm_2'] * gm['gm_7']) / ((1j * 2 * np.pi * freq * C_load) * gm['gm_8']))
-    Gain_cm_calc = Gain_cm_open / (1 + Lgain_cmfb)
+    # Lgain_cmfb = abs((gm['gm_2'] * gm['gm_7']) / ((1j * 2 * np.pi * freq * C_load) * gm['gm_8']))
+    # Gain_cm_calc = Gain_cm_open / (1 + Lgain_cmfb)
 
-    Zout_dm = abs(1 / ((1 / Rout_dm) + (1j * 2 * np.pi * freq * C_load)))
-    Gain_dm_calc = Gm_dm * Zout_dm
+    # Zout_dm = abs(1 / ((1 / Rout_dm) + (1j * 2 * np.pi * freq * C_load)))
+    # Gain_dm_calc = Gm_dm * Zout_dm
 
-    CMRR_calc = Gain_dm_calc / Gain_cm_calc
+    # CMRR_calc = Gain_dm_calc / Gain_cm_calc
 
     # ================
     # Area Calculation
     # ================
-    Area_active = get_A(W, L)
+    Area_active = get_Area(W, L)
     
     # ========================
     # Bias Voltage Calculation
@@ -141,17 +131,18 @@ def survivability_test(particle, verbose=False):
         PM_calc >= PM_spec and
         SR_calc >= SR_spec and
         Power_calc <= Power_spec and
-        noise_calc <= noise_spec and
-        CMRR_calc >= CMRR_spec and
+        # noise_calc <= noise_spec and
+        # CMRR_calc >= CMRR_spec and
+        Area_active <= Area_spec and
         W['W_1'] >= 0.42 and W['W_2'] >= 0.42 and
         W['W_3'] >= 0.42 and W['W_4'] >= 0.42 and
         W['W_5'] >= 0.42 and W['W_6'] >= 0.42 and
         W['W_7'] >= 0.42 and W['W_8'] >= 0.42 and
-        V_B1 >= 0 and V_B1 <= VDD and
-        V_B2 >= 0 and V_B2 <= VDD and
-        V_B3 >= 0 and V_B3 <= VDD and
-        V_B4 >= 0 and V_B4 <= VDD and
-        V_CMFB >= 0 and V_CMFB <= VDD and
+        V_B1 > 0 and V_B1 < VDD and
+        V_B2 > 0 and V_B2 < VDD and
+        V_B3 > 0 and V_B3 < VDD and
+        V_B4 > 0 and V_B4 < VDD and
+        V_CMFB > 0 and V_CMFB < VDD and
         Area_active > 0
     )
     
@@ -161,7 +152,8 @@ def survivability_test(particle, verbose=False):
         'Gain_dB': 20*np.log10(Gain_dc_calc),
         'PM': PM_calc,
         'Power': Power_calc,
-        'CMRR_db': 20*np.log10(CMRR_calc),
+        # 'Noise': noise_calc,
+        # 'CMRR_db': 20*np.log10(CMRR_calc),
         'Area': Area_active,
         'W_1': W['W_1'], 'L_1': L['L_1'],
         'W_2': W['W_2'], 'L_2': L['L_2'],
@@ -180,12 +172,12 @@ def survivability_test(particle, verbose=False):
     
     if verbose and specs_met:
         print(f"  Gain: {20*np.log10(Gain_dc_calc):.3f} dB (spec: {Gain_dc_spec_dB:.3f})")
-        print(f"  GBW: {GBW_calc*1e-6:.3f} MHz (spec: {GBW_spec*1e-6:.3f})")
-        print(f"  PM: {PM_calc:.3f}° (spec: {PM_spec:.3f})")
-        print(f"  SR: {SR_calc*1e-6:.3f} V/μs (spec: {SR_spec*1e-6:.3f})")
-        print(f"  Power: {Power_calc*1e6:.3f} μW (spec: {Power_spec*1e6:.3f})")
-        print(f"  Noise: {noise_calc*1e6:.3f} μV/√Hz (spec: {noise_spec*1e6:.3f})")
-        print(f"  CMRR: {20*np.log10(CMRR_calc):.3f} dB (spec: {CMRR_spec_dB:.3f})")
+        # print(f"  GBW: {GBW_calc*1e-6:.3f} MHz (spec: {GBW_spec*1e-6:.3f})")
+        # print(f"  PM: {PM_calc:.3f}° (spec: {PM_spec:.3f})")
+        # print(f"  SR: {SR_calc*1e-6:.3f} V/μs (spec: {SR_spec*1e-6:.3f})")
+        # print(f"  Power: {Power_calc*1e6:.3f} μW (spec: {Power_spec*1e6:.3f})")
+        # print(f"  Noise: {noise_calc*1e6:.3f} μV/√Hz (spec: {noise_spec*1e6:.3f})")
+        # print(f"  CMRR: {20*np.log10(CMRR_calc):.3f} dB (spec: {CMRR_spec_dB:.3f})")
         print(f"  Area: {Area_active:.3f} μm²")
     
     return specs_met, Area_active, specs_dict

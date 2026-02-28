@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from specs import *
-from gmID_sizing import get_W, get_feasRegion
+from gmID_sizing import get_params, get_feasRegion
 from survivability_check import survivability_test
 from particle_generation import generate_N_particles, generate_particle
 from pso import PSO
@@ -11,292 +11,395 @@ from simulator import evaluate_design
 
 def main():
     
-    gm_ID_min, gm_ID_max, L_available, n_L_values, I_T_min, I_T_max, I_X_min, I_X_max, \
-        V_A_min, V_A_max, V_B_min, V_B_max, V_C_min, V_C_max = \
-        get_feasRegion(gm_ID_range, V_A_range, V_B_range, V_C_range, L_DISCRETE_VALUES)
+    gm_ID_min, gm_ID_max, L_available, n_L_values, I_T_min, I_T_max, V_A_min, V_A_max, \
+        V_B_min, V_B_max = get_feasRegion(gm_ID_range, V_A_range, V_B_range, L_DISCRETE_VALUES)
     
     cont_bounds = [
         (gm_ID_min, gm_ID_max),
         (I_T_min, I_T_max),
-        (I_X_min, I_X_max),
         (V_A_min, V_A_max),
-        (V_B_min, V_B_max),
-        (V_C_min, V_C_max)
+        (V_B_min, V_B_max)
     ]
     
     print(f"Feasible Region Done")
     
-    # particles, fitness, specs_list = generate_N_particles(
-    #     cont_bounds, n_L_values, N_PARTICLES, verbose=True
-    # )
+    particles, fitness, specs_list = generate_N_particles(
+        cont_bounds, n_L_values, N_PARTICLES, verbose=True
+    )
     
-    # if particles is None:
-    #     print("\nERROR: Failed to generate initial particles!")
-    #     return None
+    if particles is None:
+        print("\nERROR: Failed to generate initial particles!")
+        return None
     
-    # print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
+    print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
+    print(f"Initial best area: {np.min(fitness):.2f} μm²")
     
-    # print("\nInitializing PSO optimizer...")
+    print("\nInitializing PSO optimizer...")
+    print("-"*70)
     
-    # pso = PSO(
-    #     cont_bounds=cont_bounds,
-    #     n_L_values=n_L_values,
-    #     n_particles=N_PARTICLES,
-    #     w=0.7,
-    #     c1=1.7,
-    #     c2=1.7,
-    #     max_velocity_updates=MAX_VELOCITY_UPDATES
-    # )
+    pso = PSO(
+        cont_bounds=cont_bounds,
+        n_L_values=n_L_values,
+        n_particles=N_PARTICLES,
+        w=0.7,
+        c1=1.7,
+        c2=1.7,
+        max_velocity_updates=MAX_VELOCITY_UPDATES
+    )
     
-    # pso.initialize_velocities()
-    # pso.set_initial_best(particles, fitness, specs_list)
+    pso.initialize_velocities()
+    pso.set_initial_best(particles, fitness, specs_list)
     
-    # print(f"PSO initialized with {N_PARTICLES} particles")
+    print(f"PSO initialized with {N_PARTICLES} particles")
+    print(f"Global best: {pso.gbest_fitness:.2f} μm²")
     
-    # # Tracking variables
-    # gbest_history = [pso.gbest_fitness]
-    # avg_fitness_history = [np.mean(fitness)]
+    gbest_history = [pso.gbest_fitness]
+    avg_fitness_history = [np.mean(fitness)]
     
-    # start_time = time.time()
+    start_time = time.time()
     
-    # # Main Loop
-    # for iteration in range(MAX_ITERATIONS):
-        
-    #     print("\nRunning PSO update...")
-    #     particles, fitness, need_simulator_check = pso.update_swarm(particles, fitness)
-        
-    #     print(f"  Updated {len(need_simulator_check)} particles")
+    for iteration in range(MAX_ITERATIONS):
 
-    #     if len(need_simulator_check) > 0:
-    #         print(f"\nChecking {len(need_simulator_check)} particles with simulator...")
+        particles, fitness, need_simulator_check = pso.update_swarm(particles, fitness)
+        
+        print(f"  Updated {len(need_simulator_check)} particles")
+        print(f"  Current global best: {pso.gbest_fitness:.2f} μm²")
+
+        if len(need_simulator_check) > 0:
+
+            rejected_indices = []
             
-    #         rejected_indices = []
-            
-    #         for idx in need_simulator_check:
-    #             particle = particles[idx]
-    #             gm1, gm2, L_1_idx, L_2_idx, ID = particle
-    #             L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
-    #             L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
+            for idx in need_simulator_check:
+                particle = particles[idx]
                 
-    #             # Get W values
-    #             W_1, W_2, _, _, _ = get_W(gm1, gm2, L_1, L_2, ID)
+                gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = particle[0:6]
+                L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = particle[6:12]
+                I_T, V_A, V_B = particle[12:15]
                 
-    #             if W_1 is not None and W_2 is not None:
-    #                 print(f"  Particle {idx}: Simulating...")
+                L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
+                L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
+                L_3 = L_DISCRETE_VALUES[int(L_3_idx)]
+                L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
+                L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
+                L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
+                
+                gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
+                         'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+                
+                L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
+
+                # Get W, L, and Vgs values
+                W, L, _, _, Vgs, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                
+                if W is not None and not any(w is None for w in W.values()):
+                    print(f"  Particle {idx}: Simulating...")
                     
-    #                 # Run simulator
-    #                 sim_passed, _ = evaluate_design(W_1, L_1, W_2, L_2, ID*1e6)
+                    current_params = {
+                        'W_1': W['W_1'], 'L_1': L_1,
+                        'W_2': W['W_2'], 'L_2': L_2,
+                        'W_3': W['W_3'], 'L_3': L_3,
+                        'W_4': W['W_4'], 'L_4': L_4,
+                        'W_5': W['W_5'], 'L_5': L_5,
+                        'W_6': W['W_6'], 'L_6': L_6,
+                        'W_7': W['W_7'], 'L_7': L['L_7'],
+                        'W_8': W['W_8'], 'L_8': L['L_8'],
+                        'V_B1': VDD - Vgs['Vgs_6'],
+                        'V_B2': Vgs['Vgs_5'],
+                        'V_B3': V_B + Vgs['Vgs_4'],
+                        'V_B4': V_A - Vgs['Vgs_3'],
+                        'V_CM': VCM
+                    }
+                    # Run simulator
+                    sim_passed, _ = evaluate_design(current_params)
                     
-    #                 if not sim_passed:
-    #                     print(f"    Particle {idx}: REJECTED by simulator")
-    #                     rejected_indices.append(idx)
-    #                     fitness[idx] = np.inf  # Mark as infeasible
-    #                 else:
-    #                     print(f"    Particle {idx}: PASSED simulator")
-    #             else:
-    #                 rejected_indices.append(idx)
-    #                 fitness[idx] = np.inf
+                    if not sim_passed:
+                        print(f"    Particle {idx}: REJECTED by simulator")
+                        rejected_indices.append(idx)
+                        fitness[idx] = np.inf  # Mark as infeasible
+                    else:
+                        print(f"    Particle {idx}: PASSED simulator")
+                else:
+                    rejected_indices.append(idx)
+                    fitness[idx] = np.inf
             
-    #         # Velocity updates for rejected particles from the simulator
-    #         if len(rejected_indices) > 0:
-    #             print(f"\nPerforming velocity updates for {len(rejected_indices)} rejected particles...")
-                
-    #             for idx in rejected_indices:
-    #                 # Try multiple velocity updates
-    #                 for attempt in range(MAX_VELOCITY_UPDATES):
-    #                     offspring, area, specs, success = pso.generate_offspring(idx, particles[idx])
+            # Velocity updates for rejected particles from the simulator
+            if len(rejected_indices) > 0:
+                print(f"\nPerforming velocity updates for {len(rejected_indices)} rejected particles...")
+
+                for idx in rejected_indices:
+                    # Try multiple velocity updates to recover the particle
+                    for attempt in range(MAX_VELOCITY_UPDATES):
+                        offspring, area, specs, success = pso.generate_offspring(idx, particles[idx])
                         
-    #                     if success and area < np.inf:
-    #                         # Check with simulator again
-    #                         gm1, gm2, L_1_idx, L_2_idx, ID = offspring
-    #                         L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
-    #                         L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
-    #                         W_1, W_2, _, _, _ = get_W(gm1, gm2, L_1, L_2, ID)
+                        if success and area < np.inf:
+                            # Check with simulator again
+                            gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = offspring[0:6]
+                            L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = offspring[6:12]
+                            I_T, V_A, V_B = offspring[12:15]
                             
-    #                         if W_1 is not None and W_2 is not None:
-    #                             sim_passed, _ = evaluate_design(W_1, L_1, W_2, L_2, ID*1e6)
+                            L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
+                            L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
+                            L_3 = L_DISCRETE_VALUES[int(L_3_idx)]
+                            L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
+                            L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
+                            L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
+                            
+                            gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
+                                    'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+                            
+                            L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
+
+                            # Get W, L, and Vgs values
+                            W, L, _, _, Vgs, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                
+                            if W is not None and not any(w is None for w in W.values()):
+                                current_params = {
+                                    'W_1': W['W_1'], 'L_1': L_1,
+                                    'W_2': W['W_2'], 'L_2': L_2,
+                                    'W_3': W['W_3'], 'L_3': L_3,
+                                    'W_4': W['W_4'], 'L_4': L_4,
+                                    'W_5': W['W_5'], 'L_5': L_5,
+                                    'W_6': W['W_6'], 'L_6': L_6,
+                                    'W_7': W['W_7'], 'L_7': L['L_7'],
+                                    'W_8': W['W_8'], 'L_8': L['L_8'],
+                                    'V_B1': VDD - Vgs['Vgs_6'],
+                                    'V_B2': Vgs['Vgs_5'],
+                                    'V_B3': V_B + Vgs['Vgs_4'],
+                                    'V_B4': V_A - Vgs['Vgs_3'],
+                                    'V_CM': VCM
+                                }
+
+                                sim_passed, _ = evaluate_design(current_params)
                                 
-    #                             if sim_passed:
-    #                                 particles[idx] = offspring
-    #                                 fitness[idx] = area
-    #                                 print(f"    Particle {idx}: Recovered with velocity update (Area={area:.2f})")
-    #                                 break
+                                if sim_passed:
+                                    particles[idx] = offspring
+                                    fitness[idx] = area
+                                    print(f"    Particle {idx}: Recovered with velocity update (Area={area:.2f})")
+                                    break
                     
-    #                 # If still rejected after velocity updates, mark for regeneration
-    #                 if fitness[idx] == np.inf:
-    #                     print(f"    Particle {idx}: Failed all velocity updates")
+                    # If still rejected after velocity updates, mark for regeneration
+                    if fitness[idx] == np.inf:
+                        print(f"    Particle {idx}: Failed all velocity updates")
             
-    #         print("\nUpdating personal and global bests...")
-    #         for i in range(N_PARTICLES):
-    #             if fitness[i] < np.inf and fitness[i] < pso.pbest_fitness[i]:
-    #                 pso.pbest_fitness[i] = fitness[i]
-    #                 pso.pbest_positions[i] = particles[i].copy()
-    #                 print(f"  Particle {i}: Updated pbest = {fitness[i]:.2f} μm²")
+            print("\nUpdating personal and global bests...")
+            for i in range(N_PARTICLES):
+                if fitness[i] < np.inf and fitness[i] < pso.pbest_fitness[i]:
+                    pso.pbest_fitness[i] = fitness[i]
+                    pso.pbest_positions[i] = particles[i].copy()
+                    print(f"  Particle {i}: Updated pbest = {fitness[i]:.2f} μm²")
             
-    #         best_idx = np.argmin(fitness)
-    #         if fitness[best_idx] < np.inf and fitness[best_idx] < pso.gbest_fitness:
-    #             pso.gbest_fitness = fitness[best_idx]
-    #             pso.gbest_position = particles[best_idx].copy()
-    #             _, _, specs_dict = survivability_test(particles[best_idx])
-    #             pso.gbest_specs = specs_dict
-    #             print(f"  New global best: {fitness[best_idx]:.2f} μm²")
+            best_idx = np.argmin(fitness)
+            if fitness[best_idx] < np.inf and fitness[best_idx] < pso.gbest_fitness:
+                pso.gbest_fitness = fitness[best_idx]
+                pso.gbest_position = particles[best_idx].copy()
+                _, _, specs_dict = survivability_test(particles[best_idx])
+                pso.gbest_specs = specs_dict
+                print(f"  New global best: {fitness[best_idx]:.2f} μm²")
             
-    #         # Refill rejected particles with new random particles
-    #         rejected_mask = fitness == np.inf
-    #         n_rejected = np.sum(rejected_mask)
+            # Refill rejected particles with new random particles
+            rejected_mask = fitness == np.inf
+            n_rejected = np.sum(rejected_mask)
             
-    #         if n_rejected > 0:
-    #             print(f"\nRefilling {n_rejected} rejected particles...")
-                
-    #             refill_count = 0
-    #             for idx in np.where(rejected_mask)[0]:
-    #                 # new particle
-    #                 new_particle, new_area, new_specs = generate_particle(cont_bounds, n_L_values)
+            if n_rejected > 0:
+
+                refill_count = 0
+                for idx in np.where(rejected_mask)[0]:
+                    # New particle generation for rejected particles
+                    new_particle, new_area, new_specs = generate_particle(cont_bounds, n_L_values)
                     
-    #                 if new_particle is not None:
-    #                     # Check survivability (already done in generate_particle)
-    #                     particles[idx] = new_particle
-    #                     fitness[idx] = new_area
-    #                     refill_count += 1
-    #                     print(f"    Particle {idx}: Refilled (Area={new_area:.2f})")
-    #                 else:
-    #                     print(f"    Particle {idx}: Failed to refill")
+                    if new_particle is not None:
+                        # Check survivability (already done in generate_particle)
+                        particles[idx] = new_particle
+                        fitness[idx] = new_area
+                        refill_count += 1
+                        print(f"    Particle {idx}: Refilled (Area={new_area:.2f})")
+                    else:
+                        print(f"    Particle {idx}: Failed to refill")
                 
-    #             print(f"  Successfully refilled {refill_count}/{n_rejected} particles")
+                print(f"  Successfully refilled {refill_count}/{n_rejected} particles")
         
-    #     gbest_history.append(pso.gbest_fitness)
-    #     avg_fitness_history.append(np.mean(fitness[fitness < np.inf]))
+        gbest_history.append(pso.gbest_fitness)
+        avg_fitness_history.append(np.mean(fitness[fitness < np.inf]))
         
-    #     valid_fitness = fitness[fitness < np.inf]
-    #     print(f"\nIteration {iteration + 1} Summary:")
-    #     print(f"  Global Best: {pso.gbest_fitness:.2f} μm²")
-    #     if len(valid_fitness) > 0:
-    #         print(f"  Average:     {np.mean(valid_fitness):.2f} μm²")
-    #     print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}")
+        valid_fitness = fitness[fitness < np.inf]
+        print(f"\nIteration {iteration + 1} Summary:")
+        print(f"  Global Best: {pso.gbest_fitness:.2f} μm²")
+        if len(valid_fitness) > 0:
+            print(f"  Average:     {np.mean(valid_fitness):.2f} μm²")
+        print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}")
     
-    # end_time = time.time()
-    # optimization_time = end_time - start_time
-    
-    # print("Optimization is complete!")
-  
-    # print("\nExtracting final design parameters...")
-    
-    # best_solution = pso.get_best_solution()
-    
-    # gm1 = best_solution['gm1']
-    # gm2 = best_solution['gm2']
-    # L_1 = best_solution['L_1']
-    # L_2 = best_solution['L_2']
-    # ID = best_solution['ID']
-    
-    # W_1, W_2, _, _, _ = get_W(gm1, gm2, L_1, L_2, ID)
-    
-    # print("\nOptimal Design Parameters:")
-    # print(f"  gm1     = {gm1*1e6:.2f} μS")
-    # print(f"  gm2     = {gm2*1e6:.2f} μS")
-    # print(f"  L_1     = {L_1:.2f} μm")
-    # print(f"  L_2     = {L_2:.2f} μm")
-    # print(f"  ID      = {ID*1e6:.2f} μA")
-    # print(f"  gm/ID_1 = {best_solution['gm_ID_1']:.2f} S/A")
-    # print(f"  gm/ID_2 = {best_solution['gm_ID_2']:.2f} S/A")
-    
-    # print("\nOptimal Transistor Sizing:")
-    # print(f"  W_1 = {W_1:.2f} μm")
-    # print(f"  W_2 = {W_2:.2f} μm")
-    # print(f"  L_1 = {L_1:.2f} μm")
-    # print(f"  L_2 = {L_2:.2f} μm")
-    
-    # print(f"\nOPTIMAL AREA: {best_solution['area']:.4f} μm²")
+    end_time = time.time()
+    optimization_time = end_time - start_time
 
-    # # Final simulator verification    
-    # print("\nFinal Simulator Verification...")
-    # final_check, final_results = evaluate_design(W_1, L_1, W_2, L_2, ID*1e6, plots=True)
-    # print(f"Final design {'PASSED' if final_check else 'FAILED'} simulator check")
-    
-    # if final_results is not None:
-    #     print("\nPerformance Specifications:")
-    #     print(f"  Slew Rate:    {final_results['SR_meas']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
-    #     print(f"  GBW:          {final_results['GBW_meas']*1e-6:.2f} MHz      (spec: ≥{GBW_spec*1e-6:.2f})")
-    #     print(f"  Gain:         {final_results['Gain_meas_dB']:.2f} dB      (spec: ≥{Gain_spec_dB:.2f})")
-    #     print(f"  Phase Margin: {final_results['PM_meas']:.2f}°        (spec: ≥{PM_spec:.2f})")
-    #     print(f"  Power:        {final_results['Power_meas']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
-    
-    # print(f"\nOptimization Time: {optimization_time:.2f} seconds")
-    
-    # plot_convergence(gbest_history, avg_fitness_history)
-    
-    # save_results(best_solution, W_1, W_2, optimization_time, final_check, final_results)
-    
-    # return best_solution
+    print("Optimization is complete!")
 
-# def plot_convergence(gbest_history, avg_history):
+    print("\nExtracting final design parameters...")
+    
+    best_solution = pso.get_best_solution()
+    
+    gm_ID_1 = best_solution['gm_ID_1']
+    gm_ID_2 = best_solution['gm_ID_2']
+    gm_ID_3 = best_solution['gm_ID_3']
+    gm_ID_4 = best_solution['gm_ID_4']
+    gm_ID_5 = best_solution['gm_ID_5']
+    gm_ID_6 = best_solution['gm_ID_6']
+    L_1 = best_solution['L_1']
+    L_2 = best_solution['L_2']
+    L_3 = best_solution['L_3']
+    L_4 = best_solution['L_4']
+    L_5 = best_solution['L_5']
+    L_6 = best_solution['L_6']
+    I_T = best_solution['I_T']
+    V_A = best_solution['V_A']
+    V_B = best_solution['V_B']
+    
+    gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
+             'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+    
+    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
+       
+    W, L, _, _, Vgs, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                
+    current_params = {
+        'W_1': W['W_1'], 'L_1': L_1,
+        'W_2': W['W_2'], 'L_2': L_2,
+        'W_3': W['W_3'], 'L_3': L_3,
+        'W_4': W['W_4'], 'L_4': L_4,
+        'W_5': W['W_5'], 'L_5': L_5,
+        'W_6': W['W_6'], 'L_6': L_6,
+        'W_7': W['W_7'], 'L_7': L['L_7'],
+        'W_8': W['W_8'], 'L_8': L['L_8'],
+        'V_B1': VDD - Vgs['Vgs_6'],
+        'V_B2': Vgs['Vgs_5'],
+        'V_B3': V_B + Vgs['Vgs_4'],
+        'V_B4': V_A - Vgs['Vgs_3'],
+        'V_CM': VCM
+    }
+    
+    print("\nOptimal Design Parameters:")
+    print(f"  gm/ID_1 = {gm_ID_1:.2f} S/A")
+    print(f"  gm/ID_2 = {gm_ID_2:.2f} S/A")
+    print(f"  gm/ID_3 = {gm_ID_3:.2f} S/A")
+    print(f"  gm/ID_4 = {gm_ID_4:.2f} S/A")
+    print(f"  gm/ID_5 = {gm_ID_5:.2f} S/A")
+    print(f"  gm/ID_6 = {gm_ID_6:.2f} S/A")
+    print(f"  I_T     = {I_T*1e6:.2f} μA")
+    print(f"  V_A     = {V_A:.2f} V")
+    print(f"  V_B     = {V_B:.2f} V")
+    
+    print("\nOptimal Transistor Sizing:")
+    print(f"  W_1 = {W['W_1']:.2f} μm,  L_1 = {L['L_1']:.2f} μm")
+    print(f"  W_2 = {W['W_2']:.2f} μm,  L_2 = {L['L_2']:.2f} μm")
+    print(f"  W_3 = {W['W_3']:.2f} μm,  L_3 = {L['L_3']:.2f} μm")
+    print(f"  W_4 = {W['W_4']:.2f} μm,  L_4 = {L['L_4']:.2f} μm")
+    print(f"  W_5 = {W['W_5']:.2f} μm,  L_5 = {L['L_5']:.2f} μm")
+    print(f"  W_6 = {W['W_6']:.2f} μm,  L_6 = {L['L_6']:.2f} μm")
+    print(f"  W_7 = {W['W_7']:.2f} μm,  L_7 = {L['L_7']:.2f} μm")
+    print(f"  W_8 = {W['W_8']:.2f} μm,  L_8 = {L['L_8']:.2f} μm")
+    
+    print(f"\n OPTIMAL AREA: {best_solution['area']:.4f} μm²")
 
-#     plt.figure(figsize=(12, 5))
+    print("\nFinal Simulator Verification...")
     
-#     plt.subplot(1, 2, 1)
-#     plt.plot(gbest_history, 'b-', linewidth=2, marker='o', markersize=4)
-#     plt.xlabel('Iteration', fontsize=11)
-#     plt.ylabel('Global Best Area', fontsize=11)
-#     plt.title('Convergence - Global Best', fontsize=12, fontweight='bold')
-#     plt.grid(True, alpha=0.3)
+    final_check, final_results = evaluate_design(current_params, plots=True)
+    print(f"Final design {'PASSED' if final_check else 'FAILED'} simulator check")
     
-#     plt.subplot(1, 2, 2)
-#     plt.plot(avg_history, 'g-', linewidth=2, marker='s', markersize=4, label='Average')
-#     plt.plot(gbest_history, 'r--', linewidth=2, marker='o', markersize=4, label='Global Best')
-#     plt.xlabel('Iteration', fontsize=11)
-#     plt.ylabel('Area (μm²)', fontsize=11)
-#     plt.title('Swarm Statistics', fontsize=12, fontweight='bold')
-#     plt.legend(fontsize=10)
-#     plt.grid(True, alpha=0.3)
+    if final_results is not None:
+        print("\nPerformance Specifications:")
+        print(f"  Gain:         {final_results['Gain_dB']:.2f} dB      (spec: ≥{Gain_dc_spec_dB:.2f})")
+        print(f"  GBW:          {final_results['GBW']*1e-6:.2f} MHz      (spec: ≥{GBW_spec*1e-6:.2f})")
+        print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: ≥{PM_spec:.2f})")
+        print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
+        print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
+        print(f"  CMRR:         {final_results['CMRR_dB']:.2f} dB      (spec: ≥{CMRR_spec_dB:.2f})")
+        print(f"  PSRR:         {final_results['PSRR_dB']:.2f} dB      (spec: ≥{PSRR_spec_dB:.2f})")
     
-#     plt.tight_layout()
-#     plt.savefig('optimization_convergence.png', dpi=300, bbox_inches='tight')
-#     print("\nConvergence plot saved to 'optimization_convergence.png'")
+    print(f"\nOptimization Time: {optimization_time:.2f} seconds")
+    print("="*70)
+    
+    plot_convergence(gbest_history, avg_fitness_history)
+    
+    save_results(best_solution, W, L, optimization_time, final_check, final_results)
+    
+    return best_solution
 
-# def save_results(best_solution, W_1, W_2, opt_time, sim_passed, results):
-#     with open('optimization_results.txt', 'w', encoding='utf-8') as f:
-#         f.write("="*70 + "\n")
-#         f.write("5T OTA OPTIMIZATION RESULTS\n")
-#         f.write("="*70 + "\n\n")
-        
-#         f.write("DESIGN SPECIFICATIONS:\n")
-#         f.write(f"  VDD = {VDD} V\n")
-#         f.write(f"  CL = {CL*1e12:.2f} pF\n")
-#         f.write(f"  Slew Rate ≥ {SR_spec*1e-6:.2f} V/μs\n")
-#         f.write(f"  GBW ≥ {GBW_spec*1e-6:.2f} MHz\n")
-#         f.write(f"  Gain ≥ {Gain_spec_dB:.2f} dB\n")
-#         f.write(f"  Phase Margin ≥ {PM_spec:.2f}°\n")
-#         f.write(f"  Power ≤ {Power_spec*1e6:.2f} μW\n\n")
-        
-#         f.write("OPTIMAL DESIGN PARAMETERS:\n")
-#         f.write(f"  gm1     = {best_solution['gm1']*1e6:.2f} μS\n")
-#         f.write(f"  gm2     = {best_solution['gm2']*1e6:.2f} μS\n")
-#         f.write(f"  L_1     = {best_solution['L_1']:.2f} μm\n")
-#         f.write(f"  L_2     = {best_solution['L_2']:.2f} μm\n")
-#         f.write(f"  ID      = {best_solution['ID']*1e6:.2f} μA\n")
-#         f.write(f"  gm/ID_1 = {best_solution['gm_ID_1']:.2f} S/A\n")
-#         f.write(f"  gm/ID_2 = {best_solution['gm_ID_2']:.2f} S/A\n\n")
-        
-#         f.write("OPTIMAL TRANSISTOR SIZING:\n")
-#         f.write(f"  W_1 = {W_1:.2f} μm\n")
-#         f.write(f"  W_2 = {W_2:.2f} μm\n")
-#         f.write(f"  L_1 = {best_solution['L_1']:.2f} μm\n")
-#         f.write(f"  L_2 = {best_solution['L_2']:.2f} μm\n\n")
-        
-#         f.write(f"OPTIMAL AREA: {best_solution['area']:.2f} μm²\n\n")
-        
-#         if results is not None:
-#             f.write("ACHIEVED SPECIFICATIONS:\n")
-#             f.write(f"  Slew Rate    = {results['SR_meas']*1e-6:.2f} V/μs\n")
-#             f.write(f"  GBW          = {results['GBW_meas']*1e-6:.2f} MHz\n")
-#             f.write(f"  Gain         = {results['Gain_meas_dB']:.2f} dB\n")
-#             f.write(f"  Phase Margin = {results['PM_meas']:.2f}°\n")
-#             f.write(f"  Power        = {results['Power_meas']*1e6:.2f} μW\n\n")
-        
-#         f.write(f"OPTIMIZATION TIME: {opt_time:.2f} seconds\n")
-#         f.write(f"FINAL SIMULATOR CHECK: {'PASSED' if sim_passed else 'FAILED'}\n")
+def plot_convergence(gbest_history, avg_history):
+    plt.figure(figsize=(12, 5))
     
-#     print("Results saved to 'optimization_results.txt'")
+    plt.subplot(1, 2, 1)
+    plt.plot(gbest_history, 'b-', linewidth=2, marker='o', markersize=4)
+    plt.xlabel('Iteration', fontsize=11)
+    plt.ylabel('Global Best Area (μm²)', fontsize=11)
+    plt.title('Convergence - Global Best', fontsize=12, fontweight='bold')
+    plt.grid(True, alpha=0.3)
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(avg_history, 'g-', linewidth=2, marker='s', markersize=4, label='Average')
+    plt.plot(gbest_history, 'r--', linewidth=2, marker='o', markersize=4, label='Global Best')
+    plt.xlabel('Iteration', fontsize=11)
+    plt.ylabel('Area (μm²)', fontsize=11)
+    plt.title('Swarm Statistics', fontsize=12, fontweight='bold')
+    plt.legend(fontsize=10)
+    plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig('optimization_convergence.png', dpi=300, bbox_inches='tight')
+    print("\nConvergence plot saved to 'optimization_convergence.png'")
 
-# if __name__ == "__main__":
-#     results = main()
+def save_results(best_solution, W, L, opt_time, sim_passed, results):
+    with open('optimization_results.txt', 'w', encoding='utf-8') as f:
+        f.write("="*70 + "\n")
+        f.write("FDDA-CMFB OPTIMIZATION RESULTS\n")
+        f.write("="*70 + "\n\n")
+        
+        f.write("DESIGN SPECIFICATIONS:\n")
+        f.write(f"  VDD = {VDD} V\n")
+        f.write(f"  CL = {CL*1e12:.2f} pF\n")
+        f.write(f"  Gain ≥ {Gain_dc_spec_dB:.2f} dB\n")
+        f.write(f"  GBW ≥ {GBW_spec*1e-6:.2f} MHz\n")
+        f.write(f"  Phase Margin ≥ {PM_spec:.2f}°\n")
+        f.write(f"  Slew Rate ≥ {SR_spec*1e-6:.2f} V/μs\n")
+        f.write(f"  Power ≤ {Power_spec*1e6:.2f} μW\n")
+        f.write(f"  CMRR ≥ {CMRR_spec_dB:.2f} dB\n")
+        f.write(f"  PSRR ≥ {PSRR_spec_dB:.2f} dB\n\n")
+        
+        f.write("OPTIMAL DESIGN PARAMETERS:\n")
+        f.write(f"  gm/ID_1 = {best_solution['gm_ID_1']:.2f} S/A\n")
+        f.write(f"  gm/ID_2 = {best_solution['gm_ID_2']:.2f} S/A\n")
+        f.write(f"  gm/ID_3 = {best_solution['gm_ID_3']:.2f} S/A\n")
+        f.write(f"  gm/ID_4 = {best_solution['gm_ID_4']:.2f} S/A\n")
+        f.write(f"  gm/ID_5 = {best_solution['gm_ID_5']:.2f} S/A\n")
+        f.write(f"  gm/ID_6 = {best_solution['gm_ID_6']:.2f} S/A\n")
+        f.write(f"  I_T     = {best_solution['I_T']*1e6:.2f} μA\n")
+        f.write(f"  V_A     = {best_solution['V_A']:.2f} V\n")
+        f.write(f"  V_B     = {best_solution['V_B']:.2f} V\n\n")
+        
+        f.write("OPTIMAL TRANSISTOR SIZING:\n")
+        f.write(f"  W_1 = {W['W_1']:.2f} μm,  L_1 = {L['L_1']:.2f} μm\n")
+        f.write(f"  W_2 = {W['W_2']:.2f} μm,  L_2 = {L['L_2']:.2f} μm\n")
+        f.write(f"  W_3 = {W['W_3']:.2f} μm,  L_3 = {L['L_3']:.2f} μm\n")
+        f.write(f"  W_4 = {W['W_4']:.2f} μm,  L_4 = {L['L_4']:.2f} μm\n")
+        f.write(f"  W_5 = {W['W_5']:.2f} μm,  L_5 = {L['L_5']:.2f} μm\n")
+        f.write(f"  W_6 = {W['W_6']:.2f} μm,  L_6 = {L['L_6']:.2f} μm\n")
+        f.write(f"  W_7 = {W['W_7']:.2f} μm,  L_7 = {L['L_7']:.2f} μm\n")
+        f.write(f"  W_8 = {W['W_8']:.2f} μm,  L_8 = {L['L_8']:.2f} μm\n\n")
+        
+        f.write(f"OPTIMAL AREA: {best_solution['area']:.2f} μm²\n\n")
+        
+        if results is not None:
+            f.write("ACHIEVED SPECIFICATIONS:\n")
+            f.write(f"  Gain         = {results['Gain_dB']:.2f} dB\n")
+            f.write(f"  GBW          = {results['GBW']*1e-6:.2f} MHz\n")
+            f.write(f"  Phase Margin = {results['PM']:.2f}°\n")
+            f.write(f"  Slew Rate    = {results['SR']*1e-6:.2f} V/μs\n")
+            f.write(f"  Power        = {results['Power']*1e6:.2f} μW\n")
+            f.write(f"  CMRR         = {results['CMRR_dB']:.2f} dB\n")
+            f.write(f"  PSRR         = {results['PSRR_dB']:.2f} dB\n\n")
+        
+        f.write(f"OPTIMIZATION TIME: {opt_time:.2f} seconds\n")
+        f.write(f"FINAL SIMULATOR CHECK: {'PASSED' if sim_passed else 'FAILED'}\n")
+    
+    print("Results saved to 'optimization_results.txt'")
+
+if __name__ == "__main__":
+    results = main()
