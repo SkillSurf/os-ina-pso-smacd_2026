@@ -89,7 +89,7 @@ def main():
                 L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
 
                 # Get W, L, and Vgs values
-                W, L, _, _, Vgs, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
                 
                 if W is not None and not any(w is None for w in W.values()):
                     print(f"  Particle {idx}: Simulating...")
@@ -150,7 +150,7 @@ def main():
                             L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
 
                             # Get W, L, and Vgs values
-                            W, L, _, _, Vgs, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                            W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
                 
                             if W is not None and not any(w is None for w in W.values()):
                                 current_params = {
@@ -258,7 +258,7 @@ def main():
     
     L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
        
-    W, L, _, _, Vgs, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+    W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
                 
     current_params = {
         'W_1': W['W_1'], 'L_1': L_1,

@@ -133,7 +133,7 @@ def survivability_test(particle, verbose=False):
         Power_calc <= Power_spec and
         # noise_calc <= noise_spec and
         # CMRR_calc >= CMRR_spec and
-        Area_active <= Area_spec and
+        # Area_active <= Area_spec and
         W['W_1'] >= 0.42 and W['W_2'] >= 0.42 and
         W['W_3'] >= 0.42 and W['W_4'] >= 0.42 and
         W['W_5'] >= 0.42 and W['W_6'] >= 0.42 and

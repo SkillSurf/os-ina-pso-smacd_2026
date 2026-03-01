@@ -1,5 +1,5 @@
 import numpy as np
-from gmID_sizing import get_params
+# from gmID_sizing import get_params
 from simulator import evaluate_design
 from survivability_check import survivability_test
 from specs import L_DISCRETE_VALUES, VDD, VCM

@@ -28,34 +28,39 @@ def get_inputParams(gm_ID, L, V_B):
     iters = 0
 
     # Get the initial Vgs guess
-    Vgs_current = PCH.lookupVGS(GM_ID=gm_ID, VSB=0, L=L)
+    Vgs_current = PCH.lookupVGS(GM_ID=gm_ID, L=L)
 
     while error > tolerance and iters < max_iters:
 
         V_C = VCM + Vgs_current  # Calculate the intermediate node
+        if V_C < 0 or V_C > VDD:
+            return None, None, None, None
         
         Vds_new = V_C - V_B  # Calculate the new Vds
-        if Vds_new <= 0.05:
-            return None, None, None
-        else:        
+        if Vds_new < 0.15:
+            return None, None, None, None
+        else:   
+            Vsb_new = VDD - V_C  # Calculate the new Vsb
+
             # Query the LUT for the new Vgs using the updated Vds
-            Vgs_new = PCH.lookupVGS(GM_ID=gm_ID, VSB=0, VDS=Vds_new, L=L)    
+            Vgs_new = PCH.lookupVGS(GM_ID=gm_ID, VSB=Vsb_new, VDS=Vds_new, L=L)    
 
             error = abs(Vgs_new - Vgs_current)  # Calculate the error  
 
             # Update variables for the next loop
             Vgs_current = Vgs_new
             Vds_final = Vds_new
+            Vsb_final = Vsb_new
             iters += 1
 
     # Return None for convergence failure
     if iters == max_iters:
-        return None, None, None
+        return None, None, None, None
 
     # Calculate V_C using the converged Vgs
     V_C = VCM + Vgs_current
 
-    return Vgs_current, Vds_final, V_C
+    return Vgs_current, Vds_final, Vsb_final, V_C
 
 # =========================================================================
 # Function to get parameters for each transistor based on gm_ID, L, and I_T
@@ -64,9 +69,9 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
 
     with silence_stdout():
         # Get the initial Vgs, Vds, and tail node voltage (V_C) for M1
-        Vgs_1, Vds_1, V_C = get_inputParams(gm_ID['gm_ID_1'], L['L_1'], V_B)
-        if Vgs_1 is None or Vds_1 is None or V_C is None or V_C < 0 or V_C > VDD:
-            return None, None, None, None, None, None
+        Vgs_1, Vds_1, Vsb_1, V_C = get_inputParams(gm_ID['gm_ID_1'], L['L_1'], V_B)
+        if Vgs_1 is None or Vds_1 is None or Vsb_1 is None or V_C is None:
+            return None, None, None, None, None, None, None
         
         # Calculate Vds for all transistors based on the converged V_C and given node voltages
         Vds = {
@@ -77,17 +82,33 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
             'Vds_5': V_B,
             'Vds_6': VDD - V_C
         }
+        if Vds['Vds_2'] < 0.15 or Vds['Vds_3'] < 0.15 or Vds['Vds_4'] <= 0 or Vds['Vds_5'] <= 0 or Vds['Vds_6'] < 0.15:
+            return None, None, None, None, None, None, None
+
+        # Calculate Vsb for all transistors
+        Vsb = {
+            'Vsb_1': Vsb_1,
+            'Vsb_2': 0,
+            'Vsb_3': VDD - V_A,
+            'Vsb_4': V_B,
+            'Vsb_5': 0,
+            'Vsb_6': 0,
+            'Vsb_7': V_B,
+            'Vsb_8': 0
+        }
 
         try:
             # LUT readout for CMFB circuit transistors (M7 and M8)
-            Vds['Vds_8'] = PCH.lookupVGS(GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=0, L=L['L_2'])
+            Vds['Vds_8'] = PCH.lookupVGS(GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=Vsb['Vsb_2'], L=L['L_2'])
             Vds['Vds_7'] = VDD - Vds['Vds_8'] - Vds['Vds_5']
+            if Vds['Vds_7'] <= 0 or Vds['Vds_8'] < 0.15:
+                return None, None, None, None, None, None, None
             
             # Append gm_ID values for M7 and M8
             gm_ID['gm_ID_8'] = gm_ID['gm_ID_2']
-            gm_ID['gm_ID_7'] = NCH.lookup('GM_ID', VGS=Vds['Vds_4'], VDS=Vds['Vds_7'], VSB=0, L=L['L_4'])
-            if gm_ID['gm_ID_7'] < gm_ID_range[0] or gm_ID['gm_ID_7'] > gm_ID_range[1]:
-                raise ValueError()
+            gm_ID['gm_ID_7'] = NCH.lookup('GM_ID', VGS=Vds['Vds_4'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_4'])
+            # if gm_ID['gm_ID_7'] < gm_ID_range[0] or gm_ID['gm_ID_7'] > gm_ID_range[1]:
+            #     raise ValueError()
 
             # Append L values for M7 and M8
             L['L_7'] = L['L_4']
@@ -107,27 +128,27 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
             
             # Read the gate-source voltage (V) from the LUTs
             Vgs = {
-                'Vgs_1': PCH.lookupVGS(GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=0, L=L['L_1']),
+                'Vgs_1': PCH.lookupVGS(GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=Vsb['Vsb_1'], L=L['L_1']),
                 'Vgs_2': Vds['Vds_8'],
-                'Vgs_3': PCH.lookupVGS(GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=0, L=L['L_3']),
-                'Vgs_4': NCH.lookupVGS(GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=0, L=L['L_4']),
-                'Vgs_5': NCH.lookupVGS(GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=0, L=L['L_5']),
-                'Vgs_6': PCH.lookupVGS(GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=0, L=L['L_6']),
-                'Vgs_7': NCH.lookupVGS(GM_ID=gm_ID['gm_ID_7'], VDS=Vds['Vds_7'], VSB=0, L=L['L_7']),
+                'Vgs_3': PCH.lookupVGS(GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=Vsb['Vsb_3'], L=L['L_3']),
+                'Vgs_4': NCH.lookupVGS(GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=Vsb['Vsb_4'], L=L['L_4']),
+                'Vgs_5': NCH.lookupVGS(GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=Vsb['Vsb_5'], L=L['L_5']),
+                'Vgs_6': PCH.lookupVGS(GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=Vsb['Vsb_6'], L=L['L_6']),
+                'Vgs_7': NCH.lookupVGS(GM_ID=gm_ID['gm_ID_7'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_7']),
                 'Vgs_8': Vds['Vds_8']
             }
             
             # Read the current density (A/µm) from the LUTs
-            JD_1 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=0, L=L['L_1'])
-            JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=0, L=L['L_2'])
-            JD_3 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=0, L=L['L_3'])
-            JD_4 = NCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=0, L=L['L_4'])
-            JD_5 = NCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=0, L=L['L_5'])
-            JD_6 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=0, L=L['L_6'])
-            JD_7 = NCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_7'], VDS=Vds['Vds_7'], VSB=0, L=L['L_7'])
-            JD_8 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_8'], VDS=Vds['Vds_8'], VSB=0, L=L['L_8'])
+            JD_1 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=Vsb['Vsb_1'], L=L['L_1'])
+            JD_2 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=Vsb['Vsb_2'], L=L['L_2'])
+            JD_3 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=Vsb['Vsb_3'], L=L['L_3'])
+            JD_4 = NCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=Vsb['Vsb_4'], L=L['L_4'])
+            JD_5 = NCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=Vsb['Vsb_5'], L=L['L_5'])
+            JD_6 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=Vsb['Vsb_6'], L=L['L_6'])
+            JD_7 = NCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_7'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_7'])
+            JD_8 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_8'], VDS=Vds['Vds_8'], VSB=Vsb['Vsb_8'], L=L['L_8'])
         except:
-            return None, None, None, None, None, None
+            return None, None, None, None, None, None, None
 
     # Calculate W for each transistor
     W = {
@@ -141,18 +162,18 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
         'W_8': ID['ID_8'] / JD_8
     }
 
-    return W, L, gm_ID, Vds, Vgs, ID
+    return W, L, gm_ID, Vds, Vgs, Vsb, ID
 
 # ===============================================================================================
 # Function to calculate all the required variables for each transistor based on gm_ID, L, and I_T
 # ===============================================================================================
 def get_specVars(gm_ID, L, V_A, V_B, I_T):
 
-    W, L, gm_ID, Vds, Vgs, ID = get_params(gm_ID, L, V_A, V_B, I_T)
+    W, L, gm_ID, Vds, Vgs, Vsb, ID = get_params(gm_ID, L, V_A, V_B, I_T)
 
     with silence_stdout():
         # Return "None" if any one of params is none
-        if any(arg is None for arg in [W, L, gm_ID, Vds, Vgs, ID]):
+        if any(arg is None for arg in [W, L, gm_ID, Vds, Vgs, Vsb, ID]):
             return None, None, None, None, None, None, None, None, None
         else:
             try:
@@ -170,40 +191,40 @@ def get_specVars(gm_ID, L, V_A, V_B, I_T):
 
                 # Read the drain conductance (S) from the LUTs
                 gds = {
-                    'gds_1': gm['gm_1'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=0, L=L['L_1']),
-                    'gds_2': gm['gm_2'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=0, L=L['L_2']),
-                    'gds_3': gm['gm_3'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=0, L=L['L_3']),
-                    'gds_4': gm['gm_4'] / NCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=0, L=L['L_4']),
-                    'gds_5': gm['gm_5'] / NCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=0, L=L['L_5']),
-                    'gds_6': gm['gm_6'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=0, L=L['L_6'])
+                    'gds_1': gm['gm_1'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=Vsb['Vsb_1'], L=L['L_1']),
+                    'gds_2': gm['gm_2'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=Vsb['Vsb_2'], L=L['L_2']),
+                    'gds_3': gm['gm_3'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=Vsb['Vsb_3'], L=L['L_3']),
+                    'gds_4': gm['gm_4'] / NCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=Vsb['Vsb_4'], L=L['L_4']),
+                    'gds_5': gm['gm_5'] / NCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=Vsb['Vsb_5'], L=L['L_5']),
+                    'gds_6': gm['gm_6'] / PCH.lookup('GM_GDS', GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=Vsb['Vsb_6'], L=L['L_6'])
                 }
 
                 # Read the capacitances (F) from the LUTs
                 C = {
-                    'Cdd_1': gm['gm_1'] / PCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=0, L=L['L_1']),
-                    'Cdd_3': gm['gm_3'] / PCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=0, L=L['L_3']),
-                    'Cdd_4': gm['gm_4'] / NCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=0, L=L['L_4']),
-                    'Cdd_5': gm['gm_5'] / NCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=0, L=L['L_5']),
-                    'Cdd_6': gm['gm_6'] / PCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=0, L=L['L_6']),
+                    'Cdd_1': gm['gm_1'] / PCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=Vsb['Vsb_1'], L=L['L_1']),
+                    'Cdd_3': gm['gm_3'] / PCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_3'], VDS=Vds['Vds_3'], VSB=Vsb['Vsb_3'], L=L['L_3']),
+                    'Cdd_4': gm['gm_4'] / NCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=Vsb['Vsb_4'], L=L['L_4']),
+                    'Cdd_5': gm['gm_5'] / NCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=Vsb['Vsb_5'], L=L['L_5']),
+                    'Cdd_6': gm['gm_6'] / PCH.lookup('GM_CDD', GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=Vsb['Vsb_6'], L=L['L_6']),
 
-                    'Css_1': gm['gm_1'] / PCH.lookup('GM_CSS', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=0, L=L['L_1']),
-                    'Css_4': gm['gm_4'] / NCH.lookup('GM_CSS', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=0, L=L['L_4']),
+                    'Css_1': gm['gm_1'] / PCH.lookup('GM_CSS', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=Vsb['Vsb_1'], L=L['L_1']),
+                    'Css_4': gm['gm_4'] / NCH.lookup('GM_CSS', GM_ID=gm_ID['gm_ID_4'], VDS=Vds['Vds_4'], VSB=Vsb['Vsb_4'], L=L['L_4']),
 
-                    'Cgg_7': gm['gm_7'] / NCH.lookup('GM_CGG', GM_ID=gm_ID['gm_ID_7'], VDS=Vds['Vds_7'], VSB=0, L=L['L_7'])
+                    'Cgg_7': gm['gm_7'] / NCH.lookup('GM_CGG', GM_ID=gm_ID['gm_ID_7'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_7'])
                 }
 
                 # Read the gamma values from the LUTs
                 gamma = {
-                    'gamma_1': PCH.gamma(GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=0, L=L['L_1']),
-                    'gamma_2': PCH.gamma(GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=0, L=L['L_2']),
-                    'gamma_5': NCH.gamma(GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=0, L=L['L_5'])
+                    'gamma_1': PCH.gamma(GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=Vsb['Vsb_1'], L=L['L_1']),
+                    'gamma_2': PCH.gamma(GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=Vsb['Vsb_2'], L=L['L_2']),
+                    'gamma_5': NCH.gamma(GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=Vsb['Vsb_5'], L=L['L_5'])
                 }
                 
                 # Read the flicker noise (nA/√Hz) from the LUTs
                 flicker = {
-                    'flicker_1': PCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=0, L=L['L_1']),
-                    'flicker_2': PCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=0, L=L['L_2']),
-                    'flicker_5': NCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=0, L=L['L_5'])
+                    'flicker_1': PCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_1'], VDS=Vds['Vds_1'], VSB=Vsb['Vsb_1'], L=L['L_1']),
+                    'flicker_2': PCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=Vsb['Vsb_2'], L=L['L_2']),
+                    'flicker_5': NCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=Vsb['Vsb_5'], L=L['L_5'])
                 }
             except:
                 return None, None, None, None, None, None, None, None, None

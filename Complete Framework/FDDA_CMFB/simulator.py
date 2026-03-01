@@ -572,21 +572,21 @@ def evaluate_design(current_params, plots=False):
     except Exception as e:  # Simulation failed for params
         return False, None  # Return as an infeasible solution
     
-# params = {'W_1': 244.28, 'L_1': 1,
+# params = {'W_1': 219.15, 'L_1': 1,
 #           'W_2': 18.90, 'L_2': 1,
-#           'W_3': 18.46, 'L_3': 1,
-#           'W_4': 3.28, 'L_4': 1,
+#           'W_3': 16.29, 'L_3': 1,
+#           'W_4': 3.04, 'L_4': 1,
 #           'W_5': 6.70, 'L_5': 1,
-#           'W_6': 102.75, 'L_6': 1,
-#           'W_7': 14.74, 'L_7': 1,
-#           'W_8': 36.92, 'L_8': 1,
-#           'V_B1': 0.8225,
+#           'W_6': 162.85, 'L_6': 1,
+#           'W_7': 57.22, 'L_7': 1,
+#           'W_8': 36.62, 'L_8': 1,
+#           'V_B1': 0.8396,
 #           'V_B2': 0.6844,
-#           'V_B3': 0.9834,
-#           'V_B4': 0.4434,
+#           'V_B3': 1.0509,
+#           'V_B4': 0.3635,
 #           'V_CM': 0.9}
 
 # if __name__ == "__main__":
-#     status, results = evaluate_design(params, plots=True)
+#     status, results = evaluate_design(params, plots=False)
 #     print("Status:", status)
 #     print("Results:", results)

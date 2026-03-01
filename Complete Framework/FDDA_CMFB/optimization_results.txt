@@ -1,0 +1,49 @@
+======================================================================
+FDDA-CMFB OPTIMIZATION RESULTS
+======================================================================
+
+DESIGN SPECIFICATIONS:
+  VDD = 1.8 V
+  CL = 1.00 pF
+  Gain ≥ 50.00 dB
+  GBW ≥ 1.00 MHz
+  Phase Margin ≥ 56.00°
+  Slew Rate ≥ 1.00 V/μs
+  Power ≤ 180.00 μW
+  CMRR ≥ 120.00 dB
+  PSRR ≥ 60.00 dB
+
+OPTIMAL DESIGN PARAMETERS:
+  gm/ID_1 = 17.90 S/A
+  gm/ID_2 = 15.78 S/A
+  gm/ID_3 = 14.53 S/A
+  gm/ID_4 = 17.56 S/A
+  gm/ID_5 = 17.36 S/A
+  gm/ID_6 = 9.57 S/A
+  I_T     = 4.25 μA
+  V_A     = 1.50 V
+  V_B     = 0.19 V
+
+OPTIMAL TRANSISTOR SIZING:
+  W_1 = 129.76 μm,  L_1 = 0.30 μm
+  W_2 = 15.88 μm,  L_2 = 0.70 μm
+  W_3 = 3.24 μm,  L_3 = 0.20 μm
+  W_4 = 3.50 μm,  L_4 = 0.70 μm
+  W_5 = 2.05 μm,  L_5 = 0.19 μm
+  W_6 = 4.35 μm,  L_6 = 0.90 μm
+  W_7 = 2.98 μm,  L_7 = 0.70 μm
+  W_8 = 30.39 μm,  L_8 = 0.70 μm
+
+OPTIMAL AREA: 244.43 μm²
+
+ACHIEVED SPECIFICATIONS:
+  Gain         = 56.30 dB
+  GBW          = 2.67 MHz
+  Phase Margin = 88.11°
+  Slew Rate    = 3.04 V/μs
+  Power        = 55.33 μW
+  CMRR         = 130.00 dB
+  PSRR         = 70.00 dB
+
+OPTIMIZATION TIME: 83.80 seconds
+FINAL SIMULATOR CHECK: PASSED

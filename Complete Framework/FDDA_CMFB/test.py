@@ -38,3 +38,4 @@ if __name__ == "__main__":
             print(f"  {meas_name}: {meas_value:.2e}")
     else:
         print("Particle does NOT meet specifications.\n")
+        print(specs)
