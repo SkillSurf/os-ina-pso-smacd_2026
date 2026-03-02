@@ -519,8 +519,22 @@ def evaluate_design(current_params, plots=False):
     and returns the binary result.
     """
 
-    # Round all parameters to 4 decimal places
-    rounded_params = {k: np.round(v, 4) for k, v in current_params.items()}
+    # Round all parameters to required decimal places
+    rounded_params = {
+        'W_1': np.round(current_params['W_1'], 2), 'L_1': np.round(current_params['L_1'], 2),
+        'W_2': np.round(current_params['W_2'], 2), 'L_2': np.round(current_params['L_2'], 2),
+        'W_3': np.round(current_params['W_3'], 2), 'L_3': np.round(current_params['L_3'], 2),
+        'W_4': np.round(current_params['W_4'], 2), 'L_4': np.round(current_params['L_4'], 2),
+        'W_5': np.round(current_params['W_5'], 2), 'L_5': np.round(current_params['L_5'], 2),
+        'W_6': np.round(current_params['W_6'], 2), 'L_6': np.round(current_params['L_6'], 2),
+        'W_7': np.round(current_params['W_7'], 2), 'L_7': np.round(current_params['L_7'], 2),
+        'W_8': np.round(current_params['W_8'], 2), 'L_8': np.round(current_params['L_8'], 2),
+        'V_B1': np.round(current_params['V_B1'], 4),
+        'V_B2': np.round(current_params['V_B2'], 4),
+        'V_B3': np.round(current_params['V_B3'], 4),
+        'V_B4': np.round(current_params['V_B4'], 4),
+        'V_CM': np.round(current_params['V_CM'], 2)
+    }
     
     # Create a new results dictionary for this specific run
     current_results = {}
@@ -540,23 +554,26 @@ def evaluate_design(current_params, plots=False):
         if specs_met:
             runsim_SLEW(measurement_results=current_results, plots=plots)
             specs_met = (current_results['SR'] >= SR_spec)
+        # current_results['SR'] = 4e6
 
         # Only if past specs are met, run the OP simulation and verify power spec
         if specs_met:
             # Run the OP simulation and verify specs
             runsim_OP(measurement_results=current_results, plots=plots)
             specs_met = (current_results['Power'] <= Power_spec)
+        # current_results['Power'] = 180e-6
 
-        # # Only if past specs are met, run the CMRR simulation and verify CMRR spec
-        # if specs_met:
-        #     runsim_CMRR(measurement_results=current_results, plots=plots)
-        #     specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
-        current_results['CMRR_dB'] = 130
-        # # Only if past specs are met, run the PSRR simulation and verify PSRR spec
-        # if specs_met:
-        #     runsim_PSRR(measurement_results=current_results, plots=plots)
-        #     specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
-        current_results['PSRR_dB'] = 70
+        # Only if past specs are met, run the CMRR simulation and verify CMRR spec
+        if specs_met:
+            runsim_CMRR(measurement_results=current_results, plots=plots)
+            specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
+        # current_results['CMRR_dB'] = 130
+
+        # Only if past specs are met, run the PSRR simulation and verify PSRR spec
+        if specs_met:
+            runsim_PSRR(measurement_results=current_results, plots=plots)
+            specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
+        # current_results['PSRR_dB'] = 70
 
         Area_active = get_Area(rounded_params, rounded_params)
         current_results['Area'] = Area_active
@@ -572,18 +589,18 @@ def evaluate_design(current_params, plots=False):
     except Exception as e:  # Simulation failed for params
         return False, None  # Return as an infeasible solution
     
-# params = {'W_1': 219.15, 'L_1': 1,
-#           'W_2': 18.90, 'L_2': 1,
-#           'W_3': 16.29, 'L_3': 1,
-#           'W_4': 3.04, 'L_4': 1,
-#           'W_5': 6.70, 'L_5': 1,
-#           'W_6': 162.85, 'L_6': 1,
-#           'W_7': 57.22, 'L_7': 1,
-#           'W_8': 36.62, 'L_8': 1,
-#           'V_B1': 0.8396,
-#           'V_B2': 0.6844,
-#           'V_B3': 1.0509,
-#           'V_B4': 0.3635,
+# params = {'W_1': 568.63, 'L_1': 0.2,
+#           'W_2': 9.28, 'L_2': 0.9,
+#           'W_3': 19.24, 'L_3': 1.0,
+#           'W_4': 2.03, 'L_4': 0.9,
+#           'W_5': 3.10, 'L_5': 0.5,
+#           'W_6': 2.41, 'L_6': 0.17,
+#           'W_7': 145.59, 'L_7': 0.9,
+#           'W_8': 17.30, 'L_8': 0.9,
+#           'V_B1': 0.8207,
+#           'V_B2': 0.8017,
+#           'V_B3': 1.1629,
+#           'V_B4': 0.3055,
 #           'V_CM': 0.9}
 
 # if __name__ == "__main__":

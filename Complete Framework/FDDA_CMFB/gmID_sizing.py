@@ -107,8 +107,6 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
             # Append gm_ID values for M7 and M8
             gm_ID['gm_ID_8'] = gm_ID['gm_ID_2']
             gm_ID['gm_ID_7'] = NCH.lookup('GM_ID', VGS=Vds['Vds_4'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_4'])
-            # if gm_ID['gm_ID_7'] < gm_ID_range[0] or gm_ID['gm_ID_7'] > gm_ID_range[1]:
-            #     raise ValueError()
 
             # Append L values for M7 and M8
             L['L_7'] = L['L_4']
@@ -234,27 +232,27 @@ def get_specVars(gm_ID, L, V_A, V_B, I_T):
 # ============================================================
 # Function to calculate the feasible range of design variables
 # ============================================================
-def get_feasRegion(gm_ID_range, V_A_range, V_B_range, L_discrete_values):
+def get_feasRegion(L_discrete_values):
 
-    # Range of gm/ID values to consider for the design
-    gm_ID_min = gm_ID_range[0]
-    gm_ID_max = gm_ID_range[1]
+    # # Range of gm/ID values to consider for the design
+    # gm_ID_min = gm_ID_range[0]
+    # gm_ID_max = gm_ID_range[1]
 
     # Minimum current calculations based on slew rate
-    I_T_min = SR_spec * CL
+    I_T_min = SR_spec * (1.2 * CL)
     # Maximum current calculations based on power budget
-    I_T_max = (Power_spec / VDD / 8)
+    I_T_max = Power_spec / VDD / 8
 
     L_available = L_discrete_values
     n_L_values = len(L_available)
 
-    V_A_min = V_A_range[0]
-    V_A_max = V_A_range[1]
+    # V_A_min = V_A_range[0]
+    # V_A_max = V_A_range[1]
 
-    V_B_min = V_B_range[0]
-    V_B_max = V_B_range[1]    
+    # V_B_min = V_B_range[0]
+    # V_B_max = V_B_range[1]    
 
-    return gm_ID_min, gm_ID_max, L_available, n_L_values, I_T_min, I_T_max, V_A_min, V_A_max, V_B_min, V_B_max
+    return L_available, n_L_values, I_T_min, I_T_max
 
 # ================================
 # Function to calculate total area

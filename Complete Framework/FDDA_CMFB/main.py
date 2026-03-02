@@ -11,17 +11,21 @@ from simulator import evaluate_design
 
 def main():
     
-    gm_ID_min, gm_ID_max, L_available, n_L_values, I_T_min, I_T_max, V_A_min, V_A_max, \
-        V_B_min, V_B_max = get_feasRegion(gm_ID_range, V_A_range, V_B_range, L_DISCRETE_VALUES)
+    L_available, n_L_values, I_T_min, I_T_max = get_feasRegion(L_DISCRETE_VALUES)
     
     cont_bounds = [
-        (gm_ID_min, gm_ID_max),
-        (I_T_min, I_T_max),
-        (V_A_min, V_A_max),
-        (V_B_min, V_B_max)
+        (gm_ID_1_range[0], gm_ID_1_range[1]),
+        (gm_ID_2_range[0], gm_ID_2_range[1]),
+        (gm_ID_3_range[0], gm_ID_3_range[1]),
+        (gm_ID_4_range[0], gm_ID_4_range[1]),
+        (gm_ID_5_range[0], gm_ID_5_range[1]),
+        (gm_ID_6_range[0], gm_ID_6_range[1]),
+        (I_T_min, I_T_max)
     ]
     
     print(f"Feasible Region Done")
+
+    start_time = time.time()
     
     particles, fitness, specs_list = generate_N_particles(
         cont_bounds, n_L_values, N_PARTICLES, verbose=True
@@ -30,6 +34,9 @@ def main():
     if particles is None:
         print("\nERROR: Failed to generate initial particles!")
         return None
+    
+    end_time = time.time()
+    print(f"\nTime taken to generate particles: {end_time - start_time:.2f} seconds")
     
     print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
     print(f"Initial best area: {np.min(fitness):.2f} μm²")
@@ -74,7 +81,7 @@ def main():
                 
                 gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = particle[0:6]
                 L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = particle[6:12]
-                I_T, V_A, V_B = particle[12:15]
+                I_T = particle[12]
                 
                 L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
                 L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -95,12 +102,12 @@ def main():
                     print(f"  Particle {idx}: Simulating...")
                     
                     current_params = {
-                        'W_1': W['W_1'], 'L_1': L_1,
-                        'W_2': W['W_2'], 'L_2': L_2,
-                        'W_3': W['W_3'], 'L_3': L_3,
-                        'W_4': W['W_4'], 'L_4': L_4,
-                        'W_5': W['W_5'], 'L_5': L_5,
-                        'W_6': W['W_6'], 'L_6': L_6,
+                        'W_1': W['W_1'], 'L_1': L['L_1'],
+                        'W_2': W['W_2'], 'L_2': L['L_2'],
+                        'W_3': W['W_3'], 'L_3': L['L_3'],
+                        'W_4': W['W_4'], 'L_4': L['L_4'],
+                        'W_5': W['W_5'], 'L_5': L['L_5'],
+                        'W_6': W['W_6'], 'L_6': L['L_6'],
                         'W_7': W['W_7'], 'L_7': L['L_7'],
                         'W_8': W['W_8'], 'L_8': L['L_8'],
                         'V_B1': VDD - Vgs['Vgs_6'],
@@ -119,6 +126,7 @@ def main():
                     else:
                         print(f"    Particle {idx}: PASSED simulator")
                 else:
+                    print(f"  Particle {idx}: Invalid W/L values, skipping simulation")
                     rejected_indices.append(idx)
                     fitness[idx] = np.inf
             
@@ -135,7 +143,7 @@ def main():
                             # Check with simulator again
                             gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = offspring[0:6]
                             L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = offspring[6:12]
-                            I_T, V_A, V_B = offspring[12:15]
+                            I_T = offspring[12]
                             
                             L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
                             L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -154,12 +162,12 @@ def main():
                 
                             if W is not None and not any(w is None for w in W.values()):
                                 current_params = {
-                                    'W_1': W['W_1'], 'L_1': L_1,
-                                    'W_2': W['W_2'], 'L_2': L_2,
-                                    'W_3': W['W_3'], 'L_3': L_3,
-                                    'W_4': W['W_4'], 'L_4': L_4,
-                                    'W_5': W['W_5'], 'L_5': L_5,
-                                    'W_6': W['W_6'], 'L_6': L_6,
+                                    'W_1': W['W_1'], 'L_1': L['L_1'],
+                                    'W_2': W['W_2'], 'L_2': L['L_2'],
+                                    'W_3': W['W_3'], 'L_3': L['L_3'],
+                                    'W_4': W['W_4'], 'L_4': L['L_4'],
+                                    'W_5': W['W_5'], 'L_5': L['L_5'],
+                                    'W_6': W['W_6'], 'L_6': L['L_6'],
                                     'W_7': W['W_7'], 'L_7': L['L_7'],
                                     'W_8': W['W_8'], 'L_8': L['L_8'],
                                     'V_B1': VDD - Vgs['Vgs_6'],
@@ -250,8 +258,6 @@ def main():
     L_5 = best_solution['L_5']
     L_6 = best_solution['L_6']
     I_T = best_solution['I_T']
-    V_A = best_solution['V_A']
-    V_B = best_solution['V_B']
     
     gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
              'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
@@ -371,8 +377,8 @@ def save_results(best_solution, W, L, opt_time, sim_passed, results):
         f.write(f"  gm/ID_5 = {best_solution['gm_ID_5']:.2f} S/A\n")
         f.write(f"  gm/ID_6 = {best_solution['gm_ID_6']:.2f} S/A\n")
         f.write(f"  I_T     = {best_solution['I_T']*1e6:.2f} μA\n")
-        f.write(f"  V_A     = {best_solution['V_A']:.2f} V\n")
-        f.write(f"  V_B     = {best_solution['V_B']:.2f} V\n\n")
+        f.write(f"  V_A     = {V_A:.2f} V\n")
+        f.write(f"  V_B     = {V_B:.2f} V\n\n")
         
         f.write("OPTIMAL TRANSISTOR SIZING:\n")
         f.write(f"  W_1 = {W['W_1']:.2f} μm,  L_1 = {L['L_1']:.2f} μm\n")

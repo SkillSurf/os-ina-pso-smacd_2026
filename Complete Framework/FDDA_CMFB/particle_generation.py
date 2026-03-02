@@ -1,23 +1,17 @@
 import numpy as np
-# from gmID_sizing import get_params
 from simulator import evaluate_design
 from survivability_check import survivability_test
-from specs import L_DISCRETE_VALUES, VDD, VCM
+from specs import L_DISCRETE_VALUES, VDD, VCM, V_A, V_B
 
 def generate_particle(cont_bounds, n_L_values, max_attempts=1000):
 
     for attempt in range(max_attempts):
         gm_ID_1 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_2 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_3 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_4 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_5 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_6 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-
-        I_T = np.random.uniform(cont_bounds[1][0], cont_bounds[1][1])
-        
-        V_A = np.random.uniform(cont_bounds[2][0], cont_bounds[2][1])
-        V_B = np.random.uniform(cont_bounds[3][0], cont_bounds[3][1])
+        gm_ID_2 = np.random.uniform(cont_bounds[1][0], cont_bounds[1][1])
+        gm_ID_3 = np.random.uniform(cont_bounds[2][0], cont_bounds[2][1])
+        gm_ID_4 = np.random.uniform(cont_bounds[3][0], cont_bounds[3][1])
+        gm_ID_5 = np.random.uniform(cont_bounds[4][0], cont_bounds[4][1])
+        gm_ID_6 = np.random.uniform(cont_bounds[5][0], cont_bounds[5][1])
         
         L_1_idx = np.random.randint(0, n_L_values)
         L_2_idx = np.random.randint(0, n_L_values)
@@ -25,9 +19,11 @@ def generate_particle(cont_bounds, n_L_values, max_attempts=1000):
         L_4_idx = np.random.randint(0, n_L_values)
         L_5_idx = np.random.randint(0, n_L_values)
         L_6_idx = np.random.randint(0, n_L_values)
+
+        I_T = np.random.uniform(cont_bounds[6][0], cont_bounds[6][1])
         
-        particle = np.array([gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6, L_1_idx,
-                            L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, I_T, V_A, V_B])
+        particle = np.array([gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6, 
+                             L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, I_T])
         
         passed, area, specs = survivability_test(particle)
         
@@ -40,16 +36,11 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=10000):
 
     for attempt in range(max_attempts):
         gm_ID_1 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_2 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_3 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_4 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_5 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-        gm_ID_6 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
-
-        I_T = np.random.uniform(cont_bounds[1][0], cont_bounds[1][1])
-        
-        V_A = np.random.uniform(cont_bounds[2][0], cont_bounds[2][1])
-        V_B = np.random.uniform(cont_bounds[3][0], cont_bounds[3][1])
+        gm_ID_2 = np.random.uniform(cont_bounds[1][0], cont_bounds[1][1])
+        gm_ID_3 = np.random.uniform(cont_bounds[2][0], cont_bounds[2][1])
+        gm_ID_4 = np.random.uniform(cont_bounds[3][0], cont_bounds[3][1])
+        gm_ID_5 = np.random.uniform(cont_bounds[4][0], cont_bounds[4][1])
+        gm_ID_6 = np.random.uniform(cont_bounds[5][0], cont_bounds[5][1])
         
         L_1_idx = np.random.randint(0, n_L_values)
         L_2_idx = np.random.randint(0, n_L_values)
@@ -57,27 +48,13 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=10000):
         L_4_idx = np.random.randint(0, n_L_values)
         L_5_idx = np.random.randint(0, n_L_values)
         L_6_idx = np.random.randint(0, n_L_values)
+
+        I_T = np.random.uniform(cont_bounds[6][0], cont_bounds[6][1])
         
-        particle = np.array([gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6, L_1_idx,
-                            L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, I_T, V_A, V_B])
+        particle = np.array([gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6, 
+                             L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, I_T])
         
         passed, area, specs = survivability_test(particle)
-        if passed:
-            print(f"Generated valid particle on attempt {attempt+1}/{max_attempts} with Area = {area:.2f} μm²")
-
-        # L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
-        # L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
-        # L_3 = L_DISCRETE_VALUES[int(L_3_idx)]
-        # L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
-        # L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
-        # L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
-        
-        # gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 
-        #          'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
-        
-        # L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
-
-        # W, L, _, _, Vgs, _ = get_params(gm_ID, L, V_A, V_B, I_T)
                 
         if passed:
             current_params = {
@@ -105,8 +82,8 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=10000):
             specs['Gain_dB'] = meas['Gain_dB']
             specs['PM'] = meas['PM']
             specs['Power'] = meas['Power']
-            specs['CMRR_db'] = meas['CMRR_dB']
-            specs['PSRR_db'] = meas['PSRR_dB']
+            specs['CMRR_dB'] = meas['CMRR_dB']
+            specs['PSRR_dB'] = meas['PSRR_dB']
             specs['Area'] = meas['Area']
             return particle, area, specs
     

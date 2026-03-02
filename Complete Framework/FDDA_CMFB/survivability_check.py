@@ -9,7 +9,7 @@ from specs import *
 def survivability_test(particle, verbose=False):
     """
     Test if a particle meets all design specifications
-    particle = [gm_ID_1, ..., gm_ID_6, L_1_idx, ..., L_6_idx, I_T, V_A, V_B]
+    particle = [gm_ID_1, ..., gm_ID_6, L_1_idx, ..., L_6_idx, I_T]
     """
     gm_ID_1 = particle[0]
     gm_ID_2 = particle[1]
@@ -26,8 +26,6 @@ def survivability_test(particle, verbose=False):
     L_6_idx = particle[11]
 
     I_T = particle[12]
-    V_A = particle[13]
-    V_B = particle[14]
 
     L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
     L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -36,8 +34,8 @@ def survivability_test(particle, verbose=False):
     L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
     L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
 
-    gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 'gm_ID_4': gm_ID_4,
-             'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+    gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 
+             'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
 
     L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
 
@@ -133,7 +131,6 @@ def survivability_test(particle, verbose=False):
         Power_calc <= Power_spec and
         # noise_calc <= noise_spec and
         # CMRR_calc >= CMRR_spec and
-        # Area_active <= Area_spec and
         W['W_1'] >= 0.42 and W['W_2'] >= 0.42 and
         W['W_3'] >= 0.42 and W['W_4'] >= 0.42 and
         W['W_5'] >= 0.42 and W['W_6'] >= 0.42 and
@@ -153,7 +150,7 @@ def survivability_test(particle, verbose=False):
         'PM': PM_calc,
         'Power': Power_calc,
         # 'Noise': noise_calc,
-        # 'CMRR_db': 20*np.log10(CMRR_calc),
+        # 'CMRR_dB': 20*np.log10(CMRR_calc),
         'Area': Area_active,
         'W_1': W['W_1'], 'L_1': L['L_1'],
         'W_2': W['W_2'], 'L_2': L['L_2'],
@@ -172,10 +169,10 @@ def survivability_test(particle, verbose=False):
     
     if verbose and specs_met:
         print(f"  Gain: {20*np.log10(Gain_dc_calc):.3f} dB (spec: {Gain_dc_spec_dB:.3f})")
-        # print(f"  GBW: {GBW_calc*1e-6:.3f} MHz (spec: {GBW_spec*1e-6:.3f})")
-        # print(f"  PM: {PM_calc:.3f}° (spec: {PM_spec:.3f})")
-        # print(f"  SR: {SR_calc*1e-6:.3f} V/μs (spec: {SR_spec*1e-6:.3f})")
-        # print(f"  Power: {Power_calc*1e6:.3f} μW (spec: {Power_spec*1e6:.3f})")
+        print(f"  GBW: {GBW_calc*1e-6:.3f} MHz (spec: {GBW_spec*1e-6:.3f})")
+        print(f"  PM: {PM_calc:.3f}° (spec: {PM_spec:.3f})")
+        print(f"  SR: {SR_calc*1e-6:.3f} V/μs (spec: {SR_spec*1e-6:.3f})")
+        print(f"  Power: {Power_calc*1e6:.3f} μW (spec: {Power_spec*1e6:.3f})")
         # print(f"  Noise: {noise_calc*1e6:.3f} μV/√Hz (spec: {noise_spec*1e6:.3f})")
         # print(f"  CMRR: {20*np.log10(CMRR_calc):.3f} dB (spec: {CMRR_spec_dB:.3f})")
         print(f"  Area: {Area_active:.3f} μm²")

@@ -13,7 +13,7 @@ class PSO:
         self.c2 = c2
         self.max_velocity_updates = max_velocity_updates
         
-        self.continuous_indices = [0, 1, 2, 3, 4, 5, 12, 13, 14]
+        self.continuous_indices = [0, 1, 2, 3, 4, 5, 12]
         self.discrete_indices = [6, 7, 8, 9, 10, 11]
         self.n_cont = len(self.continuous_indices)
         self.n_disc = len(self.discrete_indices)
@@ -31,10 +31,8 @@ class PSO:
         
     def initialize_velocities(self):
         for i, cont_idx in enumerate(self.continuous_indices):
-            if i < 6:
-                bound_range = self.cont_bounds[0][1] - self.cont_bounds[0][0]
-            else:
-                bound_range = self.cont_bounds[i-5][1] - self.cont_bounds[i-5][0]
+            bound_range = self.cont_bounds[i][1] - self.cont_bounds[i][0]
+
             self.velocities[:, i] = np.random.uniform(
                 -0.1 * bound_range,
                 0.1 * bound_range,
@@ -96,18 +94,11 @@ class PSO:
             
             new_cont_vars[i] = current_pos + self.velocities[particle_idx, i]
             
-            if i < 6:
-                new_cont_vars[i] = np.clip(
-                    new_cont_vars[i],
-                    self.cont_bounds[0][0],
-                    self.cont_bounds[0][1]
-                )
-            else:
-                new_cont_vars[i] = np.clip(
-                    new_cont_vars[i],
-                    self.cont_bounds[i-5][0],
-                    self.cont_bounds[i-5][1]
-                )
+            new_cont_vars[i] = np.clip(
+                new_cont_vars[i],
+                self.cont_bounds[i][0],
+                self.cont_bounds[i][1]
+            )
         
         return new_cont_vars
     
@@ -127,7 +118,7 @@ class PSO:
         
         new_disc_vars = self.discrete_update()
         
-        offspring = np.zeros(15)
+        offspring = np.zeros(13)
         offspring[self.continuous_indices] = new_cont_vars
         offspring[self.discrete_indices] = new_disc_vars
         
@@ -146,7 +137,6 @@ class PSO:
         for i in range(self.n_particles):
             offspring, area, specs, from_reproduction = self.generate_offspring(i, particles[i])
             
-
             new_particles[i] = offspring
             new_fitness[i] = area
             need_simulator_check.append(i)
@@ -156,7 +146,7 @@ class PSO:
     def get_best_solution(self):
         gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = self.gbest_position[0:6]
         L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = self.gbest_position[6:12]
-        I_T, V_A, V_B = self.gbest_position[12:15]
+        I_T = self.gbest_position[12]
         
         L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
         L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -179,8 +169,6 @@ class PSO:
             'L_5': L_5,
             'L_6': L_6,
             'I_T': I_T,
-            'V_A': V_A,
-            'V_B': V_B,
             'area': self.gbest_fitness,
             'specs': self.gbest_specs
         }
