@@ -144,11 +144,12 @@ def survivability_test(particle, verbose=False):
     )
     
     specs_dict = {
-        'SR': SR_calc,
-        'GBW': GBW_calc,
         'Gain_dB': 20*np.log10(Gain_dc_calc),
+        'GBW': GBW_calc,        
         'PM': PM_calc,
+        'SR': SR_calc,
         'Power': Power_calc,
+        'V_CMFB': V_CMFB,
         # 'Noise': noise_calc,
         # 'CMRR_dB': 20*np.log10(CMRR_calc),
         'Area': Area_active,
@@ -163,8 +164,7 @@ def survivability_test(particle, verbose=False):
         'V_B1': V_B1,
         'V_B2': V_B2,
         'V_B3': V_B3,
-        'V_B4': V_B4,
-        'V_CMFB': V_CMFB
+        'V_B4': V_B4
     }
     
     if verbose and specs_met:

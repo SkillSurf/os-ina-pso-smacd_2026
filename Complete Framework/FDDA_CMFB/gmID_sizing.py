@@ -112,16 +112,18 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
             L['L_7'] = L['L_4']
             L['L_8'] = L['L_2']
 
+            I_X = I_T / M
+
             # Create a dictionary to hold the current density (A/µm) for each transistor
             ID = {
                 'ID_1': I_T / 2,
-                'ID_2': I_T,
-                'ID_3': I_T,
-                'ID_4': I_T,
-                'ID_5': 2 * I_T,
+                'ID_2': I_X,
+                'ID_3': I_X,
+                'ID_4': I_X,
+                'ID_5': I_T + I_X,
                 'ID_6': I_T,
-                'ID_7': I_T,
-                'ID_8': 2 * I_T
+                'ID_7': (I_T + I_X) / 2,
+                'ID_8': I_T + I_X
             }
             
             # Read the gate-source voltage (V) from the LUTs
@@ -234,23 +236,13 @@ def get_specVars(gm_ID, L, V_A, V_B, I_T):
 # ============================================================
 def get_feasRegion(L_discrete_values):
 
-    # # Range of gm/ID values to consider for the design
-    # gm_ID_min = gm_ID_range[0]
-    # gm_ID_max = gm_ID_range[1]
-
     # Minimum current calculations based on slew rate
     I_T_min = SR_spec * (1.2 * CL)
     # Maximum current calculations based on power budget
-    I_T_max = Power_spec / VDD / 8
+    I_T_max = Power_spec / VDD / (4 * (1 + (1 / M)))
 
     L_available = L_discrete_values
-    n_L_values = len(L_available)
-
-    # V_A_min = V_A_range[0]
-    # V_A_max = V_A_range[1]
-
-    # V_B_min = V_B_range[0]
-    # V_B_max = V_B_range[1]    
+    n_L_values = len(L_available)   
 
     return L_available, n_L_values, I_T_min, I_T_max
 
