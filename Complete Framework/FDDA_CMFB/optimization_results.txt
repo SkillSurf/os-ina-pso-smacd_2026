@@ -5,45 +5,45 @@ FDDA-CMFB OPTIMIZATION RESULTS
 DESIGN SPECIFICATIONS:
   VDD = 1.8 V
   CL = 1.00 pF
-  Gain ≥ 53.00 dB
-  GBW ≥ 1.60 MHz
+  Gain ≥ 70.00 dB
+  GBW ≥ 1.00 MHz
   Phase Margin ≥ 60.00°
-  Slew Rate ≥ 6.40 V/μs
-  Power ≤ 138.00 μW
-  CMRR ≥ 76.00 dB
-  PSRR ≥ 42.00 dB
+  Slew Rate ≥ 1.00 V/μs
+  Power ≤ 80.00 μW
+  CMRR ≥ 100.00 dB
+  PSRR ≥ 60.00 dB
 
 OPTIMAL DESIGN PARAMETERS:
-  gm/ID_1 = 15.80 S/A
-  gm/ID_2 = 10.38 S/A
-  gm/ID_3 = 10.16 S/A
-  gm/ID_4 = 11.82 S/A
-  gm/ID_5 = 10.87 S/A
-  gm/ID_6 = 9.19 S/A
-  I_T     = 8.50 μA
+  gm/ID_1 = 19.36 S/A
+  gm/ID_2 = 13.25 S/A
+  gm/ID_3 = 12.37 S/A
+  gm/ID_4 = 12.77 S/A
+  gm/ID_5 = 12.53 S/A
+  gm/ID_6 = 12.68 S/A
+  I_T     = 2.98 μA
   V_A     = 1.50 V
   V_B     = 0.30 V
 
 OPTIMAL TRANSISTOR SIZING:
-  W_1 = 11.43 μm,  L_1 = 0.15 μm
-  W_2 = 7.66 μm,  L_2 = 0.90 μm
-  W_3 = 5.18 μm,  L_3 = 0.70 μm
-  W_4 = 1.92 μm,  L_4 = 0.70 μm
-  W_5 = 2.52 μm,  L_5 = 0.50 μm
-  W_6 = 1.53 μm,  L_6 = 0.15 μm
-  W_7 = 91.27 μm,  L_7 = 0.70 μm
-  W_8 = 14.41 μm,  L_8 = 0.90 μm
+  W_1 = 210.22 μm,  L_1 = 0.30 μm
+  W_2 = 0.84 μm,  L_2 = 0.50 μm
+  W_3 = 1.11 μm,  L_3 = 1.00 μm
+  W_4 = 0.79 μm,  L_4 = 3.00 μm
+  W_5 = 2.59 μm,  L_5 = 2.00 μm
+  W_6 = 4.20 μm,  L_6 = 0.70 μm
+  W_7 = 33.07 μm,  L_7 = 3.00 μm
+  W_8 = 3.90 μm,  L_8 = 0.50 μm
 
-OPTIMAL AREA: 317.57 μm²
+OPTIMAL AREA: 687.36 μm²
 
 ACHIEVED SPECIFICATIONS:
-  Gain         = 53.27 dB
-  GBW          = 4.38 MHz
-  Phase Margin = 89.78°
-  Slew Rate    = 6.49 V/μs
-  Power        = 110.40 μW
-  CMRR         = 100.55 dB
-  PSRR         = 68.96 dB
+  Gain         = 72.24 dB
+  GBW          = 1.05 MHz
+  Phase Margin = 82.00°
+  Slew Rate    = 1.04 V/μs
+  Power        = 24.37 μW
+  CMRR         = 195.64 dB
+  PSRR         = 206.84 dB
 
-OPTIMIZATION TIME: 66.96 seconds
+OPTIMIZATION TIME: 632.34 seconds
 FINAL SIMULATOR CHECK: PASSED
