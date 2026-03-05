@@ -8,11 +8,12 @@ from gmID_sizing import get_Area
 
 import PySpice.Logging.Logging as Logging
 from PySpice.Spice.Netlist import Circuit
-from PySpice.Unit import u_V, u_pF, u_GH, u_GF, u_Ohm, u_Hz, u_MHz, u_ns, u_us
+from PySpice.Unit import u_V, u_pF, u_GH, u_GF, u_Hz, u_MHz, u_ns, u_us
 import PySpice.Spice.NgSpice.Shared as Shared
 
 dir = os.path.dirname(os.path.abspath(__file__))
-dll_path = os.path.join(dir, "..", "..", "pyspice", "ngspice-42_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")
+# dll_path = os.path.join(dir, "..", "..", "pyspice", "ngspice-42_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")  # Ngspice 42
+dll_path = os.path.join(dir, "..", "..", "pyspice", "ngspice-44_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")  # Ngspice 44
 Shared.NgSpiceShared.LIBRARY_PATH = os.path.abspath(dll_path)
 
 # =============================================================
@@ -30,7 +31,7 @@ def _patched_exec_command(self, command, join_lines=True):
         if command == 'run':
             pass 
         else:
-            raise e # If it's a real syntax error, crash normally
+            raise e  # If it's a real syntax error, crash normally
 
 # Apply the patch globally
 Shared.NgSpiceShared.exec_command = _patched_exec_command
@@ -76,17 +77,6 @@ def runsim_AC(measurement_results, plots=False):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
-.control
-set no_warning
-set no_note
-.endc
-
-.options ngbehavior=hsa
-.options stacksize=64
-.options nomodcheck
-
-.param mc_mm_switch=0
-.param mc_pr_switch=0
 .lib ../../../../PDKs/sky130A/libs.tech/combined/sky130.lib.spice tt
 .include fdda_cmfb.spice
 """
@@ -109,7 +99,6 @@ set no_note
     circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC -1')
 
     simulator = circuit.simulator(temperature=27, nominal_temperature=27)
-    simulator.options(klu=1)
 
     try:
         analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
@@ -156,6 +145,8 @@ set no_note
         plt.savefig('Gain_and_GBW_plot.png')
         plt.tight_layout()
 
+    return gain_db
+
 # ======================
 # Runs the OP simulation
 # ======================
@@ -163,17 +154,6 @@ def runsim_OP(measurement_results, plots=False):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
-.control
-set no_warning
-set no_note
-.endc
-
-.options ngbehavior=hsa
-.options stacksize=64
-.options nomodcheck
-
-.param mc_mm_switch=0
-.param mc_pr_switch=0
 .lib ../../../../PDKs/sky130A/libs.tech/combined/sky130.lib.spice tt
 .include fdda_cmfb.spice
 """
@@ -196,7 +176,6 @@ set no_note
     circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
 
     simulator = circuit.simulator(temperature=27, nominal_temperature=27)
-    simulator.options(klu=1)
     simulator.save_currents = True
 
     try:
@@ -238,21 +217,11 @@ def runsim_SLEW(measurement_results, plots=False):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
-.control
-set no_warning
-set no_note
-.endc
-
-.options ngbehavior=hsa
-.options stacksize=64
-.options nomodcheck
-
-.param mc_mm_switch=0
-.param mc_pr_switch=0
 .lib ../../../../PDKs/sky130A/libs.tech/combined/sky130.lib.spice tt
 .include fdda_cmfb.spice
 """
-    circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+    # Form the closed-loop configuration (Unity gain)
+    circuit.X('X1', 'FDDA', 'V_PP', 'V_OP', 'V_NP', 'V_ON', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
     circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
 
     circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
@@ -260,19 +229,14 @@ set no_note
     circuit.C('LOADP', 'V_OP', circuit.gnd, 2@u_pF)
     circuit.C('LOADN', 'V_ON', circuit.gnd, 2@u_pF)
 
-    # Form the closed-loop configuration (Unity gain)
-    circuit.R('RFB1', 'V_PN', 'V_OP', 0@u_Ohm)
-    circuit.R('RFB2', 'V_NN', 'V_ON', 0@u_Ohm)
-
     # Define Pulse Inputs (Differential)
-    circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0 PULSE(0 1.8 10u 10p 10p 20u 40u)')
-    circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 1.8 PULSE(1.8 0 10u 10p 10p 20u 40u)')
+    circuit.V('VPP', 'V_PP', circuit.gnd, 'PULSE(0 1.8 10u 10p 10p 20u 40u)')
+    circuit.V('VNP', 'V_NP', circuit.gnd, 'PULSE(1.8 0 10u 10p 10p 20u 40u)')
 
     simulator = circuit.simulator(temperature=27, nominal_temperature=27)
-    simulator.options(klu=1, method='gear')
 
     try:
-        analysis = simulator.transient(step_time=10@u_ns, end_time=13@u_us, start_time=7@u_us, use_initial_condition=True)
+        analysis = simulator.transient(step_time=10@u_ns, end_time=20@u_us)
     except Exception as e:
         raise e
     
@@ -280,8 +244,8 @@ set no_note
     vin = analysis.nodes['v_pp'] - analysis.nodes['v_np']
     vout = analysis.nodes['v_op'] - analysis.nodes['v_on']
     
-    v_min = np.interp(9e-6, time, vout)   # Voltage at 9μs
-    v_max = np.interp(12e-6, time, vout)  # Voltage at 12μs
+    v_min = np.interp(1e-6, time, vout)   # Voltage at 1μs
+    v_max = np.interp(19e-6, time, vout)  # Voltage at 19μs
 
     v_swing = float(v_max) - float(v_min)
     v_10 = float(v_min) + (0.1 * v_swing)
@@ -316,21 +280,10 @@ set no_note
 # ========================
 # Runs the CMRR simulation
 # ========================
-def runsim_CMRR(measurement_results, plots=False):
+def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
-.control
-set no_warning
-set no_note
-.endc
-
-.options ngbehavior=hsa
-.options stacksize=64
-.options nomodcheck
-
-.param mc_mm_switch=0
-.param mc_pr_switch=0
 .lib ../../../../PDKs/sky130A/libs.tech/combined/sky130.lib.spice tt
 .include fdda_cmfb.spice
 """
@@ -348,40 +301,20 @@ set no_note
     circuit.C('CFB1', 'V_PN', circuit.gnd, 4@u_GF)
     circuit.C('CFB2', 'V_NN', circuit.gnd, 4@u_GF)
 
-    # Define AC Input (Differential)
-    circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
-    circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC -1')
-
-    sim_dm = circuit.simulator(temperature=27, nominal_temperature=27)
-    sim_dm.options(klu=1)
-
-    try:
-        dm_analysis = sim_dm.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
-    except Exception as e:
-        raise e
-    
-    freq = np.array(dm_analysis.frequency)
-    vout_dm = dm_analysis.nodes['v_op'] - dm_analysis.nodes['v_on']
-    vin_dm  = (dm_analysis.nodes['v_pp'] - dm_analysis.nodes['v_pn']) - (dm_analysis.nodes['v_np'] - dm_analysis.nodes['v_nn'])
-
-    gain_dm = vout_dm / vin_dm
-    gain_dm_db = 20 * np.log10(np.abs(gain_dm))
-
-    circuit._elements.pop('VVNP')
     # Define AC Input (Common Mode)
+    circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
     circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC 1')
 
-    sim_cm = circuit.simulator(temperature=27, nominal_temperature=27)
-    sim_cm.options(klu=1)
+    simulator = circuit.simulator(temperature=27, nominal_temperature=27)
 
     try:
-        cm_analysis = sim_cm.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
+        analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
     except Exception as e:
         raise e
     
-    freq = np.array(cm_analysis.frequency)
-    vout_cm = cm_analysis.nodes['v_op'] - cm_analysis.nodes['v_on']
-    vin_cm  = (cm_analysis.nodes['v_pp'] + cm_analysis.nodes['v_pn'] + cm_analysis.nodes['v_np'] + cm_analysis.nodes['v_nn']) / 4
+    freq = np.array(analysis.frequency)
+    vout_cm = analysis.nodes['v_op'] - analysis.nodes['v_on']
+    vin_cm  = (analysis.nodes['v_pp'] + analysis.nodes['v_pn'] + analysis.nodes['v_np'] + analysis.nodes['v_nn']) / 4
 
     gain_cm = vout_cm / vin_cm
     gain_cm_db = 20 * np.log10(np.abs(gain_cm))
@@ -411,28 +344,18 @@ set no_note
 # ========================
 # Runs the PSRR simulation
 # ========================
-def runsim_PSRR(measurement_results, plots=False):
+def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
-.control
-set no_warning
-set no_note
-.endc
-
-.options ngbehavior=hsa
-.options stacksize=64
-.options nomodcheck
-
-.param mc_mm_switch=0
-.param mc_pr_switch=0
 .lib ../../../../PDKs/sky130A/libs.tech/combined/sky130.lib.spice tt
 .include fdda_cmfb.spice
 """
     circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
     circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
 
-    circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
+    # Define VDD as AC source for PSRR analysis
+    circuit.V('VDDac', 'VDD', circuit.gnd, 'DC 1.8 AC 1')
 
     circuit.C('LOADP', 'V_OP', circuit.gnd, 2@u_pF)
     circuit.C('LOADN', 'V_ON', circuit.gnd, 2@u_pF)
@@ -443,45 +366,20 @@ set no_note
     circuit.C('CFB1', 'V_PN', circuit.gnd, 4@u_GF)
     circuit.C('CFB2', 'V_NN', circuit.gnd, 4@u_GF)
 
-    # Define AC Input (Differential)
-    circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
-    circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9 AC -1')
-
-    sim_dm = circuit.simulator(temperature=27, nominal_temperature=27)
-    sim_dm.options(klu=1)
-
-    try:
-        dm_analysis = sim_dm.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
-    except Exception as e:
-        raise e
-    
-    freq = np.array(dm_analysis.frequency)
-    vout_dm = dm_analysis.nodes['v_op'] - dm_analysis.nodes['v_on']
-    vin_dm  = (dm_analysis.nodes['v_pp'] - dm_analysis.nodes['v_pn']) - (dm_analysis.nodes['v_np'] - dm_analysis.nodes['v_nn'])
-
-    gain_dm = vout_dm / vin_dm
-    gain_dm_db = 20 * np.log10(np.abs(gain_dm))
-
-    for name in ['VVPP', 'VVNP']:
-        circuit._elements.pop(name)
     # Define DC Inputs (Quiescent Points)
     circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9')
     circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
-    # Redefine VDD as AC source for PSRR analysis
-    circuit._elements.pop('VVDD')
-    circuit.V('VDDac', 'VDD', circuit.gnd, 'DC 1.8 AC 1')
 
-    sim_ps = circuit.simulator(temperature=27, nominal_temperature=27)
-    sim_ps.options(klu=1)
+    simulator = circuit.simulator(temperature=27, nominal_temperature=27)
 
     try:
-        ps_analysis = sim_ps.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
+        analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
     except Exception as e:
         raise e
 
-    freq = np.array(ps_analysis.frequency)
-    vout_ps = ps_analysis.nodes['v_op'] - ps_analysis.nodes['v_on']
-    vdd_ac  = ps_analysis.nodes['vdd']
+    freq = np.array(analysis.frequency)
+    vout_ps = analysis.nodes['v_op'] - analysis.nodes['v_on']
+    vdd_ac  = analysis.nodes['vdd']
 
     gain_ps = vout_ps / vdd_ac
     gain_ps_db = 20 * np.log10(np.abs(gain_ps))
@@ -538,42 +436,38 @@ def evaluate_design(current_params, plots=False):
     
     # Create a new results dictionary for this specific run
     current_results = {}
-    specs_met = False # Initialize as False, will be updated later
+    specs_met = False  # Initialize as False, will be updated later
 
     # Run the sequence
     try:
         generate_spice(rounded_params)  # Generate the SPICE file for the current parameters
         
         # Run the AC simulation and verify gain, gain-bandwidth, and phase margin specs
-        runsim_AC(measurement_results=current_results, plots=plots)
+        gain_dm_db = runsim_AC(measurement_results=current_results, plots=plots)
         specs_met = (current_results['Gain_dB'] >= Gain_dc_spec_dB and
-                     current_results['GBW'] >= GBW_spec and
-                     current_results['PM'] >= PM_spec)
+                        current_results['GBW'] >= GBW_spec and
+                        current_results['PM'] >= PM_spec)
 
         # Only if past specs are met, run the SLEW simulation and verify slew rate spec
         if specs_met:
             runsim_SLEW(measurement_results=current_results, plots=plots)
             specs_met = (current_results['SR'] >= SR_spec)
-        # current_results['SR'] = 4e6
 
         # Only if past specs are met, run the OP simulation and verify power spec
         if specs_met:
             # Run the OP simulation and verify specs
             runsim_OP(measurement_results=current_results, plots=plots)
             specs_met = (current_results['Power'] <= Power_spec)
-        # current_results['Power'] = 180e-6
 
         # Only if past specs are met, run the CMRR simulation and verify CMRR spec
         if specs_met:
-            runsim_CMRR(measurement_results=current_results, plots=plots)
+            runsim_CMRR(gain_dm_db, measurement_results=current_results, plots=plots)
             specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
-        # current_results['CMRR_dB'] = 130
 
         # Only if past specs are met, run the PSRR simulation and verify PSRR spec
         if specs_met:
-            runsim_PSRR(measurement_results=current_results, plots=plots)
+            runsim_PSRR(gain_dm_db, measurement_results=current_results, plots=plots)
             specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
-        # current_results['PSRR_dB'] = 70
 
         Area_active = get_Area(rounded_params, rounded_params)
         current_results['Area'] = Area_active
@@ -589,21 +483,21 @@ def evaluate_design(current_params, plots=False):
     except Exception as e:  # Simulation failed for params
         return False, None  # Return as an infeasible solution
     
-# params = {'W_1': 568.63, 'L_1': 0.2,
-#           'W_2': 9.28, 'L_2': 0.9,
-#           'W_3': 19.24, 'L_3': 1.0,
-#           'W_4': 2.03, 'L_4': 0.9,
-#           'W_5': 3.10, 'L_5': 0.5,
-#           'W_6': 2.41, 'L_6': 0.17,
-#           'W_7': 145.59, 'L_7': 0.9,
-#           'W_8': 17.30, 'L_8': 0.9,
-#           'V_B1': 0.8207,
-#           'V_B2': 0.8017,
-#           'V_B3': 1.1629,
-#           'V_B4': 0.3055,
+# params = {'W_1': 408.80, 'L_1': 0.3,
+#           'W_2': 1.99, 'L_2': 0.2,
+#           'W_3': 4.26, 'L_3': 1,
+#           'W_4': 3.71, 'L_4': 3,
+#           'W_5': 1.95, 'L_5': 0.5,
+#           'W_6': 2.74, 'L_6': 0.18,
+#           'W_7': 97.14, 'L_7': 3,
+#           'W_8': 5.45, 'L_8': 0.2,
+#           'V_B1': 0.8571,
+#           'V_B2': 0.7666,
+#           'V_B3': 1.0621,
+#           'V_B4': 0.2824,
 #           'V_CM': 0.9}
 
 # if __name__ == "__main__":
-#     status, results = evaluate_design(params, plots=False)
+#     status, results = evaluate_design(params, plots=True)
 #     print("Status:", status)
 #     print("Results:", results)
