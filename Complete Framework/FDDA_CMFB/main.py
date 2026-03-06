@@ -302,6 +302,10 @@ def main():
     print(f"  W_6 = {W['W_6']:.2f} μm,  L_6 = {L['L_6']:.2f} μm")
     print(f"  W_7 = {W['W_7']:.2f} μm,  L_7 = {L['L_7']:.2f} μm")
     print(f"  W_8 = {W['W_8']:.2f} μm,  L_8 = {L['L_8']:.2f} μm")
+    print(f"  V_B1 = {current_params['V_B1']:.4f} V")
+    print(f"  V_B2 = {current_params['V_B2']:.4f} V")
+    print(f"  V_B3 = {current_params['V_B3']:.4f} V")
+    print(f"  V_B4 = {current_params['V_B4']:.4f} V")
     
     print(f"\n OPTIMAL AREA: {best_solution['area']:.4f} μm²")
 
@@ -381,14 +385,18 @@ def save_results(best_solution, W, L, opt_time, sim_passed, results):
         f.write(f"  V_B     = {V_B:.2f} V\n\n")
         
         f.write("OPTIMAL TRANSISTOR SIZING:\n")
-        f.write(f"  W_1 = {W['W_1']:.2f} μm,  L_1 = {L['L_1']:.2f} μm\n")
-        f.write(f"  W_2 = {W['W_2']:.2f} μm,  L_2 = {L['L_2']:.2f} μm\n")
-        f.write(f"  W_3 = {W['W_3']:.2f} μm,  L_3 = {L['L_3']:.2f} μm\n")
-        f.write(f"  W_4 = {W['W_4']:.2f} μm,  L_4 = {L['L_4']:.2f} μm\n")
-        f.write(f"  W_5 = {W['W_5']:.2f} μm,  L_5 = {L['L_5']:.2f} μm\n")
-        f.write(f"  W_6 = {W['W_6']:.2f} μm,  L_6 = {L['L_6']:.2f} μm\n")
-        f.write(f"  W_7 = {W['W_7']:.2f} μm,  L_7 = {L['L_7']:.2f} μm\n")
-        f.write(f"  W_8 = {W['W_8']:.2f} μm,  L_8 = {L['L_8']:.2f} μm\n\n")
+        f.write(f"  W_1 = {results['W_1']:.2f} μm,  L_1 = {results['L_1']:.2f} μm\n")
+        f.write(f"  W_2 = {results['W_2']:.2f} μm,  L_2 = {results['L_2']:.2f} μm\n")
+        f.write(f"  W_3 = {results['W_3']:.2f} μm,  L_3 = {results['L_3']:.2f} μm\n")
+        f.write(f"  W_4 = {results['W_4']:.2f} μm,  L_4 = {results['L_4']:.2f} μm\n")
+        f.write(f"  W_5 = {results['W_5']:.2f} μm,  L_5 = {results['L_5']:.2f} μm\n")
+        f.write(f"  W_6 = {results['W_6']:.2f} μm,  L_6 = {results['L_6']:.2f} μm\n")
+        f.write(f"  W_7 = {results['W_7']:.2f} μm,  L_7 = {results['L_7']:.2f} μm\n")
+        f.write(f"  W_8 = {results['W_8']:.2f} μm,  L_8 = {results['L_8']:.2f} μm\n")
+        f.write(f"  V_B1 = {results['V_B1']:.4f} V\n")
+        f.write(f"  V_B2 = {results['V_B2']:.4f} V\n")
+        f.write(f"  V_B3 = {results['V_B3']:.4f} V\n")
+        f.write(f"  V_B4 = {results['V_B4']:.4f} V\n\n")
         
         f.write(f"OPTIMAL AREA: {best_solution['area']:.2f} μm²\n\n")
         
