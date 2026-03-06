@@ -21,46 +21,25 @@ def silence_stdout():
 # =========================================================================
 def get_inputParams(gm_ID, L, V_B):
 
-    # Parameter initialization for the iterative convergence loop
-    tolerance = 1e-4      # 0.1 mV convergence threshold
-    max_iters = 50        # Failsafe to prevent infinite loops
-    error = float('inf')  # Initial error
-    iters = 0
+    try:
+        # Get the Vgs value based on Bulk voltage
+        Vgs = PCH.lookupVGS(GM_ID=gm_ID, VDB=(VDD-V_B), VGB=(VDD-VCM), L=L)
 
-    # Get the initial Vgs guess
-    Vgs_current = PCH.lookupVGS(GM_ID=gm_ID, L=L)
-
-    while error > tolerance and iters < max_iters:
-
-        V_C = VCM + Vgs_current  # Calculate the intermediate node
+        # Calculate the intermediate node
+        V_C = VCM + Vgs
         if V_C < 0 or V_C > VDD:
             return None, None, None, None
         
-        Vds_new = V_C - V_B  # Calculate the new Vds
-        if Vds_new < 0.15:
+        # Calculate Vds and Vsb voltages for M1
+        Vds = V_C - V_B
+        Vsb = VDD - V_C
+        if Vds < 0.15 or Vsb <= 0:
             return None, None, None, None
-        else:   
-            Vsb_new = VDD - V_C  # Calculate the new Vsb
 
-            # Query the LUT for the new Vgs using the updated Vds
-            Vgs_new = PCH.lookupVGS(GM_ID=gm_ID, VSB=Vsb_new, VDS=Vds_new, L=L)    
-
-            error = abs(Vgs_new - Vgs_current)  # Calculate the error  
-
-            # Update variables for the next loop
-            Vgs_current = Vgs_new
-            Vds_final = Vds_new
-            Vsb_final = Vsb_new
-            iters += 1
-
-    # Return None for convergence failure
-    if iters == max_iters:
+        return Vgs, Vds, Vsb, V_C
+    
+    except:
         return None, None, None, None
-
-    # Calculate V_C using the converged Vgs
-    V_C = VCM + Vgs_current
-
-    return Vgs_current, Vds_final, Vsb_final, V_C
 
 # =========================================================================
 # Function to get parameters for each transistor based on gm_ID, L, and I_T
@@ -147,6 +126,7 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
             JD_6 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_6'], VDS=Vds['Vds_6'], VSB=Vsb['Vsb_6'], L=L['L_6'])
             JD_7 = NCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_7'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_7'])
             JD_8 = PCH.lookup('ID_W', GM_ID=gm_ID['gm_ID_8'], VDS=Vds['Vds_8'], VSB=Vsb['Vsb_8'], L=L['L_8'])
+
         except:
             return None, None, None, None, None, None, None
 
@@ -226,6 +206,7 @@ def get_specVars(gm_ID, L, V_A, V_B, I_T):
                     'flicker_2': PCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_2'], VDS=Vds['Vds_2'], VSB=Vsb['Vsb_2'], L=L['L_2']),
                     'flicker_5': NCH.lookup('SFL_GM', GM_ID=gm_ID['gm_ID_5'], VDS=Vds['Vds_5'], VSB=Vsb['Vsb_5'], L=L['L_5'])
                 }
+                
             except:
                 return None, None, None, None, None, None, None, None, None
 

@@ -36,7 +36,7 @@ PSRR_spec = 10**(PSRR_spec_dB/20)         # Convert dB to V/V
 # Mixed Variable Hybrid-PSO parameters
 # ====================================
 N_PARTICLES = 10
-MAX_ITERATIONS = 30
+MAX_ITERATIONS = 15
 MAX_VELOCITY_UPDATES = 5
 
 # =========================

@@ -32,7 +32,7 @@ def generate_particle(cont_bounds, n_L_values, max_attempts=2000):
     
     return None, np.inf, None
 
-def generate_initial_particle(cont_bounds, n_L_values, max_attempts=10000):
+def generate_initial_particle(cont_bounds, n_L_values, max_attempts=50000):
 
     for attempt in range(max_attempts):
         gm_ID_1 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])
@@ -57,7 +57,6 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=10000):
         passed, area, specs = survivability_test(particle)
 
         if passed:
-
             current_params = {
                 'W_1': specs['W_1'], 'L_1': specs['L_1'],
                 'W_2': specs['W_2'], 'L_2': specs['L_2'],
@@ -72,32 +71,13 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=10000):
                 'V_B3': specs['V_B3'],
                 'V_B4': specs['V_B4'],
                 'V_CM': VCM
-            }   
-                     
+            }                     
             sim_passed, meas = evaluate_design(current_params)
-            # if meas is None:
-            #     print("--- SIMULATION FAILED FOR THE PARTICLE ---")
-            #     print(f"  Attempt {attempt+1}/{max_attempts} -- Survivability {passed} -- Simulation {sim_passed}")
-            #     print(f"  gm_ID_1: {gm_ID_1}, gm_ID_2: {gm_ID_2}, gm_ID_3: {gm_ID_3}, gm_ID_4: {gm_ID_4}, gm_ID_5: {gm_ID_5}, gm_ID_6: {gm_ID_6}")
-            #     print(f"    Specs: {specs}\n")
-            # else:
-            #     print(f"  Attempt {attempt+1}/{max_attempts} -- Survivability {passed} -- Simulation {sim_passed}")
-            #     print(f"  gm_ID_1: {gm_ID_1}, gm_ID_2: {gm_ID_2}, gm_ID_3: {gm_ID_3}, gm_ID_4: {gm_ID_4}, gm_ID_5: {gm_ID_5}, gm_ID_6: {gm_ID_6}")
-            #     print(f"    Specs: {meas}\n")
+            
         else:
             sim_passed = False
         
         if sim_passed:
-            # specs['SR'] = meas['SR']
-            # specs['GBW'] = meas['GBW']
-            # specs['Gain_dB'] = meas['Gain_dB']
-            # specs['PM'] = meas['PM']
-            # specs['Power'] = meas['Power']
-            # specs['CMRR_dB'] = meas['CMRR_dB']
-            # specs['PSRR_dB'] = meas['PSRR_dB']
-            # specs['Area'] = meas['Area']
-            # print(f"  Attempt {attempt+1}/{max_attempts} -- Survivability {passed} -- Simulation {sim_passed}")
-            # print(f"    Specs: {meas}\n")
             return particle, area, meas
             
     return None, np.inf, None
