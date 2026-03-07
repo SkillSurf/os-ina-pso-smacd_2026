@@ -218,7 +218,7 @@ def get_specVars(gm_ID, L, V_A, V_B, I_T):
 def get_feasRegion(L_discrete_values):
 
     # Minimum current calculations based on slew rate
-    I_T_min = SR_spec * (1.2 * CL)
+    I_T_min = SR_spec * (2 * CL)
     # Maximum current calculations based on power budget
     I_T_max = Power_spec / VDD / (4 * (1 + (1 / M)))
 

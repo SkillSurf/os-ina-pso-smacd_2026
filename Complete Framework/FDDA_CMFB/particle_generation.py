@@ -78,6 +78,8 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=50000):
             sim_passed = False
         
         if sim_passed:
+            print(f"\ngm_ID_1: {gm_ID_1:.2f}, gm_ID_2: {gm_ID_2:.2f}, gm_ID_3: {gm_ID_3:.2f}, gm_ID_4: {gm_ID_4:.2f}, gm_ID_5: {gm_ID_5:.2f}, gm_ID_6: {gm_ID_6:.2f}, I_T: {I_T*1e6:.2f} μA")
+            print(f"Gain: {meas['Gain_dB']:.2f} dB, GBW: {meas['GBW']*1e-6:.2f} MHz, PM: {meas['PM']:.2f} degrees, SR: {meas['SR']*1e-6:.2f} V/μs, CMRR: {meas['CMRR_dB']:.2f} dB, PSRR: {meas['PSRR_dB']:.2f} dB, Power: {meas['Power']*1e6:.2f} μW")
             return particle, area, meas
             
     return None, np.inf, None
