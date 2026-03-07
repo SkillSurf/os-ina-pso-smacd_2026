@@ -18,7 +18,7 @@ M = 4              # Current Ratio (I_T:I_X)
 # FDDA and CMFB design specifications
 # ===================================
 Vicm_spec = (0.8, 1.0)                    # Input Common Mode Range (V)
-Gain_dc_spec_dB = 70                      # DC Gain (dB)
+Gain_dc_spec_dB = 72                      # DC Gain (dB)
 GBW_spec = 1e6                            # Gain Bandwidth (Hz)
 PM_spec = 60                              # Phase Margin (degrees)
 SR_spec = 1e6                             # Slew Rate (V/s)

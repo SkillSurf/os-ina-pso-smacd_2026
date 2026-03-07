@@ -71,7 +71,7 @@ def generate_spice(params):
 # ======================
 # Runs the AC simulation
 # ======================
-def runsim_AC(measurement_results, plots=False):
+def runsim_AC(measurement_results):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -120,35 +120,12 @@ def runsim_AC(measurement_results, plots=False):
     measurement_results['GBW'] = float(gbw)
     measurement_results['PM'] = float(phase_margin)
 
-    if plots:
-        _, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-
-        ax1.semilogx(freq, gain_db, color='blue', linestyle='-')
-        ax1.set_ylabel('Gain (dB)')
-        ax1.grid(True, which="both", ls="-")
-        ax1.set_title("Bode Plot of FDDA-CMFB")
-
-        ax2.semilogx(freq, phase_deg, color='blue', linestyle='-')
-        ax2.set_ylabel('Phase (Degrees)')
-        ax2.set_xlabel('Frequency (Hz)')
-        ax2.grid(True, which="both", ls="-")
-        ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-        labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
-        ax2.xaxis.set_major_locator(FixedLocator(ticks))
-        ax2.xaxis.set_major_formatter(FixedFormatter(labels))
-
-        ax1.axhline(y=0, color='red', linestyle='--') 
-        ax2.axhline(y=-180, color='red', linestyle='--') 
-
-        plt.savefig('Gain_and_GBW_plot.png')
-        plt.tight_layout()
-
-    return gain_db
+    return gain_db, phase_deg, freq
 
 # ======================
 # Runs the OP simulation
 # ======================
-def runsim_OP(measurement_results, plots=False):
+def runsim_OP(measurement_results):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -188,30 +165,29 @@ def runsim_OP(measurement_results, plots=False):
     measurement_results['Power'] = power
     measurement_results['V_CMFB'] = v_cmfb
 
-    if plots:
-        # Write all operating point values to a text file
-        with open('op_results.txt', 'w') as f:
-            f.write("Operating Point Analysis Results:\n")
-            f.write(f"Quiescent Current (I_Q): {abs(iq)*1e6:.2f} uA\n")
-            f.write(f"Power Consumption: {power*1e6:.2f} uW\n")
-            f.write("\nDetailed Node Voltages:\n")
-            for node in analysis.nodes:
-                voltage = float(analysis.nodes[node][0])
-                f.write(f"{node}: {voltage:.5f} V\n")
-            f.write("\nDetailed Branch Currents:\n")
-            for branch in analysis.branches:
-                current = float(analysis.branches[branch][0])
-                f.write(f"{branch}: {current*1e6:.2f} uA\n")
-            f.write("\nInternal Parameters:\n")
-            for key in analysis.internal_parameters:
-                if len(analysis[key]) > 0:
-                    current = float(analysis[key].item())
-                    f.write(f"{key}: {current*1e6:.2f} uA\n")
+    # Write all operating point values to a text file
+    with open('OPERATING_POINT.txt', 'w') as f:
+        f.write("Operating Point Analysis Results:\n")
+        f.write(f"Quiescent Current (I_Q): {abs(iq)*1e6:.2f} uA\n")
+        f.write(f"Power Consumption: {power*1e6:.2f} uW\n")
+        f.write("\nDetailed Node Voltages:\n")
+        for node in analysis.nodes:
+            voltage = float(analysis.nodes[node][0])
+            f.write(f"{node}: {voltage:.5f} V\n")
+        f.write("\nDetailed Branch Currents:\n")
+        for branch in analysis.branches:
+            current = float(analysis.branches[branch][0])
+            f.write(f"{branch}: {current*1e6:.2f} uA\n")
+        f.write("\nInternal Parameters:\n")
+        for key in analysis.internal_parameters:
+            if len(analysis[key]) > 0:
+                current = float(analysis[key].item())
+                f.write(f"{key}: {current*1e6:.2f} uA\n")
 
 # ========================
 # Runs the SLEW simulation
 # ========================
-def runsim_SLEW(measurement_results, plots=False):
+def runsim_SLEW(measurement_results):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -256,29 +232,30 @@ def runsim_SLEW(measurement_results, plots=False):
 
     measurement_results['SR'] = float(slew)
 
-    if plots:
-        _, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+    _, ax = plt.subplots(figsize=(12, 8))
 
-        ax1.plot(time*1e6, vin, color='blue', linestyle='-')
-        ax1.set_ylabel('Input Voltage (V)')
-        ax1.grid(True, which="both", ls="-")
-        ax1.set_title("FDDA-CMFB Slew Response")
+    l1 = ax.plot(time*1e6, vin, label='Input', color='blue', linewidth=2)
+    l2 = ax.plot(time*1e6, vout, label='Output', color='red', linewidth=2)
+    ax.set_xlabel('Time (μs)')
+    ax.set_ylabel('Voltage (V)')
+    ax.grid(True, which="both", ls="-")
+    ax.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5)
 
-        ax2.plot(time*1e6, vout, color='blue', linestyle='-')
-        ax2.set_ylabel('Output Voltage (V)')
-        ax2.set_xlabel('Time (μs)')
-        ax2.grid(True, which="both", ls="-")
+    # Draw a line between two points
+    ax.plot([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', linestyle='--', linewidth=1)
 
-        if slew > 0:
-            ax2.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5)
+    lns = l1 + l2
+    labs = [l.get_label() for l in lns]
+    ax.legend(lns, labs, loc='best')
 
-        plt.savefig('Slew_plot.png')
-        plt.tight_layout()
+    ax.set_title("Slew Response of the FDDA")
+    plt.tight_layout()
+    plt.savefig('SLEW_RESPONSE.png')
 
 # ========================
 # Runs the CMRR simulation
 # ========================
-def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
+def runsim_CMRR(gain_dm_db, measurement_results):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -322,27 +299,12 @@ def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
 
     measurement_results['CMRR_dB'] = float(cmrr_1k)
 
-    if plots:
-        _, ax = plt.subplots(figsize=(12, 8))
-
-        ax.semilogx(freq, cmrr_db, color='blue', linestyle='-')
-        ax.set_ylabel('CMRR (dB)')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.grid(True, which="both", ls="-")
-        ax.set_title("CMRR Plot of FDDA-CMFB")
-
-        ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-        labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
-        ax.xaxis.set_major_locator(FixedLocator(ticks))
-        ax.xaxis.set_major_formatter(FixedFormatter(labels)) 
-
-        plt.savefig('CMRR_plot.png')
-        plt.tight_layout()
+    return cmrr_db
 
 # ========================
 # Runs the PSRR simulation
 # ========================
-def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
+def runsim_PSRR(gain_dm_db, measurement_results):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -387,24 +349,67 @@ def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
 
     measurement_results['PSRR_dB'] = float(psrr_1k)
 
-    if plots:
-        _, ax = plt.subplots(figsize=(12, 8))
+    return psrr_db
 
-        ax.semilogx(freq, psrr_db, color='blue', linestyle='-')
-        ax.set_ylabel('PSRR (dB)')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.grid(True, which="both", ls="-")
-        ax.set_title("PSRR Plot of FDDA-CMFB")
+# ========================
+# Runs the CMFB simulation
+# ========================
+def runsim_CMFB(measurement_results):
 
-        ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-        labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
-        ax.xaxis.set_major_locator(FixedLocator(ticks))
-        ax.xaxis.set_major_formatter(FixedFormatter(labels))
+    circuit = Circuit('FDDA_CMFB Simulation')
+    circuit.raw_spice ="""
+.lib ../../../../../PDKs/sky130A/libs.tech/combined/sky130.lib.spice tt
+.include fdda_cmfb.spice
+"""
+    circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB_IN', circuit.gnd, 'V_OP', 'V_ON')
+    circuit.X('X2', 'CMFB', 'V_CMFB_OUT', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
 
-        ax.axhline(y=0, color='red', linestyle='--')  
+    circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
 
-        plt.savefig('PSRR_plot.png')
-        plt.tight_layout()
+    circuit.C('LOADP', 'V_OP', circuit.gnd, 2@u_pF)
+    circuit.C('LOADN', 'V_ON', circuit.gnd, 2@u_pF)
+
+    # Series feedback with infinite inductor and parallel feedback with infinite capacitor (to ensure proper DC biasing)
+    circuit.L('LFB1', 'V_PN', 'V_OP', 4@u_GH)
+    circuit.L('LFB2', 'V_NN', 'V_ON', 4@u_GH)
+    circuit.C('CFB1', 'V_PN', circuit.gnd, 4@u_GF)
+    circuit.C('CFB2', 'V_NN', circuit.gnd, 4@u_GF)
+
+    # Define DC Inputs (Quiescent Points)
+    circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9')
+    circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
+
+    # Connect the CMFB input and output with an ideal inductor to measure the CMFB loop gain
+    circuit.L('LCM', 'V_CMFB_IN', 'V_CMFB_OUT', 4@u_GH)
+
+    # Define AC input at the CMFB node
+    circuit.V('VAC', 'V_IN', circuit.gnd, 'DC 0 AC 1')
+    circuit.C('CCM', 'V_CMFB_IN', 'V_IN', 4@u_GF)
+
+    simulator = circuit.simulator(temperature=27, nominal_temperature=27)
+
+    try:
+        analysis = simulator.ac(start_frequency=0.1@u_Hz, stop_frequency=100@u_MHz, number_of_points=20, variation='dec')
+    except Exception as e:
+        raise e
+    
+    freq = np.array(analysis.frequency)
+    vout = analysis.nodes['v_cmfb_out']
+    vin  = analysis.nodes['v_cmfb_in']
+
+    gain = vout / vin
+    gain_db = 20 * np.log10(np.abs(gain))
+    phase_deg = np.angle(gain, deg=True)
+
+    dc_gain = gain_db[0]
+    gbw = np.interp(0, gain_db[::-1], freq[::-1])
+    phase_margin = np.interp(gbw, freq, phase_deg)
+
+    measurement_results['CMFB Gain_dB'] = float(dc_gain)
+    measurement_results['CMFB GBW'] = float(gbw)
+    measurement_results['CMFB PM'] = float(phase_margin)
+
+    return gain_db, phase_deg
 
 # ================================
 # Function to calculate total area
@@ -422,6 +427,35 @@ def get_Area(W, L):
             + (2 * W['W_8'] * L['L_8'])
     
     return area
+
+def create_Plot(freq, fdda_gain_db, fdda_phase, cmfb_gain_db, cmfb_phase):
+    
+    # Plot all frequency dependant parameters in one figure
+    _, ax = plt.subplots(figsize=(12, 8))
+
+    l1 = ax.semilogx(freq, fdda_gain_db, label='FDDA Gain', color='red', linestyle='-', linewidth=2)
+    l2 = ax.semilogx(freq, cmfb_gain_db, label='CMFB Loop Gain', color='green', linestyle='--', linewidth=2)
+    ax.set_ylabel('Magnitude (dB)')
+    ax.set_xlabel('Frequency (Hz)') 
+
+    tx = ax.twinx()
+    l3 = tx.semilogx(freq, fdda_phase, label='FDDA Phase', color='blue', linestyle='-.', linewidth=2)
+    l4 = tx.semilogx(freq, cmfb_phase, label='CMFB Loop Phase', color='magenta', linestyle=':', linewidth=2)
+    tx.set_ylabel('Phase (Degrees)')
+
+    ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
+    labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
+    ax.xaxis.set_major_locator(FixedLocator(ticks))
+    ax.xaxis.set_major_formatter(FixedFormatter(labels))
+    ax.grid(True, ls="-")
+
+    lns = l1 + l2 + l3 + l4
+    labs = [l.get_label() for l in lns]
+    ax.legend(lns, labs, loc='best') 
+
+    ax.set_title("Frequency Response Plot of Differential Gain, Phase for FDDA & Loop Gain, Phase for CMFB")
+    plt.savefig('FREQUENCY_RESPONSE.png')
+    plt.tight_layout()
 
 # ===========================================================
 # Top-level function to evaluate a design given the variables
@@ -457,30 +491,37 @@ def evaluate_design(current_params, plots=False):
     generate_spice(rounded_params)  # Generate the SPICE file for the current parameters
     
     # Run the AC simulation and measure gain, gain-bandwidth, and phase margin
-    gain_dm_db = runsim_AC(measurement_results=current_results, plots=plots)
+    fdda_gain_db, fdda_phase, freq = runsim_AC(measurement_results=current_results)
     specs_met = (current_results['Gain_dB'] >= Gain_dc_spec_dB and 
                  current_results['GBW'] >= GBW_spec and 
                  current_results['PM'] >= PM_spec)
 
     # Run the SLEW simulation and measure slew rate
     if specs_met:
-        runsim_SLEW(measurement_results=current_results, plots=plots)
+        runsim_SLEW(measurement_results=current_results)
         specs_met = (current_results['SR'] >= SR_spec)
 
     # Run the OP simulation and measure power
     if specs_met:
-        runsim_OP(measurement_results=current_results, plots=plots)
+        runsim_OP(measurement_results=current_results)
         specs_met = (current_results['Power'] <= Power_spec)
 
     # Run the CMRR simulation and measure CMRR
     if specs_met:
-        runsim_CMRR(gain_dm_db, measurement_results=current_results, plots=plots)
+        cmrr_db = runsim_CMRR(fdda_gain_db, measurement_results=current_results)
         specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
 
     # Run the PSRR simulation and measure PSRR
     if specs_met:
-        runsim_PSRR(gain_dm_db, measurement_results=current_results, plots=plots)
+        psrr_db = runsim_PSRR(fdda_gain_db, measurement_results=current_results)
         specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
+
+    # Run the CMFB simulation and measure CMFB loop gain and GBW
+    if specs_met:
+        cmfb_gain_db, cmfb_phase = runsim_CMFB(measurement_results=current_results)
+        specs_met = (current_results['CMFB GBW'] >= GBW_spec * 0.3)
+
+    create_Plot(freq, fdda_gain_db, fdda_phase, cmfb_gain_db, cmfb_phase)
 
     Area_active = get_Area(rounded_params, rounded_params)
     current_results['Area'] = Area_active
@@ -493,18 +534,18 @@ def evaluate_design(current_params, plots=False):
 
     return specs_met, current_results
     
-params = {'W_1': 112, 'L_1': 0.3,
-          'W_2': 1.20, 'L_2': 0.6,
-          'W_3': 1.20, 'L_3': 1,
-          'W_4': 0.54, 'L_4': 2,
-          'W_5': 2.90, 'L_5': 3,
-          'W_6': 3.60, 'L_6': 0.8,
-          'W_7': 25, 'L_7': 2,
-          'W_8': 5.60, 'L_8': 0.6,
-          'V_B1': 0.687,
-          'V_B2': 0.710,
-          'V_B3': 1.056,
-          'V_B4': 0.317,
+params = {'W_1': 86, 'L_1': 0.3,
+          'W_2': 0.92, 'L_2': 0.7,
+          'W_3': 0.88, 'L_3': 1,
+          'W_4': 0.87, 'L_4': 3,
+          'W_5': 2.5, 'L_5': 2,
+          'W_6': 4.2, 'L_6': 0.7,
+          'W_7': 29, 'L_7': 3,
+          'W_8': 4.4, 'L_8': 0.7,
+          'V_B1': 0.718,
+          'V_B2': 0.699,
+          'V_B3': 1.040,
+          'V_B4': 0.297,
           'V_CM': 0.9}
 
 if __name__ == "__main__":
@@ -512,14 +553,16 @@ if __name__ == "__main__":
     status, results = evaluate_design(params, plots=False)
 
     if status:
-        print(f"\nGain (dB): {results['Gain_dB']:.2f} dB")
+        print(f"\nFDDA Gain: {results['Gain_dB']:.2f} dB")
         print(f"GBW: {results['GBW']*1e-6:.2f} MHz")
         print(f"Phase Margin: {results['PM']:.2f} degrees")
         print(f"Slew Rate: {results['SR']*1e-6:.2f} V/μs")
         print(f"Power: {results['Power']*1e6:.2f} μW")
-        print(f"CMRR: {results['CMRR_dB']:.2f} dB")
-        print(f"PSRR: {results['PSRR_dB']:.2f} dB")
+        print(f"CMRR @ 1kHz: {results['CMRR_dB']:.2f} dB")
+        print(f"PSRR @ 1kHz: {results['PSRR_dB']:.2f} dB")
+        print(f"CMFB Loop Gain: {results['CMFB Gain_dB']:.2f} dB")
+        print(f"CMFB GBW: {results['CMFB GBW']*1e-6:.2f} MHz")
+        print(f"CMFB Phase Margin: {results['CMFB PM']:.2f} degrees")
         print(f"\nArea: {results['Area']:.2f} μm²")
     else:
-        print("\nDesign does NOT meet all specifications.")    
-    
+        print("\nDesign does NOT meet all specifications.")
