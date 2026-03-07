@@ -321,8 +321,8 @@ def main():
         print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: ≥{PM_spec:.2f})")
         print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
         print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
-        print(f"  CMRR:         {final_results['CMRR_dB']:.2f} dB      (spec: ≥{CMRR_spec_dB:.2f})")
-        print(f"  PSRR:         {final_results['PSRR_dB']:.2f} dB      (spec: ≥{PSRR_spec_dB:.2f})")
+        print(f"  CMRR @ 1kHz:  {final_results['CMRR_dB']:.2f} dB      (spec: ≥{CMRR_spec_dB:.2f})")
+        print(f"  PSRR @ 1kHz:  {final_results['PSRR_dB']:.2f} dB      (spec: ≥{PSRR_spec_dB:.2f})")
     
     print(f"\nOptimization Time: {optimization_time:.2f} seconds")
     print("="*70)
@@ -370,8 +370,8 @@ def save_results(best_solution, W, L, opt_time, sim_passed, results):
         f.write(f"  Phase Margin ≥ {PM_spec:.2f}°\n")
         f.write(f"  Slew Rate ≥ {SR_spec*1e-6:.2f} V/μs\n")
         f.write(f"  Power ≤ {Power_spec*1e6:.2f} μW\n")
-        f.write(f"  CMRR ≥ {CMRR_spec_dB:.2f} dB\n")
-        f.write(f"  PSRR ≥ {PSRR_spec_dB:.2f} dB\n\n")
+        f.write(f"  CMRR @ 1kHz ≥ {CMRR_spec_dB:.2f} dB\n")
+        f.write(f"  PSRR @ 1kHz ≥ {PSRR_spec_dB:.2f} dB\n\n")
         
         f.write("OPTIMAL DESIGN PARAMETERS:\n")
         f.write(f"  gm/ID_1 = {best_solution['gm_ID_1']:.2f} S/A\n")
@@ -407,8 +407,8 @@ def save_results(best_solution, W, L, opt_time, sim_passed, results):
             f.write(f"  Phase Margin = {results['PM']:.2f}°\n")
             f.write(f"  Slew Rate    = {results['SR']*1e-6:.2f} V/μs\n")
             f.write(f"  Power        = {results['Power']*1e6:.2f} μW\n")
-            f.write(f"  CMRR         = {results['CMRR_dB']:.2f} dB\n")
-            f.write(f"  PSRR         = {results['PSRR_dB']:.2f} dB\n\n")
+            f.write(f"  CMRR @ 1kHz  = {results['CMRR_dB']:.2f} dB\n")
+            f.write(f"  PSRR @ 1kHz  = {results['PSRR_dB']:.2f} dB\n\n")
         
         f.write(f"OPTIMIZATION TIME: {opt_time:.2f} seconds\n")
         f.write(f"FINAL SIMULATOR CHECK: {'PASSED' if sim_passed else 'FAILED'}\n")

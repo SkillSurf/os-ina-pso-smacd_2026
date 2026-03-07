@@ -88,7 +88,7 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
             gm_ID['gm_ID_7'] = NCH.lookup('GM_ID', VGS=Vds['Vds_4'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_4'])
 
             # Append L values for M7 and M8
-            L['L_7'] = L['L_4']
+            L['L_7'] = 0.3
             L['L_8'] = L['L_2']
 
             I_X = I_T / M
