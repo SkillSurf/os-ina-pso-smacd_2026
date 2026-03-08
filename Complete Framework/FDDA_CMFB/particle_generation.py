@@ -32,7 +32,7 @@ def generate_particle(cont_bounds, n_L_values, max_attempts=2000):
     
     return None, np.inf, None
 
-def generate_initial_particle(cont_bounds, n_L_values, max_attempts=50000):
+def generate_initial_particle(cont_bounds, n_L_values, max_attempts=100000):
 
     for attempt in range(max_attempts):
         gm_ID_1 = np.random.uniform(cont_bounds[0][0], cont_bounds[0][1])

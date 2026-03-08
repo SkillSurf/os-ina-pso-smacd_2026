@@ -1,4 +1,5 @@
 import time
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,336 +10,394 @@ from particle_generation import generate_N_particles, generate_particle
 from pso import PSO
 from simulator import evaluate_design
 
+logger = logging.getLogger("OptimizationLogger")
+logger.setLevel(logging.INFO)
+
+logger.propagate = False  # Prevent duplicate logs if root logger is configured
+if logger.hasHandlers():
+    logger.handlers.clear()
+
 def main():
 
-    with open("pso_realtime_log.txt", "w") as log_file:
+    file_handler = logging.FileHandler("optimization_log.txt", mode='w', encoding="utf-8")
+
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
        
-        L_available, n_L_values, I_T_min, I_T_max = get_feasRegion(L_DISCRETE_VALUES)
-        
-        cont_bounds = [
-            (gm_ID_1_range[0], gm_ID_1_range[1]),
-            (gm_ID_2_range[0], gm_ID_2_range[1]),
-            (gm_ID_3_range[0], gm_ID_3_range[1]),
-            (gm_ID_4_range[0], gm_ID_4_range[1]),
-            (gm_ID_5_range[0], gm_ID_5_range[1]),
-            (gm_ID_6_range[0], gm_ID_6_range[1]),
-            (I_T_min, I_T_max)
-        ]
-        
-        print(f"Feasible Region Done")
+    L_available, n_L_values, I_T_min, I_T_max = get_feasRegion(L_DISCRETE_VALUES)
+    
+    cont_bounds = [
+        (gm_ID_1_range[0], gm_ID_1_range[1]),
+        (gm_ID_2_range[0], gm_ID_2_range[1]),
+        (gm_ID_3_range[0], gm_ID_3_range[1]),
+        (gm_ID_4_range[0], gm_ID_4_range[1]),
+        (gm_ID_5_range[0], gm_ID_5_range[1]),
+        (gm_ID_6_range[0], gm_ID_6_range[1]),
+        (I_T_min, I_T_max)
+    ]
+    
+    print(f"Feasible Region Done")
 
-        start_time = time.time()
-        
-        particles, fitness, specs_list = generate_N_particles(
-            cont_bounds, n_L_values, N_PARTICLES, verbose=True
-        )
-        
-        if particles is None:
-            print("\nERROR: Failed to generate initial particles!")
-            return None
-        
-        end_time = time.time()
-        print(f"\nTime taken to generate particles: {end_time - start_time:.2f} seconds")
-        
-        print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
-        print(f"Initial best area: {np.min(fitness):.2f} μm²")
-        
-        print("\nInitializing PSO optimizer...")
-        print("-"*70)
-        
-        pso = PSO(
-            cont_bounds=cont_bounds,
-            n_L_values=n_L_values,
-            n_particles=N_PARTICLES,
-            w=0.7,
-            c1=1.7,
-            c2=1.7,
-            max_velocity_updates=MAX_VELOCITY_UPDATES
-        )
-        
-        pso.initialize_velocities()
-        pso.set_initial_best(particles, fitness, specs_list)
-        
-        print(f"PSO initialized with {N_PARTICLES} particles")
-        print(f"Global best: {pso.gbest_fitness:.2f} μm²")
-        
-        gbest_history = [pso.gbest_fitness]
-        avg_fitness_history = [np.mean(fitness)]
-        
-        start_time = time.time()
-        
-        for iteration in range(MAX_ITERATIONS):
+    start_time = time.time()
+    
+    particles, fitness, specs_list = generate_N_particles(
+        cont_bounds, n_L_values, N_PARTICLES, verbose=True
+    )
+    
+    if particles is None:
+        print("\nERROR: Failed to generate initial particles!")
+        return None
+    
+    end_time = time.time()
+    print(f"\nTime taken to generate particles: {end_time - start_time:.2f} seconds")
+    
+    print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
+    print(f"Initial best area: {np.min(fitness):.2f} μm²")
+    
+    print("\nInitializing PSO optimizer...")
+    print("-"*70)
+    
+    pso = PSO(
+        cont_bounds=cont_bounds,
+        n_L_values=n_L_values,
+        n_particles=N_PARTICLES,
+        w=0.7,
+        c1=1.7,
+        c2=1.7,
+        max_velocity_updates=MAX_VELOCITY_UPDATES
+    )
+    
+    pso.initialize_velocities()
+    pso.set_initial_best(particles, fitness, specs_list)
+    
+    print(f"PSO initialized with {N_PARTICLES} particles")
+    print(f"Global best: {pso.gbest_fitness:.2f} μm²")
+    # Log initial best solution
+    log_solution(0, pso.gbest_position, pso.gbest_specs, pso.gbest_fitness)
+    
+    gbest_history = [pso.gbest_fitness]
+    avg_fitness_history = [np.mean(fitness)]
+    
+    start_time = time.time()
+    
+    for iteration in range(MAX_ITERATIONS):
 
-            particles, fitness, need_simulator_check = pso.update_swarm(particles, fitness)
+        particles, fitness, need_simulator_check = pso.update_swarm(particles, fitness)
+        
+        print(f"  Updated {len(need_simulator_check)} particles")
+        print(f"  Current global best: {pso.gbest_fitness:.2f} μm²")
+
+        if len(need_simulator_check) > 0:
+
+            rejected_indices = []
             
-            print(f"  Updated {len(need_simulator_check)} particles")
-            print(f"  Current global best: {pso.gbest_fitness:.2f} μm²")
-
-            if len(need_simulator_check) > 0:
-
-                rejected_indices = []
+            for idx in need_simulator_check:
+                particle = particles[idx]
                 
-                for idx in need_simulator_check:
-                    particle = particles[idx]
-                    
-                    gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = particle[0:6]
-                    L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = particle[6:12]
-                    I_T = particle[12]
-                    
-                    L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
-                    L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
-                    L_3 = L_DISCRETE_VALUES[int(L_3_idx)]
-                    L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
-                    L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
-                    L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
-                    
-                    gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
-                            'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
-                    
-                    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
+                gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = particle[0:6]
+                L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = particle[6:12]
+                I_T = particle[12]
+                
+                L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
+                L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
+                L_3 = L_DISCRETE_VALUES[int(L_3_idx)]
+                L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
+                L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
+                L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
+                
+                gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
+                        'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+                
+                L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
 
-                    # Get W, L, and Vgs values
-                    W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                # Get W, L, and Vgs values
+                W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                
+                if W is not None and not any(w is None for w in W.values()):
+                    print(f"  Particle {idx}: Simulating...")
                     
-                    if W is not None and not any(w is None for w in W.values()):
-                        print(f"  Particle {idx}: Simulating...")
-                        
-                        current_params = {
-                            'W_1': W['W_1'], 'L_1': L['L_1'],
-                            'W_2': W['W_2'], 'L_2': L['L_2'],
-                            'W_3': W['W_3'], 'L_3': L['L_3'],
-                            'W_4': W['W_4'], 'L_4': L['L_4'],
-                            'W_5': W['W_5'], 'L_5': L['L_5'],
-                            'W_6': W['W_6'], 'L_6': L['L_6'],
-                            'W_7': W['W_7'], 'L_7': L['L_7'],
-                            'W_8': W['W_8'], 'L_8': L['L_8'],
-                            'V_B1': VDD - Vgs['Vgs_6'],
-                            'V_B2': Vgs['Vgs_5'],
-                            'V_B3': V_B + Vgs['Vgs_4'],
-                            'V_B4': V_A - Vgs['Vgs_3'],
-                            'V_CM': VCM
-                        }
-                        # Run simulator
-                        sim_passed, _ = evaluate_design(current_params)
-                        
-                        if not sim_passed:
-                            print(f"    Particle {idx}: REJECTED by simulator")
-                            rejected_indices.append(idx)
-                            fitness[idx] = np.inf  # Mark as infeasible
-                        else:
-                            print(f"    Particle {idx}: PASSED simulator")
-                    else:
-                        print(f"  Particle {idx}: Invalid W/L values, skipping simulation")
+                    current_params = {
+                        'W_1': W['W_1'], 'L_1': L['L_1'],
+                        'W_2': W['W_2'], 'L_2': L['L_2'],
+                        'W_3': W['W_3'], 'L_3': L['L_3'],
+                        'W_4': W['W_4'], 'L_4': L['L_4'],
+                        'W_5': W['W_5'], 'L_5': L['L_5'],
+                        'W_6': W['W_6'], 'L_6': L['L_6'],
+                        'W_7': W['W_7'], 'L_7': L['L_7'],
+                        'W_8': W['W_8'], 'L_8': L['L_8'],
+                        'V_B1': VDD - Vgs['Vgs_6'],
+                        'V_B2': Vgs['Vgs_5'],
+                        'V_B3': V_B + Vgs['Vgs_4'],
+                        'V_B4': V_A - Vgs['Vgs_3'],
+                        'V_CM': VCM
+                    }
+                    # Run simulator
+                    sim_passed, _ = evaluate_design(current_params)
+                    
+                    if not sim_passed:
+                        print(f"    Particle {idx}: REJECTED by simulator")
                         rejected_indices.append(idx)
-                        fitness[idx] = np.inf
-                
-                # Velocity updates for rejected particles from the simulator
-                if len(rejected_indices) > 0:
-                    print(f"\nPerforming velocity updates for {len(rejected_indices)} rejected particles...")
+                        fitness[idx] = np.inf  # Mark as infeasible
+                    else:
+                        print(f"    Particle {idx}: PASSED simulator")
+                else:
+                    print(f"  Particle {idx}: Invalid W/L values, skipping simulation")
+                    rejected_indices.append(idx)
+                    fitness[idx] = np.inf
+            
+            # Velocity updates for rejected particles from the simulator
+            if len(rejected_indices) > 0:
+                print(f"\nPerforming velocity updates for {len(rejected_indices)} rejected particles...")
 
-                    for idx in rejected_indices:
-                        # Try multiple velocity updates to recover the particle
-                        for attempt in range(MAX_VELOCITY_UPDATES):
-                            offspring, area, specs, success = pso.generate_offspring(idx, particles[idx])
+                for idx in rejected_indices:
+                    # Try multiple velocity updates to recover the particle
+                    for attempt in range(MAX_VELOCITY_UPDATES):
+                        offspring, area, specs, success = pso.generate_offspring(idx, particles[idx])
+                        
+                        if success and area < np.inf:
+                            # Check with simulator again
+                            gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = offspring[0:6]
+                            L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = offspring[6:12]
+                            I_T = offspring[12]
                             
-                            if success and area < np.inf:
-                                # Check with simulator again
-                                gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = offspring[0:6]
-                                L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = offspring[6:12]
-                                I_T = offspring[12]
-                                
-                                L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
-                                L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
-                                L_3 = L_DISCRETE_VALUES[int(L_3_idx)]
-                                L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
-                                L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
-                                L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
-                                
-                                gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
-                                        'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
-                                
-                                L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
+                            L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
+                            L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
+                            L_3 = L_DISCRETE_VALUES[int(L_3_idx)]
+                            L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
+                            L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
+                            L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
+                            
+                            gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
+                                    'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+                            
+                            L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
 
-                                # Get W, L, and Vgs values
-                                W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                            # Get W, L, and Vgs values
+                            W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                
+                            if W is not None and not any(w is None for w in W.values()):
+                                current_params = {
+                                    'W_1': W['W_1'], 'L_1': L['L_1'],
+                                    'W_2': W['W_2'], 'L_2': L['L_2'],
+                                    'W_3': W['W_3'], 'L_3': L['L_3'],
+                                    'W_4': W['W_4'], 'L_4': L['L_4'],
+                                    'W_5': W['W_5'], 'L_5': L['L_5'],
+                                    'W_6': W['W_6'], 'L_6': L['L_6'],
+                                    'W_7': W['W_7'], 'L_7': L['L_7'],
+                                    'W_8': W['W_8'], 'L_8': L['L_8'],
+                                    'V_B1': VDD - Vgs['Vgs_6'],
+                                    'V_B2': Vgs['Vgs_5'],
+                                    'V_B3': V_B + Vgs['Vgs_4'],
+                                    'V_B4': V_A - Vgs['Vgs_3'],
+                                    'V_CM': VCM
+                                }
+
+                                sim_passed, _ = evaluate_design(current_params)
+                                
+                                if sim_passed:
+                                    particles[idx] = offspring
+                                    fitness[idx] = area
+                                    print(f"    Particle {idx}: Recovered with velocity update (Area={area:.2f})")
+                                    break
                     
-                                if W is not None and not any(w is None for w in W.values()):
-                                    current_params = {
-                                        'W_1': W['W_1'], 'L_1': L['L_1'],
-                                        'W_2': W['W_2'], 'L_2': L['L_2'],
-                                        'W_3': W['W_3'], 'L_3': L['L_3'],
-                                        'W_4': W['W_4'], 'L_4': L['L_4'],
-                                        'W_5': W['W_5'], 'L_5': L['L_5'],
-                                        'W_6': W['W_6'], 'L_6': L['L_6'],
-                                        'W_7': W['W_7'], 'L_7': L['L_7'],
-                                        'W_8': W['W_8'], 'L_8': L['L_8'],
-                                        'V_B1': VDD - Vgs['Vgs_6'],
-                                        'V_B2': Vgs['Vgs_5'],
-                                        'V_B3': V_B + Vgs['Vgs_4'],
-                                        'V_B4': V_A - Vgs['Vgs_3'],
-                                        'V_CM': VCM
-                                    }
-
-                                    sim_passed, _ = evaluate_design(current_params)
-                                    
-                                    if sim_passed:
-                                        particles[idx] = offspring
-                                        fitness[idx] = area
-                                        print(f"    Particle {idx}: Recovered with velocity update (Area={area:.2f})")
-                                        break
-                        
-                        # If still rejected after velocity updates, mark for regeneration
-                        if fitness[idx] == np.inf:
-                            print(f"    Particle {idx}: Failed all velocity updates")
-                
-                print("\nUpdating personal and global bests...")
-                for i in range(N_PARTICLES):
-                    if fitness[i] < np.inf and fitness[i] < pso.pbest_fitness[i]:
-                        pso.pbest_fitness[i] = fitness[i]
-                        pso.pbest_positions[i] = particles[i].copy()
-                        print(f"  Particle {i}: Updated pbest = {fitness[i]:.2f} μm²")
-                
-                best_idx = np.argmin(fitness)
-                if fitness[best_idx] < np.inf and fitness[best_idx] < pso.gbest_fitness:
-                    pso.gbest_fitness = fitness[best_idx]
-                    pso.gbest_position = particles[best_idx].copy()
-                    _, _, specs_dict = survivability_test(particles[best_idx])
-                    pso.gbest_specs = specs_dict
-                    # Log best position data into a .txt file
-                    log_file.write(f"Iteration {iteration + 1}: Global Best Area = {fitness[best_idx]:.2f} μm²\n")
-                    log_file.write(f", Particle: {particles[best_idx]}\n")
-                    log_file.write(f", Specs: {specs_dict}\n\n")
-                    log_file.flush()
-                    print(f"  New global best: {fitness[best_idx]:.2f} μm²")
-                
-                # Refill rejected particles with new random particles
-                rejected_mask = fitness == np.inf
-                n_rejected = np.sum(rejected_mask)
-                
-                if n_rejected > 0:
-
-                    refill_count = 0
-                    for idx in np.where(rejected_mask)[0]:
-                        # New particle generation for rejected particles
-                        new_particle, new_area, new_specs = generate_particle(cont_bounds, n_L_values)
-                        
-                        if new_particle is not None:
-                            # Check survivability (already done in generate_particle)
-                            particles[idx] = new_particle
-                            fitness[idx] = new_area
-                            refill_count += 1
-                            print(f"    Particle {idx}: Refilled (Area={new_area:.2f})")
-                        else:
-                            print(f"    Particle {idx}: Failed to refill")
-                    
-                    print(f"  Successfully refilled {refill_count}/{n_rejected} particles")
+                    # If still rejected after velocity updates, mark for regeneration
+                    if fitness[idx] == np.inf:
+                        print(f"    Particle {idx}: Failed all velocity updates")
             
-            gbest_history.append(pso.gbest_fitness)
-            avg_fitness_history.append(np.mean(fitness[fitness < np.inf]))
+            print("\nUpdating personal and global bests...")
+            for i in range(N_PARTICLES):
+                if fitness[i] < np.inf and fitness[i] < pso.pbest_fitness[i]:
+                    pso.pbest_fitness[i] = fitness[i]
+                    pso.pbest_positions[i] = particles[i].copy()
+                    print(f"  Particle {i}: Updated pbest = {fitness[i]:.2f} μm²")
             
-            valid_fitness = fitness[fitness < np.inf]
-            print(f"\nIteration {iteration + 1} Summary:")
-            print(f"  Global Best: {pso.gbest_fitness:.2f} μm²")
-            if len(valid_fitness) > 0:
-                print(f"  Average:     {np.mean(valid_fitness):.2f} μm²")
-            print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}")
-        
-        end_time = time.time()
-        optimization_time = end_time - start_time
+            best_idx = np.argmin(fitness)
+            if fitness[best_idx] < np.inf and fitness[best_idx] < pso.gbest_fitness:
+                pso.gbest_fitness = fitness[best_idx]
+                pso.gbest_position = particles[best_idx].copy()
+                _, _, specs_dict = survivability_test(particles[best_idx])
+                pso.gbest_specs = specs_dict
+                print(f"  New global best: {fitness[best_idx]:.2f} μm²")
+                # Log new best solution
+                log_solution(iteration, pso.gbest_position, pso.gbest_specs, pso.gbest_fitness)
+            
+            # Refill rejected particles with new random particles
+            rejected_mask = fitness == np.inf
+            n_rejected = np.sum(rejected_mask)
+            
+            if n_rejected > 0:
 
-        print("Optimization is complete!")
-
-        print("\nExtracting final design parameters...")
-        
-        best_solution = pso.get_best_solution()
-        
-        gm_ID_1 = best_solution['gm_ID_1']
-        gm_ID_2 = best_solution['gm_ID_2']
-        gm_ID_3 = best_solution['gm_ID_3']
-        gm_ID_4 = best_solution['gm_ID_4']
-        gm_ID_5 = best_solution['gm_ID_5']
-        gm_ID_6 = best_solution['gm_ID_6']
-        L_1 = best_solution['L_1']
-        L_2 = best_solution['L_2']
-        L_3 = best_solution['L_3']
-        L_4 = best_solution['L_4']
-        L_5 = best_solution['L_5']
-        L_6 = best_solution['L_6']
-        I_T = best_solution['I_T']
-        
-        gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
-                'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
-        
-        L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
-        
-        W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                refill_count = 0
+                for idx in np.where(rejected_mask)[0]:
+                    # New particle generation for rejected particles
+                    new_particle, new_area, new_specs = generate_particle(cont_bounds, n_L_values)
                     
-        current_params = {
-            'W_1': W['W_1'], 'L_1': L_1,
-            'W_2': W['W_2'], 'L_2': L_2,
-            'W_3': W['W_3'], 'L_3': L_3,
-            'W_4': W['W_4'], 'L_4': L_4,
-            'W_5': W['W_5'], 'L_5': L_5,
-            'W_6': W['W_6'], 'L_6': L_6,
-            'W_7': W['W_7'], 'L_7': L['L_7'],
-            'W_8': W['W_8'], 'L_8': L['L_8'],
-            'V_B1': VDD - Vgs['Vgs_6'],
-            'V_B2': Vgs['Vgs_5'],
-            'V_B3': V_B + Vgs['Vgs_4'],
-            'V_B4': V_A - Vgs['Vgs_3'],
-            'V_CM': VCM
-        }
+                    if new_particle is not None:
+                        # Check survivability (already done in generate_particle)
+                        particles[idx] = new_particle
+                        fitness[idx] = new_area
+                        refill_count += 1
+                        print(f"    Particle {idx}: Refilled (Area={new_area:.2f})")
+                    else:
+                        print(f"    Particle {idx}: Failed to refill")
+                
+                print(f"  Successfully refilled {refill_count}/{n_rejected} particles")
         
-        print("\nOptimal Design Parameters:")
-        print(f"  gm/ID_1 = {gm_ID_1:.2f} S/A")
-        print(f"  gm/ID_2 = {gm_ID_2:.2f} S/A")
-        print(f"  gm/ID_3 = {gm_ID_3:.2f} S/A")
-        print(f"  gm/ID_4 = {gm_ID_4:.2f} S/A")
-        print(f"  gm/ID_5 = {gm_ID_5:.2f} S/A")
-        print(f"  gm/ID_6 = {gm_ID_6:.2f} S/A")
-        print(f"  I_T     = {I_T*1e6:.2f} μA")
-        print(f"  V_A     = {V_A:.2f} V")
-        print(f"  V_B     = {V_B:.2f} V")
+        gbest_history.append(pso.gbest_fitness)
+        avg_fitness_history.append(np.mean(fitness[fitness < np.inf]))
         
-        print("\nOptimal Transistor Sizing:")
-        print(f"  W_1 = {W['W_1']:.2f} μm,  L_1 = {L['L_1']:.2f} μm")
-        print(f"  W_2 = {W['W_2']:.2f} μm,  L_2 = {L['L_2']:.2f} μm")
-        print(f"  W_3 = {W['W_3']:.2f} μm,  L_3 = {L['L_3']:.2f} μm")
-        print(f"  W_4 = {W['W_4']:.2f} μm,  L_4 = {L['L_4']:.2f} μm")
-        print(f"  W_5 = {W['W_5']:.2f} μm,  L_5 = {L['L_5']:.2f} μm")
-        print(f"  W_6 = {W['W_6']:.2f} μm,  L_6 = {L['L_6']:.2f} μm")
-        print(f"  W_7 = {W['W_7']:.2f} μm,  L_7 = {L['L_7']:.2f} μm")
-        print(f"  W_8 = {W['W_8']:.2f} μm,  L_8 = {L['L_8']:.2f} μm")
-        print(f"  V_B1 = {current_params['V_B1']:.4f} V")
-        print(f"  V_B2 = {current_params['V_B2']:.4f} V")
-        print(f"  V_B3 = {current_params['V_B3']:.4f} V")
-        print(f"  V_B4 = {current_params['V_B4']:.4f} V")
-        
-        print(f"\n OPTIMAL AREA: {best_solution['area']:.4f} μm²")
+        valid_fitness = fitness[fitness < np.inf]
+        print(f"\nIteration {iteration + 1} Summary:")
+        print(f"  Global Best: {pso.gbest_fitness:.2f} μm²")
 
-        print("\nFinal Simulator Verification...")
-        
-        final_check, final_results = evaluate_design(current_params, plots=True)
-        print(f"Final design {'PASSED' if final_check else 'FAILED'} simulator check")
-        
-        if final_results is not None:
-            print("\nPerformance Specifications:")
-            print(f"  Gain:         {final_results['Gain_dB']:.2f} dB      (spec: ≥{Gain_dc_spec_dB:.2f})")
-            print(f"  GBW:          {final_results['GBW']*1e-6:.2f} MHz      (spec: ≥{GBW_spec*1e-6:.2f})")
-            print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: ≥{PM_spec:.2f})")
-            print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
-            print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
-            print(f"  CMRR @ 1kHz:  {final_results['CMRR_dB']:.2f} dB      (spec: ≥{CMRR_spec_dB:.2f})")
-            print(f"  PSRR @ 1kHz:  {final_results['PSRR_dB']:.2f} dB      (spec: ≥{PSRR_spec_dB:.2f})")
-        
-        print(f"\nOptimization Time: {optimization_time:.2f} seconds")
-        print("="*70)
-        
-        plot_convergence(gbest_history, avg_fitness_history)
-        
-        save_results(best_solution, W, L, optimization_time, final_check, final_results)
-        
-        return best_solution
+        if len(valid_fitness) > 0:
+            print(f"  Average:     {np.mean(valid_fitness):.2f} μm²")
+        print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}")
+    
+    end_time = time.time()
+    optimization_time = end_time - start_time
+
+    print("Optimization is complete!")
+
+    print("\nExtracting final design parameters...")
+    
+    best_solution = pso.get_best_solution()
+    
+    gm_ID_1 = best_solution['gm_ID_1']
+    gm_ID_2 = best_solution['gm_ID_2']
+    gm_ID_3 = best_solution['gm_ID_3']
+    gm_ID_4 = best_solution['gm_ID_4']
+    gm_ID_5 = best_solution['gm_ID_5']
+    gm_ID_6 = best_solution['gm_ID_6']
+    L_1 = best_solution['L_1']
+    L_2 = best_solution['L_2']
+    L_3 = best_solution['L_3']
+    L_4 = best_solution['L_4']
+    L_5 = best_solution['L_5']
+    L_6 = best_solution['L_6']
+    I_T = best_solution['I_T']
+    
+    gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
+            'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+    
+    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
+    
+    W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
+                
+    current_params = {
+        'W_1': W['W_1'], 'L_1': L_1,
+        'W_2': W['W_2'], 'L_2': L_2,
+        'W_3': W['W_3'], 'L_3': L_3,
+        'W_4': W['W_4'], 'L_4': L_4,
+        'W_5': W['W_5'], 'L_5': L_5,
+        'W_6': W['W_6'], 'L_6': L_6,
+        'W_7': W['W_7'], 'L_7': L['L_7'],
+        'W_8': W['W_8'], 'L_8': L['L_8'],
+        'V_B1': VDD - Vgs['Vgs_6'],
+        'V_B2': Vgs['Vgs_5'],
+        'V_B3': V_B + Vgs['Vgs_4'],
+        'V_B4': V_A - Vgs['Vgs_3'],
+        'V_CM': VCM
+    }
+    
+    print("\nOptimal Design Parameters:")
+    print(f"  gm/ID_1 = {gm_ID_1:.2f} S/A")
+    print(f"  gm/ID_2 = {gm_ID_2:.2f} S/A")
+    print(f"  gm/ID_3 = {gm_ID_3:.2f} S/A")
+    print(f"  gm/ID_4 = {gm_ID_4:.2f} S/A")
+    print(f"  gm/ID_5 = {gm_ID_5:.2f} S/A")
+    print(f"  gm/ID_6 = {gm_ID_6:.2f} S/A")
+    print(f"  I_T     = {I_T*1e6:.2f} μA")
+    print(f"  V_A     = {V_A:.2f} V")
+    print(f"  V_B     = {V_B:.2f} V")
+    
+    print("\nOptimal Transistor Sizing:")
+    print(f"  W_1 = {W['W_1']:.2f} μm,  L_1 = {L['L_1']:.2f} μm")
+    print(f"  W_2 = {W['W_2']:.2f} μm,  L_2 = {L['L_2']:.2f} μm")
+    print(f"  W_3 = {W['W_3']:.2f} μm,  L_3 = {L['L_3']:.2f} μm")
+    print(f"  W_4 = {W['W_4']:.2f} μm,  L_4 = {L['L_4']:.2f} μm")
+    print(f"  W_5 = {W['W_5']:.2f} μm,  L_5 = {L['L_5']:.2f} μm")
+    print(f"  W_6 = {W['W_6']:.2f} μm,  L_6 = {L['L_6']:.2f} μm")
+    print(f"  W_7 = {W['W_7']:.2f} μm,  L_7 = {L['L_7']:.2f} μm")
+    print(f"  W_8 = {W['W_8']:.2f} μm,  L_8 = {L['L_8']:.2f} μm")
+    print(f"  V_B1 = {current_params['V_B1']:.4f} V")
+    print(f"  V_B2 = {current_params['V_B2']:.4f} V")
+    print(f"  V_B3 = {current_params['V_B3']:.4f} V")
+    print(f"  V_B4 = {current_params['V_B4']:.4f} V")
+    
+    print(f"\n OPTIMAL AREA: {best_solution['area']:.4f} μm²")
+
+    print("\nFinal Simulator Verification...")
+    
+    final_check, final_results = evaluate_design(current_params, plots=True)
+    print(f"Final design {'PASSED' if final_check else 'FAILED'} simulator check")
+    
+    if final_results is not None:
+        print("\nPerformance Specifications:")
+        print(f"  Gain:         {final_results['Gain_dB']:.2f} dB      (spec: ≥{Gain_dc_spec_dB:.2f})")
+        print(f"  GBW:          {final_results['GBW']*1e-6:.2f} MHz      (spec: ≥{GBW_spec*1e-6:.2f})")
+        print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: ≥{PM_spec:.2f})")
+        print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
+        print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
+        print(f"  CMRR @ 1kHz:  {final_results['CMRR_dB']:.2f} dB      (spec: ≥{CMRR_spec_dB:.2f})")
+        print(f"  PSRR @ 1kHz:  {final_results['PSRR_dB']:.2f} dB      (spec: ≥{PSRR_spec_dB:.2f})")
+    
+    print(f"\nOptimization Time: {optimization_time:.2f} seconds")
+    print("="*70)
+    
+    plot_convergence(gbest_history, avg_fitness_history)
+    
+    save_results(best_solution, W, L, optimization_time, final_check, final_results)
+    
+    return best_solution
+
+def log_solution(iteration, position, specs, fitness):
+
+    # Log best position data into a .txt file
+    raw_particle = [float(val) for val in position]
+    raw_particle[-1] *= 1e6  # Scale the last element (I_T) to μA
+    clean_particle = [f"{val:.4f}" for val in raw_particle]
+
+    clean_specs = {k: float(v) for k, v in specs.items()}
+
+    # Create a formatted log message
+    log_message = (
+        f"Iteration {iteration + 1} | Global Best Area: {fitness:.2f} μm²\n"
+        f"    Particle : [{', '.join(clean_particle)}]\n"
+        f"    Specs    :\n"
+    )
+
+    # Format: 'Key': (Multiplier, 'Unit', 'Format_String')
+    spec_formats = {
+        'Gain_dB': (1,    'dB',   '{:.2f}'),
+        'GBW':     (1e-6, 'MHz',  '{:.2f}'),
+        'PM':      (1,    'deg',  '{:.2f}'),
+        'SR':      (1e-6, 'V/μs', '{:.2f}'),
+        'Power':   (1e6,  'μW',   '{:.2f}'),
+        'V_CMFB':  (1,    'V',    '{:.4f}'),
+        'CMRR_dB': (1,    'dB',   '{:.2f}'),
+        'PSRR_dB': (1,    'dB',   '{:.2f}'),
+        'Area':    (1,    'μm²',  '{:.2f}')
+    }
+
+    # Format the specs with appropriate units and precision
+    for key, value in clean_specs.items():
+        if key in spec_formats:
+            multiplier, unit, fmt = spec_formats[key]
+            scaled_val = value * multiplier
+            formatted_val = fmt.format(scaled_val)
+            log_message += f"        {key:<8}: {formatted_val} {unit}\n"
+        elif key.startswith('W_') or key.startswith('L_'):
+            log_message += f"        {key:<8}: {value:.4f} μm\n"
+        elif key.startswith('V_'):
+            log_message += f"        {key:<8}: {value:.4f} V\n"
+        else:
+            log_message += f"        {key:<8}: {value:.4g}\n"
+
+    # Write the log message to the file
+    logger.info(log_message)  
 
 def plot_convergence(gbest_history, avg_history):
     plt.figure(figsize=(12, 5))
