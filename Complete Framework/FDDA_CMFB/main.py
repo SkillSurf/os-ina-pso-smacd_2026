@@ -97,8 +97,8 @@ def main():
                 particle = particles[idx]
                 
                 gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = particle[0:6]
-                L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = particle[6:12]
-                I_T = particle[12]
+                L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, L_7_idx = particle[6:13]
+                I_T = particle[13]
                 
                 L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
                 L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -106,11 +106,12 @@ def main():
                 L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
                 L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
                 L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
-                
-                gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
-                        'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
-                
-                L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
+                L_7 = L_DISCRETE_VALUES[int(L_7_idx)]
+
+                gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 
+                         'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+
+                L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6, 'L_7': L_7}
 
                 # Get W, L, and Vgs values
                 W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
@@ -159,8 +160,8 @@ def main():
                         if success and area < np.inf:
                             # Check with simulator again
                             gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = offspring[0:6]
-                            L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = offspring[6:12]
-                            I_T = offspring[12]
+                            L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, L_7_idx = offspring[6:13]
+                            I_T = offspring[13]
                             
                             L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
                             L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -168,11 +169,12 @@ def main():
                             L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
                             L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
                             L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
+                            L_7 = L_DISCRETE_VALUES[int(L_7_idx)]
                             
-                            gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
-                                    'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+                            gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 
+                                     'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
                             
-                            L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}                
+                            L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6, 'L_7': L_7}                
 
                             # Get W, L, and Vgs values
                             W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
@@ -254,7 +256,7 @@ def main():
 
         if len(valid_fitness) > 0:
             print(f"  Average:     {np.mean(valid_fitness):.2f} μm²")
-        print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}")
+        print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}\n")
     
     end_time = time.time()
     optimization_time = end_time - start_time
@@ -277,22 +279,23 @@ def main():
     L_4 = best_solution['L_4']
     L_5 = best_solution['L_5']
     L_6 = best_solution['L_6']
+    L_7 = best_solution['L_7']
     I_T = best_solution['I_T']
     
-    gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3,
-            'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
+    gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 
+             'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
     
-    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
+    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6, 'L_7': L_7}
     
     W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
                 
     current_params = {
-        'W_1': W['W_1'], 'L_1': L_1,
-        'W_2': W['W_2'], 'L_2': L_2,
-        'W_3': W['W_3'], 'L_3': L_3,
-        'W_4': W['W_4'], 'L_4': L_4,
-        'W_5': W['W_5'], 'L_5': L_5,
-        'W_6': W['W_6'], 'L_6': L_6,
+        'W_1': W['W_1'], 'L_1': L['L_1'],
+        'W_2': W['W_2'], 'L_2': L['L_2'],
+        'W_3': W['W_3'], 'L_3': L['L_3'],
+        'W_4': W['W_4'], 'L_4': L['L_4'],
+        'W_5': W['W_5'], 'L_5': L['L_5'],
+        'W_6': W['W_6'], 'L_6': L['L_6'],
         'W_7': W['W_7'], 'L_7': L['L_7'],
         'W_8': W['W_8'], 'L_8': L['L_8'],
         'V_B1': VDD - Vgs['Vgs_6'],
@@ -370,27 +373,37 @@ def log_solution(iteration, position, specs, fitness):
     )
 
     # Format: 'Key': (Multiplier, 'Unit', 'Format_String')
-    spec_formats = {
-        'Gain_dB': (1,    'dB',   '{:.2f}'),
-        'GBW':     (1e-6, 'MHz',  '{:.2f}'),
-        'PM':      (1,    'deg',  '{:.2f}'),
-        'SR':      (1e-6, 'V/μs', '{:.2f}'),
-        'Power':   (1e6,  'μW',   '{:.2f}'),
-        'V_CMFB':  (1,    'V',    '{:.4f}'),
-        'CMRR_dB': (1,    'dB',   '{:.2f}'),
-        'PSRR_dB': (1,    'dB',   '{:.2f}'),
-        'Area':    (1,    'μm²',  '{:.2f}')
-    }
+    # spec_formats = {
+    #     'Gain_dB': (1,    'dB',   '{:.2f}'),
+    #     'GBW':     (1e-6, 'MHz',  '{:.2f}'),
+    #     'PM':      (1,    'deg',  '{:.2f}'),
+    #     'SR':      (1e-6, 'V/μs', '{:.2f}'),
+    #     'Power':   (1e6,  'μW',   '{:.2f}'),
+    #     'V_CMFB':  (1,    'V',    '{:.4f}'),
+    #     'CMRR_dB': (1,    'dB',   '{:.2f}'),
+    #     'PSRR_dB': (1,    'dB',   '{:.2f}'),
+    #     'Area':    (1,    'μm²',  '{:.2f}')
+    # }
+    keys_to_skip = {'Gain_dB', 'GBW', 'PM', 'SR', 'Power', 'V_CMFB', 'CMRR_dB', 'PSRR_dB', 'Area'}
 
     # Format the specs with appropriate units and precision
+    # for key, value in clean_specs.items():
+    #     if key in spec_formats:
+    #         multiplier, unit, fmt = spec_formats[key]
+    #         scaled_val = value * multiplier
+    #         formatted_val = fmt.format(scaled_val)
+    #         log_message += f"        {key:<8}: {formatted_val} {unit}\n"
+    #     elif key.startswith('W_') or key.startswith('L_'):
+    #         log_message += f"        {key:<8}: {value:.4f} μm\n"
+    #     elif key.startswith('V_'):
+    #         log_message += f"        {key:<8}: {value:.4f} V\n"
+    #     else:
+    #         log_message += f"        {key:<8}: {value:.4g}\n"
     for key, value in clean_specs.items():
-        if key in spec_formats:
-            multiplier, unit, fmt = spec_formats[key]
-            scaled_val = value * multiplier
-            formatted_val = fmt.format(scaled_val)
-            log_message += f"        {key:<8}: {formatted_val} {unit}\n"
+        if key in keys_to_skip:
+            continue            
         elif key.startswith('W_') or key.startswith('L_'):
-            log_message += f"        {key:<8}: {value:.4f} μm\n"
+            log_message += f"        {key:<8}: {value:.2f} μm\n"            
         elif key.startswith('V_'):
             log_message += f"        {key:<8}: {value:.4f} V\n"
         else:

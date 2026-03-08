@@ -13,8 +13,8 @@ class PSO:
         self.c2 = c2
         self.max_velocity_updates = max_velocity_updates
         
-        self.continuous_indices = [0, 1, 2, 3, 4, 5, 12]
-        self.discrete_indices = [6, 7, 8, 9, 10, 11]
+        self.continuous_indices = [0, 1, 2, 3, 4, 5, 13]
+        self.discrete_indices = [6, 7, 8, 9, 10, 11, 12]
         self.n_cont = len(self.continuous_indices)
         self.n_disc = len(self.discrete_indices)
         
@@ -118,7 +118,7 @@ class PSO:
         
         new_disc_vars = self.discrete_update()
         
-        offspring = np.zeros(13)
+        offspring = np.zeros(self.n_cont + self.n_disc)
         offspring[self.continuous_indices] = new_cont_vars
         offspring[self.discrete_indices] = new_disc_vars
         
@@ -145,8 +145,8 @@ class PSO:
     
     def get_best_solution(self):
         gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6 = self.gbest_position[0:6]
-        L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx = self.gbest_position[6:12]
-        I_T = self.gbest_position[12]
+        L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, L_7_idx = self.gbest_position[6:13]
+        I_T = self.gbest_position[13]
         
         L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
         L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -154,6 +154,7 @@ class PSO:
         L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
         L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
         L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
+        L_7 = L_DISCRETE_VALUES[int(L_7_idx)]
         
         return {
             'gm_ID_1': gm_ID_1,
@@ -168,6 +169,7 @@ class PSO:
             'L_4': L_4,
             'L_5': L_5,
             'L_6': L_6,
+            'L_7': L_7,
             'I_T': I_T,
             'area': self.gbest_fitness,
             'specs': self.gbest_specs

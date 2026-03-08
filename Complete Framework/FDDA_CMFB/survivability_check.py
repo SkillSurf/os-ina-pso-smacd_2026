@@ -9,7 +9,7 @@ from specs import *
 def survivability_test(particle, verbose=False):
     """
     Test if a particle meets all design specifications
-    particle = [gm_ID_1, ..., gm_ID_6, L_1_idx, ..., L_6_idx, I_T]
+    particle = [gm_ID_1, ..., gm_ID_6, L_1_idx, ..., L_7_idx, I_T]
     """
     gm_ID_1 = particle[0]
     gm_ID_2 = particle[1]
@@ -24,8 +24,9 @@ def survivability_test(particle, verbose=False):
     L_4_idx = particle[9]
     L_5_idx = particle[10]
     L_6_idx = particle[11]
+    L_7_idx = particle[12]
 
-    I_T = particle[12]
+    I_T = particle[13]
 
     L_1 = L_DISCRETE_VALUES[int(L_1_idx)]
     L_2 = L_DISCRETE_VALUES[int(L_2_idx)]
@@ -33,11 +34,12 @@ def survivability_test(particle, verbose=False):
     L_4 = L_DISCRETE_VALUES[int(L_4_idx)]
     L_5 = L_DISCRETE_VALUES[int(L_5_idx)]
     L_6 = L_DISCRETE_VALUES[int(L_6_idx)]
+    L_7 = L_DISCRETE_VALUES[int(L_7_idx)]
 
     gm_ID = {'gm_ID_1': gm_ID_1, 'gm_ID_2': gm_ID_2, 'gm_ID_3': gm_ID_3, 
              'gm_ID_4': gm_ID_4, 'gm_ID_5': gm_ID_5, 'gm_ID_6': gm_ID_6}
 
-    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6}
+    L = {'L_1': L_1, 'L_2': L_2, 'L_3': L_3, 'L_4': L_4, 'L_5': L_5, 'L_6': L_6, 'L_7': L_7}
 
     W, L, gm, gds, C, Vgs, gamma, flicker, ID = get_specVars(gm_ID, L, V_A, V_B, I_T)
     

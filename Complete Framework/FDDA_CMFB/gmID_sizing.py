@@ -84,11 +84,10 @@ def get_params(gm_ID, L, V_A, V_B, I_T):
                 return None, None, None, None, None, None, None
             
             # Append gm_ID values for M7 and M8
+            gm_ID['gm_ID_7'] = NCH.lookup('GM_ID', VGS=Vds['Vds_4'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_7'])
             gm_ID['gm_ID_8'] = gm_ID['gm_ID_2']
-            gm_ID['gm_ID_7'] = NCH.lookup('GM_ID', VGS=Vds['Vds_4'], VDS=Vds['Vds_7'], VSB=Vsb['Vsb_7'], L=L['L_4'])
 
-            # Append L values for M7 and M8
-            L['L_7'] = 0.3  # Fixed length for M7
+            # Append L values for M8
             L['L_8'] = L['L_2']
 
             I_X = I_T / M

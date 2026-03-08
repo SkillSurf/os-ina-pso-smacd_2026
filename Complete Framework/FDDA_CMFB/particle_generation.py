@@ -19,11 +19,12 @@ def generate_particle(cont_bounds, n_L_values, max_attempts=2000):
         L_4_idx = np.random.randint(0, n_L_values)
         L_5_idx = np.random.randint(0, n_L_values)
         L_6_idx = np.random.randint(0, n_L_values)
+        L_7_idx = np.random.randint(5, n_L_values)
 
         I_T = np.random.uniform(cont_bounds[6][0], cont_bounds[6][1])
         
         particle = np.array([gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6, 
-                             L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, I_T])
+                             L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, L_7_idx, I_T])
         
         passed, area, specs = survivability_test(particle)
         
@@ -48,11 +49,12 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=100000):
         L_4_idx = np.random.randint(0, n_L_values)
         L_5_idx = np.random.randint(0, n_L_values)
         L_6_idx = np.random.randint(0, n_L_values)
+        L_7_idx = np.random.randint(5, n_L_values)
 
         I_T = np.random.uniform(cont_bounds[6][0], cont_bounds[6][1])
         
         particle = np.array([gm_ID_1, gm_ID_2, gm_ID_3, gm_ID_4, gm_ID_5, gm_ID_6, 
-                             L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, I_T])
+                             L_1_idx, L_2_idx, L_3_idx, L_4_idx, L_5_idx, L_6_idx, L_7_idx, I_T])
         
         passed, area, specs = survivability_test(particle)
 
@@ -79,7 +81,7 @@ def generate_initial_particle(cont_bounds, n_L_values, max_attempts=100000):
         
         if sim_passed:
             print(f"\ngm_ID_1: {gm_ID_1:.2f}, gm_ID_2: {gm_ID_2:.2f}, gm_ID_3: {gm_ID_3:.2f}, gm_ID_4: {gm_ID_4:.2f}, gm_ID_5: {gm_ID_5:.2f}, gm_ID_6: {gm_ID_6:.2f}, I_T: {I_T*1e6:.2f} μA")
-            print(f"L_1: {meas['L_1']:.2f} μm, L_2: {meas['L_2']:.2f} μm, L_3: {meas['L_3']:.2f} μm, L_4: {meas['L_4']:.2f} μm, L_5: {meas['L_5']:.2f} μm, L_6: {meas['L_6']:.2f} μm")
+            print(f"L_1: {meas['L_1']:.2f} μm, L_2: {meas['L_2']:.2f} μm, L_3: {meas['L_3']:.2f} μm, L_4: {meas['L_4']:.2f} μm, L_5: {meas['L_5']:.2f} μm, L_6: {meas['L_6']:.2f} μm, L_7: {meas['L_7']:.2f} μm")
             print(f"Gain: {meas['Gain_dB']:.2f} dB, GBW: {meas['GBW']*1e-6:.2f} MHz, PM: {meas['PM']:.2f} degrees, SR: {meas['SR']*1e-6:.2f} V/μs, CMRR: {meas['CMRR_dB']:.2f} dB, PSRR: {meas['PSRR_dB']:.2f} dB, Power: {meas['Power']*1e6:.2f} μW")
             return particle, area, meas
             

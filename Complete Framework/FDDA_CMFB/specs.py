@@ -26,7 +26,7 @@ CMRR_spec_dB = 120                        # Common Mode Rejection Ratio (dB)
 PSRR_spec_dB = 60                         # Power Supply Rejection Ratio (dB)
 # noise_spec = 0.05e-6                      # Input Referred Noise (V/√Hz)
 Power_spec = 40e-6                        # Power Consumption (W)
-Area_spec = 5000                          # Area (μm^2)
+Area_spec = 5000                          # Area (μm²)
 
 Gain_dc_spec = 10**(Gain_dc_spec_dB/20)   # Convert dB to V/V
 CMRR_spec = 10**(CMRR_spec_dB/20)         # Convert dB to V/V
