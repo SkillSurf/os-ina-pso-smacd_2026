@@ -242,7 +242,8 @@ def runsim_SLEW(measurement_results):
     ax.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5)
 
     # Draw a line between two points
-    ax.plot([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', linestyle='--', linewidth=1)
+    ax.plot([t_10*1e6, t_90*1e6], [v_10, v_10], color='black', linestyle='--', linewidth=1)
+    ax.plot([t_90*1e6, t_90*1e6], [v_10, v_90], color='black', linestyle='--', linewidth=1)
 
     lns = l1 + l2
     labs = [l.get_label() for l in lns]
@@ -534,18 +535,18 @@ def evaluate_design(current_params, plots=False):
 
     return specs_met, current_results
     
-params = {'W_1': 86, 'L_1': 0.3,
-          'W_2': 0.92, 'L_2': 0.7,
-          'W_3': 0.88, 'L_3': 1,
-          'W_4': 0.87, 'L_4': 3,
-          'W_5': 2.5, 'L_5': 2,
-          'W_6': 4.2, 'L_6': 0.7,
-          'W_7': 29, 'L_7': 3,
-          'W_8': 4.4, 'L_8': 0.7,
-          'V_B1': 0.718,
-          'V_B2': 0.699,
-          'V_B3': 1.040,
-          'V_B4': 0.297,
+params = {'W_1': 85, 'L_1': 0.3,
+          'W_2': 0.5, 'L_2': 0.3,
+          'W_3': 1.2, 'L_3': 0.8,
+          'W_4': 0.81, 'L_4': 3,
+          'W_5': 2.4, 'L_5': 2,
+          'W_6': 3.6, 'L_6': 0.6,
+          'W_7': 20, 'L_7': 0.3,
+          'W_8': 2.3, 'L_8': 0.3,
+          'V_B1': 0.725,
+          'V_B2': 0.702,
+          'V_B3': 1.044,
+          'V_B4': 0.348,
           'V_CM': 0.9}
 
 if __name__ == "__main__":
