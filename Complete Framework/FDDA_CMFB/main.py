@@ -1,4 +1,6 @@
+import os
 import time
+import psutil
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,6 +12,7 @@ from particle_generation import generate_N_particles, generate_particle
 from pso import PSO
 from simulator import evaluate_design
 
+process = psutil.Process(os.getpid())
 logger = logging.getLogger("OptimizationLogger")
 logger.setLevel(logging.INFO)
 
@@ -256,7 +259,8 @@ def main():
 
         if len(valid_fitness) > 0:
             print(f"  Average:     {np.mean(valid_fitness):.2f} μm²")
-        print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}\n")
+        print(f"  Valid particles: {len(valid_fitness)}/{N_PARTICLES}")
+        print(f"  --- Memory Usage: {process.memory_info().rss / (1024 ** 2):.2f} MB ({process.memory_info().rss / (1024 ** 3):.2f} GB)")
     
     end_time = time.time()
     optimization_time = end_time - start_time
@@ -372,33 +376,8 @@ def log_solution(iteration, position, specs, fitness):
         f"    Specs    :\n"
     )
 
-    # Format: 'Key': (Multiplier, 'Unit', 'Format_String')
-    # spec_formats = {
-    #     'Gain_dB': (1,    'dB',   '{:.2f}'),
-    #     'GBW':     (1e-6, 'MHz',  '{:.2f}'),
-    #     'PM':      (1,    'deg',  '{:.2f}'),
-    #     'SR':      (1e-6, 'V/μs', '{:.2f}'),
-    #     'Power':   (1e6,  'μW',   '{:.2f}'),
-    #     'V_CMFB':  (1,    'V',    '{:.4f}'),
-    #     'CMRR_dB': (1,    'dB',   '{:.2f}'),
-    #     'PSRR_dB': (1,    'dB',   '{:.2f}'),
-    #     'Area':    (1,    'μm²',  '{:.2f}')
-    # }
     keys_to_skip = {'Gain_dB', 'GBW', 'PM', 'SR', 'Power', 'V_CMFB', 'CMRR_dB', 'PSRR_dB', 'Area'}
 
-    # Format the specs with appropriate units and precision
-    # for key, value in clean_specs.items():
-    #     if key in spec_formats:
-    #         multiplier, unit, fmt = spec_formats[key]
-    #         scaled_val = value * multiplier
-    #         formatted_val = fmt.format(scaled_val)
-    #         log_message += f"        {key:<8}: {formatted_val} {unit}\n"
-    #     elif key.startswith('W_') or key.startswith('L_'):
-    #         log_message += f"        {key:<8}: {value:.4f} μm\n"
-    #     elif key.startswith('V_'):
-    #         log_message += f"        {key:<8}: {value:.4f} V\n"
-    #     else:
-    #         log_message += f"        {key:<8}: {value:.4g}\n"
     for key, value in clean_specs.items():
         if key in keys_to_skip:
             continue            

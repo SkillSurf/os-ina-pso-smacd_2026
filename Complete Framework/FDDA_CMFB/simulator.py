@@ -1,4 +1,5 @@
 import os
+import ctypes
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator, FixedFormatter
@@ -12,9 +13,12 @@ from PySpice.Unit import u_V, u_pF, u_GH, u_GF, u_Hz, u_MHz, u_ns, u_us
 import PySpice.Spice.NgSpice.Shared as Shared
 
 dir = os.path.dirname(os.path.abspath(__file__))
-# dll_path = os.path.join(dir, "..", "..", "pyspice", "ngspice-42_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")  # Ngspice 42
 dll_path = os.path.join(dir, "..", "..", "pyspice", "ngspice-44_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")  # Ngspice 44
 Shared.NgSpiceShared.LIBRARY_PATH = os.path.abspath(dll_path)
+
+# Apply .format("") so it looks for "ngspice.dll" instead of "ngspice{}.dll"
+exact_dll_path = Shared.NgSpiceShared.LIBRARY_PATH.format("")
+ngspice_c_lib = ctypes.CDLL(exact_dll_path)  # Grab the raw C-library using ctypes
 
 # =============================================================
 # To handle latest ngspice versions that crash on 'run' command
@@ -145,6 +149,15 @@ def runsim_AC(measurement_results, plots=False):
         plt.savefig('Gain_and_GBW_plot.png')
         plt.tight_layout()
 
+    # Hit the Ngspice C-API Reset Button directly
+    ngspice_c_lib.ngSpice_Reset()  
+    ngspice = simulator.factory(circuit).ngspice  # Re-initialize PySpice
+    if ngspice:
+        # FIX: Force the internal ID back to a standard Python integer (0)
+        # so CFFI doesn't choke trying to parse an existing pointer.
+        ngspice._ngspice_id = 0 
+        ngspice._init_ngspice(False)  # Safely re-hook into the wiped C-engine
+
     return gain_db
 
 # ======================
@@ -209,6 +222,15 @@ def runsim_OP(measurement_results, plots=False):
                 if len(analysis[key]) > 0:
                     current = float(analysis[key].item())
                     f.write(f"{key}: {current*1e6:.2f} uA\n")
+
+    # Hit the Ngspice C-API Reset Button directly
+    ngspice_c_lib.ngSpice_Reset()  
+    ngspice = simulator.factory(circuit).ngspice  # Re-initialize PySpice
+    if ngspice:
+        # FIX: Force the internal ID back to a standard Python integer (0)
+        # so CFFI doesn't choke trying to parse an existing pointer.
+        ngspice._ngspice_id = 0 
+        ngspice._init_ngspice(False)  # Safely re-hook into the wiped C-engine
 
 # ========================
 # Runs the SLEW simulation
@@ -277,6 +299,15 @@ def runsim_SLEW(measurement_results, plots=False):
         plt.savefig('Slew_plot.png')
         plt.tight_layout()
 
+    # Hit the Ngspice C-API Reset Button directly
+    ngspice_c_lib.ngSpice_Reset()  
+    ngspice = simulator.factory(circuit).ngspice  # Re-initialize PySpice
+    if ngspice:
+        # FIX: Force the internal ID back to a standard Python integer (0)
+        # so CFFI doesn't choke trying to parse an existing pointer.
+        ngspice._ngspice_id = 0 
+        ngspice._init_ngspice(False)  # Safely re-hook into the wiped C-engine
+
 # ========================
 # Runs the CMRR simulation
 # ========================
@@ -340,6 +371,15 @@ def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
 
         plt.savefig('CMRR_plot.png')
         plt.tight_layout()
+
+    # Hit the Ngspice C-API Reset Button directly
+    ngspice_c_lib.ngSpice_Reset()  
+    ngspice = simulator.factory(circuit).ngspice  # Re-initialize PySpice
+    if ngspice:
+        # FIX: Force the internal ID back to a standard Python integer (0)
+        # so CFFI doesn't choke trying to parse an existing pointer.
+        ngspice._ngspice_id = 0 
+        ngspice._init_ngspice(False)  # Safely re-hook into the wiped C-engine
 
 # ========================
 # Runs the PSRR simulation
@@ -407,6 +447,15 @@ def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
 
         plt.savefig('PSRR_plot.png')
         plt.tight_layout()
+
+    # Hit the Ngspice C-API Reset Button directly
+    ngspice_c_lib.ngSpice_Reset()  
+    ngspice = simulator.factory(circuit).ngspice  # Re-initialize PySpice
+    if ngspice:
+        # FIX: Force the internal ID back to a standard Python integer (0)
+        # so CFFI doesn't choke trying to parse an existing pointer.
+        ngspice._ngspice_id = 0 
+        ngspice._init_ngspice(False)  # Safely re-hook into the wiped C-engine
 
 # ===========================================================
 # Top-level function to evaluate a design given the variables
