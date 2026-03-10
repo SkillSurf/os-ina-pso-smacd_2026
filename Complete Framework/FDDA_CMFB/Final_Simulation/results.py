@@ -493,34 +493,34 @@ def evaluate_design(current_params, plots=False):
     
     # Run the AC simulation and measure gain, gain-bandwidth, and phase margin
     fdda_gain_db, fdda_phase, freq = runsim_AC(measurement_results=current_results)
-    specs_met = (current_results['Gain_dB'] >= Gain_dc_spec_dB and 
-                 current_results['GBW'] >= GBW_spec and 
-                 current_results['PM'] >= PM_spec)
+    specs_met = (current_results['Gain_dB'] > Gain_dc_spec_dB and 
+                 current_results['GBW'] > GBW_spec and 
+                 current_results['PM'] > PM_spec)
 
     # Run the SLEW simulation and measure slew rate
     if specs_met:
         runsim_SLEW(measurement_results=current_results)
-        specs_met = (current_results['SR'] >= SR_spec)
+        specs_met = (current_results['SR'] > SR_spec)
 
     # Run the OP simulation and measure power
     if specs_met:
         runsim_OP(measurement_results=current_results)
-        specs_met = (current_results['Power'] <= Power_spec)
+        specs_met = (current_results['Power'] < Power_spec)
 
     # Run the CMRR simulation and measure CMRR
     if specs_met:
         cmrr_db = runsim_CMRR(fdda_gain_db, measurement_results=current_results)
-        specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
+        specs_met = (current_results['CMRR_dB'] > CMRR_spec_dB)
 
     # Run the PSRR simulation and measure PSRR
     if specs_met:
         psrr_db = runsim_PSRR(fdda_gain_db, measurement_results=current_results)
-        specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
+        specs_met = (current_results['PSRR_dB'] > PSRR_spec_dB)
 
     # Run the CMFB simulation and measure CMFB loop gain and GBW
     if specs_met:
         cmfb_gain_db, cmfb_phase = runsim_CMFB(measurement_results=current_results)
-        specs_met = (current_results['CMFB GBW'] >= GBW_spec * 0.3)
+        specs_met = (current_results['CMFB GBW'] > GBW_spec * 0.3)
 
     create_Plot(freq, fdda_gain_db, fdda_phase, cmfb_gain_db, cmfb_phase)
 
@@ -535,18 +535,18 @@ def evaluate_design(current_params, plots=False):
 
     return specs_met, current_results
     
-params = {'W_1': 85, 'L_1': 0.3,
-          'W_2': 0.5, 'L_2': 0.3,
-          'W_3': 1.2, 'L_3': 0.8,
-          'W_4': 0.81, 'L_4': 3,
-          'W_5': 2.4, 'L_5': 2,
-          'W_6': 3.6, 'L_6': 0.6,
-          'W_7': 20, 'L_7': 0.3,
-          'W_8': 2.3, 'L_8': 0.3,
-          'V_B1': 0.725,
-          'V_B2': 0.702,
-          'V_B3': 1.044,
-          'V_B4': 0.348,
+params = {'W_1': 73.91, 'L_1': 0.3,
+          'W_2': 0.9, 'L_2': 0.8,
+          'W_3': 0.62, 'L_3': 0.8,
+          'W_4': 0.75, 'L_4': 3,
+          'W_5': 1.95, 'L_5': 2,
+          'W_6': 5.12, 'L_6': 1,
+          'W_7': 21.08, 'L_7': 0.2,
+          'W_8': 4.25, 'L_8': 0.8,
+          'V_B1': 0.7056,
+          'V_B2': 0.7057,
+          'V_B3': 1.0395,
+          'V_B4': 0.3061,
           'V_CM': 0.9}
 
 if __name__ == "__main__":
