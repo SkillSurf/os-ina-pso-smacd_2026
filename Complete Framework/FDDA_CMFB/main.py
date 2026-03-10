@@ -29,6 +29,9 @@ def main():
     file_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
+
+    # Log the current time at the start of the optimization
+    logger.info(f"Optimization started at: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
        
     L_available, n_L_values, I_T_min, I_T_max = get_feasRegion(L_DISCRETE_VALUES)
     
@@ -55,7 +58,16 @@ def main():
         return None
     
     end_time = time.time()
-    print(f"\nTime taken to generate particles: {end_time - start_time:.2f} seconds")
+    particle_gen_time = end_time - start_time
+    print(f"\nTime taken to generate particles: {particle_gen_time:.2f} seconds")
+
+    # Log time taken to generate particles
+    logger.info(f"Time taken to generate {N_PARTICLES} particles: {particle_gen_time:.2f} seconds\n")
+
+    # Log all initial particles
+    logger.info("Initial Particles and their Fitness:\n")
+    for i in range(len(particles)):
+        log_solution(-1, particles[i], specs_list[i], fitness[i])
     
     print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
     print(f"Initial best area: {np.min(fitness):.2f} μm²")
@@ -269,7 +281,10 @@ def main():
 
     print("Optimization is complete!")
     # Log the total number of iterations
-    logger.info(f"Total number of iterations in this run: {MAX_ITERATIONS}")
+    logger.info(f"Total number of iterations in this run: {MAX_ITERATIONS}\n")
+    
+    # Log optimization time
+    logger.info(f"Total optimization time: {optimization_time:.2f} seconds\n")
 
     print("\nExtracting final design parameters...")
     
@@ -347,13 +362,13 @@ def main():
     
     if final_results is not None:
         print("\nPerformance Specifications:")
-        print(f"  Gain:         {final_results['Gain_dB']:.2f} dB      (spec: >{Gain_dc_spec_dB:.2f})")
-        print(f"  GBW:          {final_results['GBW']*1e-6:.2f} MHz      (spec: >{GBW_spec*1e-6:.2f})")
-        print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: >{PM_spec:.2f})")
-        print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: >{SR_spec*1e-6:.2f})")
-        print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: <{Power_spec*1e6:.2f})")
-        print(f"  CMRR @ 1kHz:  {final_results['CMRR_dB']:.2f} dB      (spec: >{CMRR_spec_dB:.2f})")
-        print(f"  PSRR @ 1kHz:  {final_results['PSRR_dB']:.2f} dB      (spec: >{PSRR_spec_dB:.2f})")
+        print(f"  Gain:         {final_results['Gain_dB']:.2f} dB      (spec: ≥{Gain_dc_spec_dB:.2f})")
+        print(f"  GBW:          {final_results['GBW']*1e-6:.2f} MHz      (spec: ≥{GBW_spec*1e-6:.2f})")
+        print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: ≥{PM_spec:.2f})")
+        print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
+        print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
+        print(f"  CMRR @ 1kHz:  {final_results['CMRR_dB']:.2f} dB      (spec: ≥{CMRR_spec_dB:.2f})")
+        print(f"  PSRR @ 1kHz:  {final_results['PSRR_dB']:.2f} dB      (spec: ≥{PSRR_spec_dB:.2f})")
     
     print(f"\nOptimization Time: {optimization_time:.2f} seconds")
     print("="*70)
@@ -362,6 +377,9 @@ def main():
     
     save_results(best_solution, W, L, optimization_time, final_check, final_results)
     
+    # Log current time at the end of the optimization
+    logger.info(f"Optimization completed at: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
     return best_solution
 
 def log_solution(iteration, position, specs, fitness):
@@ -432,13 +450,13 @@ def save_results(best_solution, W, L, opt_time, sim_passed, results):
         f.write("DESIGN SPECIFICATIONS:\n")
         f.write(f"  VDD = {VDD} V\n")
         f.write(f"  CL = {CL*1e12:.2f} pF\n")
-        f.write(f"  Gain > {Gain_dc_spec_dB:.2f} dB\n")
-        f.write(f"  GBW > {GBW_spec*1e-6:.2f} MHz\n")
-        f.write(f"  Phase Margin > {PM_spec:.2f}°\n")
-        f.write(f"  Slew Rate > {SR_spec*1e-6:.2f} V/μs\n")
-        f.write(f"  Power < {Power_spec*1e6:.2f} μW\n")
-        f.write(f"  CMRR @ 1kHz > {CMRR_spec_dB:.2f} dB\n")
-        f.write(f"  PSRR @ 1kHz > {PSRR_spec_dB:.2f} dB\n\n")
+        f.write(f"  Gain ≥ {Gain_dc_spec_dB:.2f} dB\n")
+        f.write(f"  GBW ≥ {GBW_spec*1e-6:.2f} MHz\n")
+        f.write(f"  Phase Margin ≥ {PM_spec:.2f}°\n")
+        f.write(f"  Slew Rate ≥ {SR_spec*1e-6:.2f} V/μs\n")
+        f.write(f"  Power ≤ {Power_spec*1e6:.2f} μW\n")
+        f.write(f"  CMRR @ 1kHz ≥ {CMRR_spec_dB:.2f} dB\n")
+        f.write(f"  PSRR @ 1kHz ≥ {PSRR_spec_dB:.2f} dB\n\n")
         
         f.write("OPTIMAL DESIGN PARAMETERS:\n")
         f.write(f"  gm/ID_1 = {best_solution['gm_ID_1']:.2f} S/A\n")

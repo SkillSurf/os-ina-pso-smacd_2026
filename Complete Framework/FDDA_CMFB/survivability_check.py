@@ -126,11 +126,11 @@ def survivability_test(particle, verbose=False):
     V_CMFB = VDD - Vgs['Vgs_2']
     
     specs_met = (
-        Gain_dc_calc > Gain_dc_spec and
-        GBW_calc > GBW_spec and
-        PM_calc > PM_spec and
-        SR_calc > SR_spec and
-        Power_calc < Power_spec and
+        Gain_dc_calc >= Gain_dc_spec and
+        GBW_calc >= GBW_spec and
+        PM_calc >= PM_spec and
+        SR_calc >= SR_spec and
+        Power_calc <= Power_spec and
         # noise_calc <= noise_spec and
         # CMRR_calc >= CMRR_spec and
         W['W_1'] >= 0.42 and W['W_2'] >= 0.42 and

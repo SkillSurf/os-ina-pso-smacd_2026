@@ -493,30 +493,30 @@ def evaluate_design(current_params, plots=False):
         
         # Run the AC simulation and verify gain, gain-bandwidth, and phase margin specs
         gain_dm_db = runsim_AC(measurement_results=current_results, plots=plots)
-        specs_met = (current_results['Gain_dB'] > Gain_dc_spec_dB and
-                        current_results['GBW'] > GBW_spec and
-                        current_results['PM'] > PM_spec)
+        specs_met = (current_results['Gain_dB'] >= Gain_dc_spec_dB and
+                        current_results['GBW'] >= GBW_spec and
+                        current_results['PM'] >= PM_spec)
 
         # Only if past specs are met, run the SLEW simulation and verify slew rate spec
         if specs_met:
             runsim_SLEW(measurement_results=current_results, plots=plots)
-            specs_met = (current_results['SR'] > SR_spec)
+            specs_met = (current_results['SR'] >= SR_spec)
 
         # Only if past specs are met, run the OP simulation and verify power spec
         if specs_met:
             # Run the OP simulation and verify specs
             runsim_OP(measurement_results=current_results, plots=plots)
-            specs_met = (current_results['Power'] < Power_spec)
+            specs_met = (current_results['Power'] <= Power_spec)
 
         # Only if past specs are met, run the CMRR simulation and verify CMRR spec
         if specs_met:
             runsim_CMRR(gain_dm_db, measurement_results=current_results, plots=plots)
-            specs_met = (current_results['CMRR_dB'] > CMRR_spec_dB)
+            specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
 
         # Only if past specs are met, run the PSRR simulation and verify PSRR spec
         if specs_met:
             runsim_PSRR(gain_dm_db, measurement_results=current_results, plots=plots)
-            specs_met = (current_results['PSRR_dB'] > PSRR_spec_dB)
+            specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
 
         Area_active = get_Area(rounded_params, rounded_params)
         current_results['Area'] = Area_active
