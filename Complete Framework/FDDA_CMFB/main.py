@@ -1,4 +1,5 @@
 import os
+import gc
 import time
 import psutil
 import logging
@@ -87,9 +88,10 @@ def main():
     
     for iteration in range(MAX_ITERATIONS):
 
+        gc.collect()  # Explicitly trigger garbage collection to manage memory
         particles, fitness, need_simulator_check = pso.update_swarm(particles, fitness)
         
-        print(f"  Updated {len(need_simulator_check)} particles")
+        print(f"\nIteration {iteration+1}: Updated {len(need_simulator_check)} particles")
         print(f"  Current global best: {pso.gbest_fitness:.2f} μm²")
 
         if len(need_simulator_check) > 0:
@@ -120,7 +122,7 @@ def main():
                 W, L, _, _, Vgs, _, _ = get_params(gm_ID, L, V_A, V_B, I_T)
                 
                 if W is not None and not any(w is None for w in W.values()):
-                    print(f"  Particle {idx}: Simulating...")
+                    print(f"  Particle {idx+1}: Simulating...")
                     
                     current_params = {
                         'W_1': W['W_1'], 'L_1': L['L_1'],
@@ -141,13 +143,13 @@ def main():
                     sim_passed, _ = evaluate_design(current_params)
                     
                     if not sim_passed:
-                        print(f"    Particle {idx}: REJECTED by simulator")
+                        print(f"    Particle {idx+1}: REJECTED by simulator")
                         rejected_indices.append(idx)
                         fitness[idx] = np.inf  # Mark as infeasible
                     else:
-                        print(f"    Particle {idx}: PASSED simulator")
+                        print(f"    Particle {idx+1}: PASSED simulator")
                 else:
-                    print(f"  Particle {idx}: Invalid W/L values, skipping simulation")
+                    print(f"  Particle {idx+1}: Invalid W/L values, skipping simulation")
                     rejected_indices.append(idx)
                     fitness[idx] = np.inf
             
@@ -204,19 +206,19 @@ def main():
                                 if sim_passed:
                                     particles[idx] = offspring
                                     fitness[idx] = area
-                                    print(f"    Particle {idx}: Recovered with velocity update (Area={area:.2f})")
+                                    print(f"    Particle {idx+1}: Recovered with velocity update (Area={area:.2f})")
                                     break
                     
                     # If still rejected after velocity updates, mark for regeneration
                     if fitness[idx] == np.inf:
-                        print(f"    Particle {idx}: Failed all velocity updates")
+                        print(f"    Particle {idx+1}: Failed all velocity updates")
             
             print("\nUpdating personal and global bests...")
             for i in range(N_PARTICLES):
                 if fitness[i] < np.inf and fitness[i] < pso.pbest_fitness[i]:
                     pso.pbest_fitness[i] = fitness[i]
                     pso.pbest_positions[i] = particles[i].copy()
-                    print(f"  Particle {i}: Updated pbest = {fitness[i]:.2f} μm²")
+                    print(f"  Particle {i+1}: Updated pbest = {fitness[i]:.2f} μm²")
             
             best_idx = np.argmin(fitness)
             if fitness[best_idx] < np.inf and fitness[best_idx] < pso.gbest_fitness:
@@ -244,9 +246,9 @@ def main():
                         particles[idx] = new_particle
                         fitness[idx] = new_area
                         refill_count += 1
-                        print(f"    Particle {idx}: Refilled (Area={new_area:.2f})")
+                        print(f"    Particle {idx+1}: Refilled (Area={new_area:.2f})")
                     else:
-                        print(f"    Particle {idx}: Failed to refill")
+                        print(f"    Particle {idx+1}: Failed to refill")
                 
                 print(f"  Successfully refilled {refill_count}/{n_rejected} particles")
         
@@ -254,7 +256,7 @@ def main():
         avg_fitness_history.append(np.mean(fitness[fitness < np.inf]))
         
         valid_fitness = fitness[fitness < np.inf]
-        print(f"\nIteration {iteration + 1} Summary:")
+        print(f"\nIteration {iteration+1} Summary:")
         print(f"  Global Best: {pso.gbest_fitness:.2f} μm²")
 
         if len(valid_fitness) > 0:
@@ -266,6 +268,8 @@ def main():
     optimization_time = end_time - start_time
 
     print("Optimization is complete!")
+    # Log the total number of iterations
+    logger.info(f"Total number of iterations in this run: {MAX_ITERATIONS}")
 
     print("\nExtracting final design parameters...")
     
@@ -343,13 +347,13 @@ def main():
     
     if final_results is not None:
         print("\nPerformance Specifications:")
-        print(f"  Gain:         {final_results['Gain_dB']:.2f} dB      (spec: ≥{Gain_dc_spec_dB:.2f})")
-        print(f"  GBW:          {final_results['GBW']*1e-6:.2f} MHz      (spec: ≥{GBW_spec*1e-6:.2f})")
-        print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: ≥{PM_spec:.2f})")
-        print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: ≥{SR_spec*1e-6:.2f})")
-        print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: ≤{Power_spec*1e6:.2f})")
-        print(f"  CMRR @ 1kHz:  {final_results['CMRR_dB']:.2f} dB      (spec: ≥{CMRR_spec_dB:.2f})")
-        print(f"  PSRR @ 1kHz:  {final_results['PSRR_dB']:.2f} dB      (spec: ≥{PSRR_spec_dB:.2f})")
+        print(f"  Gain:         {final_results['Gain_dB']:.2f} dB      (spec: >{Gain_dc_spec_dB:.2f})")
+        print(f"  GBW:          {final_results['GBW']*1e-6:.2f} MHz      (spec: >{GBW_spec*1e-6:.2f})")
+        print(f"  Phase Margin: {final_results['PM']:.2f}°        (spec: >{PM_spec:.2f})")
+        print(f"  Slew Rate:    {final_results['SR']*1e-6:.2f} V/μs     (spec: >{SR_spec*1e-6:.2f})")
+        print(f"  Power:        {final_results['Power']*1e6:.2f} μW       (spec: <{Power_spec*1e6:.2f})")
+        print(f"  CMRR @ 1kHz:  {final_results['CMRR_dB']:.2f} dB      (spec: >{CMRR_spec_dB:.2f})")
+        print(f"  PSRR @ 1kHz:  {final_results['PSRR_dB']:.2f} dB      (spec: >{PSRR_spec_dB:.2f})")
     
     print(f"\nOptimization Time: {optimization_time:.2f} seconds")
     print("="*70)
@@ -392,6 +396,11 @@ def log_solution(iteration, position, specs, fitness):
     logger.info(log_message)  
 
 def plot_convergence(gbest_history, avg_history):
+
+    # Log convergence data
+    for i, area in enumerate(gbest_history):
+        logger.info(f"Iteration {i}: Global Best Area = {area:.4f} μm², Average Area = {avg_history[i]:.4f} μm²\n")
+
     plt.figure(figsize=(12, 5))
     
     plt.subplot(1, 2, 1)
@@ -423,13 +432,13 @@ def save_results(best_solution, W, L, opt_time, sim_passed, results):
         f.write("DESIGN SPECIFICATIONS:\n")
         f.write(f"  VDD = {VDD} V\n")
         f.write(f"  CL = {CL*1e12:.2f} pF\n")
-        f.write(f"  Gain ≥ {Gain_dc_spec_dB:.2f} dB\n")
-        f.write(f"  GBW ≥ {GBW_spec*1e-6:.2f} MHz\n")
-        f.write(f"  Phase Margin ≥ {PM_spec:.2f}°\n")
-        f.write(f"  Slew Rate ≥ {SR_spec*1e-6:.2f} V/μs\n")
-        f.write(f"  Power ≤ {Power_spec*1e6:.2f} μW\n")
-        f.write(f"  CMRR @ 1kHz ≥ {CMRR_spec_dB:.2f} dB\n")
-        f.write(f"  PSRR @ 1kHz ≥ {PSRR_spec_dB:.2f} dB\n\n")
+        f.write(f"  Gain > {Gain_dc_spec_dB:.2f} dB\n")
+        f.write(f"  GBW > {GBW_spec*1e-6:.2f} MHz\n")
+        f.write(f"  Phase Margin > {PM_spec:.2f}°\n")
+        f.write(f"  Slew Rate > {SR_spec*1e-6:.2f} V/μs\n")
+        f.write(f"  Power < {Power_spec*1e6:.2f} μW\n")
+        f.write(f"  CMRR @ 1kHz > {CMRR_spec_dB:.2f} dB\n")
+        f.write(f"  PSRR @ 1kHz > {PSRR_spec_dB:.2f} dB\n\n")
         
         f.write("OPTIMAL DESIGN PARAMETERS:\n")
         f.write(f"  gm/ID_1 = {best_solution['gm_ID_1']:.2f} S/A\n")

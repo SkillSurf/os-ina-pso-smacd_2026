@@ -42,7 +42,7 @@ MAX_VELOCITY_UPDATES = 5
 # =========================
 # Range of sizing variables
 # =========================
-gm_ID_1_range = (18, 21)
+gm_ID_1_range = (18, 20)
 gm_ID_2_range = (13, 15)
 gm_ID_3_range = (12, 14)
 gm_ID_4_range = (12, 14)

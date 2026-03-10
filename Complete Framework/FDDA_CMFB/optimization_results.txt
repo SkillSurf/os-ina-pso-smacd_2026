@@ -10,44 +10,44 @@ DESIGN SPECIFICATIONS:
   Phase Margin ≥ 60.00°
   Slew Rate ≥ 1.00 V/μs
   Power ≤ 40.00 μW
-  CMRR ≥ 120.00 dB
-  PSRR ≥ 60.00 dB
+  CMRR @ 1kHz ≥ 120.00 dB
+  PSRR @ 1kHz ≥ 60.00 dB
 
 OPTIMAL DESIGN PARAMETERS:
   gm/ID_1 = 18.00 S/A
   gm/ID_2 = 13.00 S/A
-  gm/ID_3 = 12.00 S/A
+  gm/ID_3 = 12.06 S/A
   gm/ID_4 = 14.00 S/A
-  gm/ID_5 = 13.00 S/A
-  gm/ID_6 = 12.92 S/A
-  I_T     = 2.60 μA
+  gm/ID_5 = 12.55 S/A
+  gm/ID_6 = 12.95 S/A
+  I_T     = 2.23 μA
   V_A     = 1.50 V
   V_B     = 0.30 V
 
 OPTIMAL TRANSISTOR SIZING:
-  W_1 = 86.07 μm,  L_1 = 0.30 μm
-  W_2 = 0.92 μm,  L_2 = 0.70 μm
-  W_3 = 0.88 μm,  L_3 = 1.00 μm
-  W_4 = 0.87 μm,  L_4 = 3.00 μm
-  W_5 = 2.47 μm,  L_5 = 2.00 μm
-  W_6 = 4.21 μm,  L_6 = 0.70 μm
-  W_7 = 28.93 μm,  L_7 = 3.00 μm
-  W_8 = 4.35 μm,  L_8 = 0.70 μm
-  V_B1 = 0.7179 V
-  V_B2 = 0.6989 V
+  W_1 = 73.91 μm,  L_1 = 0.30 μm
+  W_2 = 0.90 μm,  L_2 = 0.80 μm
+  W_3 = 0.62 μm,  L_3 = 0.80 μm
+  W_4 = 0.75 μm,  L_4 = 3.00 μm
+  W_5 = 1.95 μm,  L_5 = 2.00 μm
+  W_6 = 5.12 μm,  L_6 = 1.00 μm
+  W_7 = 21.08 μm,  L_7 = 0.20 μm
+  W_8 = 4.25 μm,  L_8 = 0.80 μm
+  V_B1 = 0.7056 V
+  V_B2 = 0.7057 V
   V_B3 = 1.0395 V
-  V_B4 = 0.2969 V
+  V_B4 = 0.3061 V
 
-OPTIMAL AREA: 490.47 μm²
+OPTIMAL AREA: 145.06 μm²
 
 ACHIEVED SPECIFICATIONS:
-  Gain         = 73.04 dB
-  GBW          = 1.06 MHz
-  Phase Margin = 85.91°
-  Slew Rate    = 1.04 V/μs
-  Power        = 21.14 μW
-  CMRR         = 209.18 dB
-  PSRR         = 225.95 dB
+  Gain         = 72.00 dB
+  GBW          = 1.00 MHz
+  Phase Margin = 86.62°
+  Slew Rate    = 1.00 V/μs
+  Power        = 17.95 μW
+  CMRR @ 1kHz  = 197.40 dB
+  PSRR @ 1kHz  = 204.13 dB
 
-OPTIMIZATION TIME: 7043.46 seconds
+OPTIMIZATION TIME: 56088.21 seconds
 FINAL SIMULATOR CHECK: PASSED
