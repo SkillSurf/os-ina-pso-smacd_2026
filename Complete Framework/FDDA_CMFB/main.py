@@ -31,7 +31,7 @@ def main():
     logger.addHandler(file_handler)
 
     # Log the current time at the start of the optimization
-    logger.info(f"Optimization started at: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    logger.info(f"OPTIMIZATION STARTED\n")
        
     L_available, n_L_values, I_T_min, I_T_max = get_feasRegion(L_DISCRETE_VALUES)
     
@@ -61,13 +61,13 @@ def main():
     particle_gen_time = end_time - start_time
     print(f"\nTime taken to generate particles: {particle_gen_time:.2f} seconds")
 
-    # Log time taken to generate particles
-    logger.info(f"Time taken to generate {N_PARTICLES} particles: {particle_gen_time:.2f} seconds\n")
-
     # Log all initial particles
     logger.info("Initial Particles and their Fitness:\n")
     for i in range(len(particles)):
-        log_solution(-1, particles[i], specs_list[i], fitness[i])
+        log_init_particle(i, particles[i], fitness[i])
+
+    # Log time taken to generate particles
+    logger.info(f"Time taken to generate {N_PARTICLES} particles: {particle_gen_time:.2f} seconds\n")
     
     print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
     print(f"Initial best area: {np.min(fitness):.2f} μm²")
@@ -279,7 +279,8 @@ def main():
     end_time = time.time()
     optimization_time = end_time - start_time
 
-    print("Optimization is complete!")
+    print("\nOptimization is complete!")
+
     # Log the total number of iterations
     logger.info(f"Total number of iterations in this run: {MAX_ITERATIONS}\n")
     
@@ -378,37 +379,81 @@ def main():
     save_results(best_solution, W, L, optimization_time, final_check, final_results)
     
     # Log current time at the end of the optimization
-    logger.info(f"Optimization completed at: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    logger.info(f"OPTIMIZATION COMPLETED. Total run time: {(particle_gen_time + optimization_time):.2f} seconds\n")
 
     return best_solution
+
+def log_init_particle(particle, position, fitness):
+
+    # Log best position data into a .txt file
+    raw_particle = [float(val) for val in position]
+
+    # Create a formatted log message
+    log_message = (
+        f"Initial Particle {particle + 1} | Active Area: {fitness:.4f} μm²\n"
+    )
+    log_message += f"gm/ID_1 = {raw_particle[0]:.4f} S/A, gm/ID_2 = {raw_particle[1]:.4f} S/A, gm/ID_3 = {raw_particle[2]:.4f} S/A\n"
+    log_message += f"gm/ID_4 = {raw_particle[3]:.4f} S/A, gm/ID_5 = {raw_particle[4]:.4f} S/A, gm/ID_6 = {raw_particle[5]:.4f} S/A, I_T = {raw_particle[13]*1e6:.4f} μA\n"
+    log_message += f"L_1 = {L_DISCRETE_VALUES[int(raw_particle[6])]:.2f} μm, L_2 = {L_DISCRETE_VALUES[int(raw_particle[7])]:.2f} μm, L_3 = {L_DISCRETE_VALUES[int(raw_particle[8])]:.2f} μm, L_4 = {L_DISCRETE_VALUES[int(raw_particle[9])]:.2f} μm, L_5 = {L_DISCRETE_VALUES[int(raw_particle[10])]:.2f} μm, L_6 = {L_DISCRETE_VALUES[int(raw_particle[11])]:.2f} μm, L_7 = {L_DISCRETE_VALUES[int(raw_particle[12])]:.2f} μm\n"   
+
+    # Write the log message to the file
+    logger.info(log_message)  
 
 def log_solution(iteration, position, specs, fitness):
 
     # Log best position data into a .txt file
     raw_particle = [float(val) for val in position]
     raw_particle[-1] *= 1e6  # Scale the last element (I_T) to μA
-    clean_particle = [f"{val:.4f}" for val in raw_particle]
+    for i in range(6, 13):
+        raw_particle[i] = L_DISCRETE_VALUES[int(raw_particle[i])]  # Convert L indices to actual values
 
+    clean_particle = [f"{val:.4f}" for val in raw_particle]
     clean_specs = {k: float(v) for k, v in specs.items()}
 
     # Create a formatted log message
     log_message = (
-        f"Iteration {iteration + 1} | Global Best Area: {fitness:.2f} μm²\n"
+        f"Iteration {iteration + 1} | Global Best Area: {fitness:.4f} μm²\n"
         f"    Particle : [{', '.join(clean_particle)}]\n"
         f"    Specs    :\n"
     )
 
     keys_to_skip = {'Gain_dB', 'GBW', 'PM', 'SR', 'Power', 'V_CMFB', 'CMRR_dB', 'PSRR_dB', 'Area'}
+    processed_keys = set(keys_to_skip)
 
     for key, value in clean_specs.items():
-        if key in keys_to_skip:
-            continue            
-        elif key.startswith('W_') or key.startswith('L_'):
-            log_message += f"        {key:<8}: {value:.2f} μm\n"            
+        if key in processed_keys:
+            continue 
+
+        if key.startswith('W_'):
+            idx = key[2:]
+            l_key = f"L_{idx}"
+            # Check if the matching L_ key exists to pair them
+            if l_key in clean_specs:
+                l_value = clean_specs[l_key]
+                log_message += f"        {key:<8}: {value:.2f} μm, {l_key:<8}: {l_value:.2f} μm\n"
+                processed_keys.add(l_key)  # Mark L as processed so we don't print it again
+            else:
+                log_message += f"        {key:<8}: {value:.2f} μm\n"
+            processed_keys.add(key)
+
+        elif key.startswith('L_'):
+            idx = key[2:]
+            w_key = f"W_{idx}"
+            # Handle the edge case where L_ comes before W_ in the dictionary
+            if w_key in clean_specs:
+                w_value = clean_specs[w_key]
+                log_message += f"        {w_key:<8}: {w_value:.2f} μm, {key:<8}: {value:.2f} μm\n"
+                processed_keys.add(w_key)
+            else:
+                log_message += f"        {key:<8}: {value:.2f} μm\n"
+            processed_keys.add(key)
+
         elif key.startswith('V_'):
             log_message += f"        {key:<8}: {value:.4f} V\n"
+            processed_keys.add(key)
         else:
             log_message += f"        {key:<8}: {value:.4g}\n"
+            processed_keys.add(key)
 
     # Write the log message to the file
     logger.info(log_message)  
@@ -417,7 +462,7 @@ def plot_convergence(gbest_history, avg_history):
 
     # Log convergence data
     for i, area in enumerate(gbest_history):
-        logger.info(f"Iteration {i}: Global Best Area = {area:.4f} μm², Average Area = {avg_history[i]:.4f} μm²\n")
+        logger.info(f"Iteration {i+1}: Global Best Area = {area:.4f} μm², Average Area = {avg_history[i]:.4f} μm²\n")
 
     plt.figure(figsize=(12, 5))
     
