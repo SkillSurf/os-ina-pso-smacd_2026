@@ -44,6 +44,16 @@ def main():
         (gm_ID_6_range[0], gm_ID_6_range[1]),
         (I_T_min, I_T_max)
     ]
+
+    # Cache original gm_ID bounds as absolute outer limits (never changes)
+    original_gm_bounds = [
+        (gm_ID_1_range[0], gm_ID_1_range[1]),
+        (gm_ID_2_range[0], gm_ID_2_range[1]),
+        (gm_ID_3_range[0], gm_ID_3_range[1]),
+        (gm_ID_4_range[0], gm_ID_4_range[1]),
+        (gm_ID_5_range[0], gm_ID_5_range[1]),
+        (gm_ID_6_range[0], gm_ID_6_range[1]),
+    ]
     
     print(f"Feasible Region Done")
 
@@ -247,6 +257,21 @@ def main():
                 # Log new best solution
                 log_solution(iteration, pso.gbest_position, pso.gbest_specs, pso.gbest_fitness)
             
+                # Dynamically adjust gm_ID search bounds based on the best solution
+                DELTA = 1.0  
+                best_gm_IDs = pso.gbest_position[0:6]
+
+                for i, gm_val in enumerate(best_gm_IDs):
+                    orig_lo, orig_hi = original_gm_bounds[i]  # currently this is not needed
+                    new_lo = gm_val - DELTA
+                    new_hi = gm_val + DELTA
+
+                    cont_bounds[i] = (new_lo, new_hi)
+
+                print(f"  [Bounds Update] New gm_ID search window:")
+                for i, (lo, hi) in enumerate(cont_bounds[:6]):
+                    print(f"    gm_ID_{i+1}_range = ({lo:.4f}, {hi:.4f})")
+
             # Refill rejected particles with new random particles
             rejected_mask = fitness == np.inf
             n_rejected = np.sum(rejected_mask)
