@@ -30,8 +30,8 @@ def main():
 
     logger.addHandler(file_handler)
 
-    # Log the current time at the start of the optimization
-    logger.info(f"OPTIMIZATION STARTED\n")
+    # Log the current time at the start of the particle generation
+    logger.info(f"PARTICLE GENERATION STARTED\n")
        
     L_available, n_L_values, I_T_min, I_T_max = get_feasRegion(L_DISCRETE_VALUES)
     
@@ -61,19 +61,24 @@ def main():
     particle_gen_time = end_time - start_time
     print(f"\nTime taken to generate particles: {particle_gen_time:.2f} seconds")
 
-    # Log all initial particles
-    logger.info("Initial Particles and their Fitness:\n")
+    # Log all initial particles and their fitness values
     for i in range(len(particles)):
         log_init_particle(i, particles[i], fitness[i])
 
+    # Log current time at the end of particle generation
+    logger.info(f"PARTICLE GENERATION COMPLETED\n")
+
     # Log time taken to generate particles
-    logger.info(f"Time taken to generate {N_PARTICLES} particles: {particle_gen_time:.2f} seconds\n")
+    logger.info(f"Time taken to generate {N_PARTICLES} particles: {particle_gen_time:.2f} seconds | {(particle_gen_time) / 3600:.2f} hours\n")
     
     print(f"\nSuccessfully generated {N_PARTICLES} valid particles")
     print(f"Initial best area: {np.min(fitness):.2f} μm²")
     
     print("\nInitializing PSO optimizer...")
     print("-"*70)
+
+    # Log the current time at the start of the optimization
+    logger.info(f"OPTIMIZATION STARTED\n")
     
     pso = PSO(
         cont_bounds=cont_bounds,
@@ -285,7 +290,7 @@ def main():
     logger.info(f"Total number of iterations in this run: {MAX_ITERATIONS}\n")
     
     # Log optimization time
-    logger.info(f"Total optimization time: {optimization_time:.2f} seconds\n")
+    logger.info(f"Total optimization time: {optimization_time:.2f} seconds | {(optimization_time) / 3600:.2f} hours\n")
 
     print("\nExtracting final design parameters...")
     
@@ -379,7 +384,10 @@ def main():
     save_results(best_solution, W, L, optimization_time, final_check, final_results)
     
     # Log current time at the end of the optimization
-    logger.info(f"OPTIMIZATION COMPLETED. Total run time: {(particle_gen_time + optimization_time):.2f} seconds\n")
+    logger.info(f"OPTIMIZATION COMPLETED\n")
+
+    # Log total run time
+    logger.info(f"Total run time: {(particle_gen_time + optimization_time):.2f} seconds | {(particle_gen_time + optimization_time) / 3600:.2f} hours\n")
 
     return best_solution
 
@@ -404,10 +412,12 @@ def log_solution(iteration, position, specs, fitness):
     # Log best position data into a .txt file
     raw_particle = [float(val) for val in position]
     raw_particle[-1] *= 1e6  # Scale the last element (I_T) to μA
-    for i in range(6, 13):
-        raw_particle[i] = L_DISCRETE_VALUES[int(raw_particle[i])]  # Convert L indices to actual values
-
-    clean_particle = [f"{val:.4f}" for val in raw_particle]
+    clean_particle = [
+        f"{L_DISCRETE_VALUES[int(val)]}" if 6 <= i <= 12 
+        else f"{val:.4f}" 
+        for i, val in enumerate(raw_particle)
+    ]
+    
     clean_specs = {k: float(v) for k, v in specs.items()}
 
     # Create a formatted log message
@@ -418,42 +428,16 @@ def log_solution(iteration, position, specs, fitness):
     )
 
     keys_to_skip = {'Gain_dB', 'GBW', 'PM', 'SR', 'Power', 'V_CMFB', 'CMRR_dB', 'PSRR_dB', 'Area'}
-    processed_keys = set(keys_to_skip)
 
     for key, value in clean_specs.items():
-        if key in processed_keys:
-            continue 
-
-        if key.startswith('W_'):
-            idx = key[2:]
-            l_key = f"L_{idx}"
-            # Check if the matching L_ key exists to pair them
-            if l_key in clean_specs:
-                l_value = clean_specs[l_key]
-                log_message += f"        {key:<8}: {value:.2f} μm, {l_key:<8}: {l_value:.2f} μm\n"
-                processed_keys.add(l_key)  # Mark L as processed so we don't print it again
-            else:
-                log_message += f"        {key:<8}: {value:.2f} μm\n"
-            processed_keys.add(key)
-
-        elif key.startswith('L_'):
-            idx = key[2:]
-            w_key = f"W_{idx}"
-            # Handle the edge case where L_ comes before W_ in the dictionary
-            if w_key in clean_specs:
-                w_value = clean_specs[w_key]
-                log_message += f"        {w_key:<8}: {w_value:.2f} μm, {key:<8}: {value:.2f} μm\n"
-                processed_keys.add(w_key)
-            else:
-                log_message += f"        {key:<8}: {value:.2f} μm\n"
-            processed_keys.add(key)
-
+        if key in keys_to_skip:
+            continue            
+        elif key.startswith('W_') or key.startswith('L_'):
+            log_message += f"        {key:<8}: {value:.2f} μm\n"            
         elif key.startswith('V_'):
             log_message += f"        {key:<8}: {value:.4f} V\n"
-            processed_keys.add(key)
         else:
             log_message += f"        {key:<8}: {value:.4g}\n"
-            processed_keys.add(key)
 
     # Write the log message to the file
     logger.info(log_message)  
