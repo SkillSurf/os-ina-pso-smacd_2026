@@ -268,9 +268,9 @@ def main():
 
                     cont_bounds[i] = (new_lo, new_hi)
 
-                print(f"  [Bounds Update] New gm_ID search window:")
+                print(f"[Bounds Update] New gm_ID search window:")
                 for i, (lo, hi) in enumerate(cont_bounds[:6]):
-                    print(f"    gm_ID_{i+1}_range = ({lo:.4f}, {hi:.4f})")
+                    print(f"  gm_ID_{i+1}_range = ({lo:.4f}, {hi:.4f})")
 
             # Refill rejected particles with new random particles
             rejected_mask = fitness == np.inf
@@ -471,7 +471,7 @@ def plot_convergence(gbest_history, avg_history):
 
     # Log convergence data
     for i, area in enumerate(gbest_history):
-        logger.info(f"Iteration {i+1}: Global Best Area = {area:.4f} μm², Average Area = {avg_history[i]:.4f} μm²\n")
+        logger.info(f"Iteration {i}: Global Best Area = {area:.4f} μm², Average Area = {avg_history[i]:.4f} μm²\n")
 
     plt.figure(figsize=(12, 5))
     

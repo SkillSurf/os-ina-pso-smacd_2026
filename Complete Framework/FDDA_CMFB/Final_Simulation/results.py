@@ -239,15 +239,16 @@ def runsim_SLEW(measurement_results):
     ax.set_xlabel('Time (μs)')
     ax.set_ylabel('Voltage (V)')
     ax.grid(True, which="both", ls="-")
-    ax.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5)
 
-    # Draw a line between two points
-    ax.plot([t_10*1e6, t_90*1e6], [v_10, v_10], color='black', linestyle='--', linewidth=1)
-    ax.plot([t_90*1e6, t_90*1e6], [v_10, v_90], color='black', linestyle='--', linewidth=1)
+    ax.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5)
+    ax.axvline(x=t_90*1e6, color='black', linestyle='--', linewidth=1)
+    ax.axhline(y=v_10, color='black', linestyle='--', linewidth=1)
 
     lns = l1 + l2
     labs = [l.get_label() for l in lns]
     ax.legend(lns, labs, loc='best')
+
+    ax.set_xlim(0, 20)
 
     ax.set_title("Slew Response of the FDDA")
     plt.tight_layout()
@@ -352,6 +353,89 @@ def runsim_PSRR(gain_dm_db, measurement_results):
 
     return psrr_db
 
+# =========================
+# Runs the NOISE simulation
+# =========================
+def runsim_NOISE(measurement_results):
+
+    circuit = Circuit('FDDA_CMFB Simulation')
+    circuit.raw_spice ="""
+.lib ../../../../../PDKs/sky130A/libs.tech/combined/sky130.lib.spice tt
+.include fdda_cmfb.spice
+"""
+    circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+    circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
+
+    circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
+
+    circuit.C('LOADP', 'V_OP', circuit.gnd, 2@u_pF)
+    circuit.C('LOADN', 'V_ON', circuit.gnd, 2@u_pF)
+
+    # Series feedback with infinite inductor and parallel feedback with infinite capacitor (to ensure proper DC biasing)
+    circuit.L('LFB1', 'V_PN', 'V_OP', 4@u_GH)
+    circuit.L('LFB2', 'V_NN', 'V_ON', 4@u_GH)
+    circuit.C('CFB1', 'V_PN', circuit.gnd, 4@u_GF)
+    circuit.C('CFB2', 'V_NN', circuit.gnd, 4@u_GF)
+
+    # Define AC Input (Single Source)
+    circuit.V('VPP', 'V_PP', circuit.gnd, 'DC 0.9 AC 1')
+    circuit.V('VNP', 'V_NP', circuit.gnd, 'DC 0.9')
+
+    simulator = circuit.simulator(temperature=27, nominal_temperature=27)
+
+    try:
+        analysis = simulator.noise(
+            output_node='V_OP',
+            ref_node='V_ON',
+            src='VVPP',
+            variation='dec',
+            points=20,
+            start_frequency=0.1@u_Hz, 
+            stop_frequency=100@u_MHz,
+            )
+    except Exception as e:
+        raise e
+
+    measurement_results['Noise_RMS'] = float(analysis.nodes['inoise_total'][0])
+    noise1_plot = simulator.ngspice.plot(simulation=simulator, plot_name='noise1')
+    
+    freq = np.array(noise1_plot['frequency']._data)
+    noise = np.array(noise1_plot['inoise_spectrum']._data)
+
+    noise_1k = np.interp(1e3, freq, noise)  # Noise Input at 1kHz
+
+    measurement_results['Noise_in'] = float(noise_1k)
+
+    # Plot the noise spectrum
+    _, ax = plt.subplots(figsize=(12, 8))
+
+    ax.loglog(freq, noise, color='green', linewidth=2)
+    ax.set_xlabel('Frequency (Hz)')
+    ax.set_ylabel(r'Input-Referred Noise (V/$\sqrt{\mathrm{Hz}}$)')
+
+    ticks = [0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
+    labels = ['0.1', '1', '10', '100', '1K', '10K', '100K', '1M', '10M', '100M']
+    ax.xaxis.set_major_locator(FixedLocator(ticks))
+    ax.xaxis.set_major_formatter(FixedFormatter(labels))
+
+    ax.scatter([1e3], [noise_1k], color='black', zorder=5)
+    ax.axvline(x=1e3, color='black', linestyle='--', linewidth=1)
+    ax.axhline(y=noise_1k, color='black', linestyle='--', linewidth=1)
+
+    ax.tick_params(axis='both', which='major', direction='out')
+    ax.tick_params(axis='both', which='minor', direction='out')
+
+    ax.grid(True, axis='both', which='major', linestyle='-')
+    ax.grid(True, axis='both', which='minor', linestyle='--')
+
+    ax.set_xlim(1e-1, 1e8)
+    ax.set_ylim((10**np.floor(np.log10(min(noise))))*0.8, 10**np.ceil(np.log10(noise[0])))
+
+    plt.tight_layout()
+    plt.savefig('NOISE_SPECTRUM.png')
+
+    return
+
 # ========================
 # Runs the CMFB simulation
 # ========================
@@ -454,9 +538,11 @@ def create_Plot(freq, fdda_gain_db, fdda_phase, cmfb_gain_db, cmfb_phase):
     labs = [l.get_label() for l in lns]
     ax.legend(lns, labs, loc='best') 
 
+    ax.set_xlim(1e-1, 1e8)
+
     ax.set_title("Frequency Response Plot of Differential Gain, Phase for FDDA & Loop Gain, Phase for CMFB")
-    plt.savefig('FREQUENCY_RESPONSE.png')
     plt.tight_layout()
+    plt.savefig('FREQUENCY_RESPONSE.png')    
 
 # ===========================================================
 # Top-level function to evaluate a design given the variables
@@ -493,34 +579,39 @@ def evaluate_design(current_params, plots=False):
     
     # Run the AC simulation and measure gain, gain-bandwidth, and phase margin
     fdda_gain_db, fdda_phase, freq = runsim_AC(measurement_results=current_results)
-    specs_met = (current_results['Gain_dB'] > Gain_dc_spec_dB and 
-                 current_results['GBW'] > GBW_spec and 
-                 current_results['PM'] > PM_spec)
+    specs_met = (current_results['Gain_dB'] >= Gain_dc_spec_dB and 
+                 current_results['GBW'] >= GBW_spec and 
+                 current_results['PM'] >= PM_spec)
 
     # Run the SLEW simulation and measure slew rate
     if specs_met:
         runsim_SLEW(measurement_results=current_results)
-        specs_met = (current_results['SR'] > SR_spec)
+        specs_met = (current_results['SR'] >= SR_spec)
 
     # Run the OP simulation and measure power
     if specs_met:
         runsim_OP(measurement_results=current_results)
-        specs_met = (current_results['Power'] < Power_spec)
+        specs_met = (current_results['Power'] <= Power_spec)
 
     # Run the CMRR simulation and measure CMRR
     if specs_met:
         cmrr_db = runsim_CMRR(fdda_gain_db, measurement_results=current_results)
-        specs_met = (current_results['CMRR_dB'] > CMRR_spec_dB)
+        specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
 
     # Run the PSRR simulation and measure PSRR
     if specs_met:
         psrr_db = runsim_PSRR(fdda_gain_db, measurement_results=current_results)
-        specs_met = (current_results['PSRR_dB'] > PSRR_spec_dB)
+        specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
+
+    # Run the Noise simulation and measure input-referred RMS noise voltage
+    if specs_met:
+        runsim_NOISE(measurement_results=current_results)
+        specs_met = (current_results['Noise_in'] <= noise_spec)
 
     # Run the CMFB simulation and measure CMFB loop gain and GBW
     if specs_met:
         cmfb_gain_db, cmfb_phase = runsim_CMFB(measurement_results=current_results)
-        specs_met = (current_results['CMFB GBW'] > GBW_spec * 0.3)
+        specs_met = (current_results['CMFB GBW'] >= GBW_spec * 0.3)
 
     create_Plot(freq, fdda_gain_db, fdda_phase, cmfb_gain_db, cmfb_phase)
 
@@ -561,6 +652,8 @@ if __name__ == "__main__":
         print(f"Power: {results['Power']*1e6:.2f} μW")
         print(f"CMRR @ 1kHz: {results['CMRR_dB']:.2f} dB")
         print(f"PSRR @ 1kHz: {results['PSRR_dB']:.2f} dB")
+        print(f"Input-Referred Noise @ 1kHz: {results['Noise_in']*1e9:.2f} nV/√Hz")
+        print(f"Input-Referred Noise (0.1 Hz to 100 MHz): {results['Noise_RMS']*1e6:.2f} μV RMS")
         print(f"CMFB Loop Gain: {results['CMFB Gain_dB']:.2f} dB")
         print(f"CMFB GBW: {results['CMFB GBW']*1e-6:.2f} MHz")
         print(f"CMFB Phase Margin: {results['CMFB PM']:.2f} degrees")

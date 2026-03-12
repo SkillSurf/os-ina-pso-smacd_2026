@@ -24,8 +24,8 @@ PM_spec = 60                              # Phase Margin (degrees)
 SR_spec = 1e6                             # Slew Rate (V/s)
 CMRR_spec_dB = 120                        # Common Mode Rejection Ratio (dB)
 PSRR_spec_dB = 60                         # Power Supply Rejection Ratio (dB)
-# noise_spec = 0.05e-6                      # Input Referred Noise (V/√Hz)
-Power_spec = 40e-6                       # Power Consumption (W)
+noise_spec = 250e-9                       # Input Referred Noise (V/√Hz)
+Power_spec = 40e-6                        # Power Consumption (W)
 Area_spec = 5000                          # Area (μm^2)
 
 Gain_dc_spec = 10**(Gain_dc_spec_dB/20)   # Convert dB to V/V
