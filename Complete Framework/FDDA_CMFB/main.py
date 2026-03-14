@@ -1,5 +1,5 @@
 import os
-import gc
+# import gc
 import time
 import psutil
 import logging
@@ -115,7 +115,7 @@ def main():
     
     for iteration in range(MAX_ITERATIONS):
 
-        gc.collect()  # Explicitly trigger garbage collection to manage memory
+        # gc.collect()  # Explicitly trigger garbage collection to manage memory
         particles, fitness, need_simulator_check = pso.update_swarm(particles, fitness)
         
         print(f"\nIteration {iteration+1}: Updated {len(need_simulator_check)} particles")
