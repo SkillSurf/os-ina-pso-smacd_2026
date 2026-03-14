@@ -23,7 +23,11 @@ if logger.hasHandlers():
 
 def main():
 
-    file_handler = logging.FileHandler("optimization_log.txt", mode='w', encoding="utf-8")
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    log_dir = f"logs/{timestamp}"
+    os.makedirs(log_dir, exist_ok=True)
+
+    file_handler = logging.FileHandler(os.path.join(log_dir, "optimization_log.txt"), mode='w', encoding="utf-8")
 
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     file_handler.setFormatter(formatter)
@@ -388,7 +392,7 @@ def main():
 
     print("\nFinal Simulator Verification...")
     
-    final_check, final_results = evaluate_design(current_params, plots=True)
+    final_check, final_results = evaluate_design(current_params, plots=True, log_dir=log_dir)
     print(f"Final design {'PASSED' if final_check else 'FAILED'} simulator check")
     
     if final_results is not None:
@@ -404,9 +408,9 @@ def main():
     print(f"\nOptimization Time: {optimization_time:.2f} seconds")
     print("="*70)
     
-    plot_convergence(gbest_history, avg_fitness_history)
+    plot_convergence(gbest_history, avg_fitness_history, log_dir)
     
-    save_results(best_solution, W, L, optimization_time, final_check, final_results)
+    save_results(best_solution, W, L, optimization_time, final_check, final_results, log_dir)
     
     # Log current time at the end of the optimization
     logger.info(f"OPTIMIZATION COMPLETED\n")
@@ -467,7 +471,7 @@ def log_solution(iteration, position, specs, fitness):
     # Write the log message to the file
     logger.info(log_message)  
 
-def plot_convergence(gbest_history, avg_history):
+def plot_convergence(gbest_history, avg_history, log_dir):
 
     # Log convergence data
     for i, area in enumerate(gbest_history):
@@ -492,11 +496,11 @@ def plot_convergence(gbest_history, avg_history):
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('optimization_convergence.png', dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(log_dir, "optimization_convergence.png"), dpi=300, bbox_inches='tight')
     print("\nConvergence plot saved to 'optimization_convergence.png'")
 
-def save_results(best_solution, W, L, opt_time, sim_passed, results):
-    with open('optimization_results.txt', 'w', encoding='utf-8') as f:
+def save_results(best_solution, W, L, opt_time, sim_passed, results, log_dir):
+    with open(os.path.join(log_dir, "optimization_results.txt"), 'w', encoding='utf-8') as f:
         f.write("="*70 + "\n")
         f.write("FDDA-CMFB OPTIMIZATION RESULTS\n")
         f.write("="*70 + "\n\n")

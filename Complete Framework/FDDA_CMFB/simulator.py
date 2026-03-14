@@ -77,7 +77,7 @@ def generate_spice(params):
 # ======================
 # Runs the AC simulation
 # ======================
-def runsim_AC(measurement_results, plots=False):
+def runsim_AC(measurement_results, plots=False, log_dir=None):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -126,7 +126,7 @@ def runsim_AC(measurement_results, plots=False):
     measurement_results['GBW'] = float(gbw)
     measurement_results['PM'] = float(phase_margin)
 
-    if plots:
+    if plots and log_dir is not None:
         _, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
         ax1.semilogx(freq, gain_db, color='blue', linestyle='-')
@@ -146,7 +146,7 @@ def runsim_AC(measurement_results, plots=False):
         ax1.axhline(y=0, color='red', linestyle='--') 
         ax2.axhline(y=-180, color='red', linestyle='--') 
 
-        plt.savefig('Gain_and_GBW_plot.png')
+        plt.savefig(os.path.join(log_dir, 'Gain_and_GBW_plot.png'))
         plt.tight_layout()
 
     # Hit the Ngspice C-API Reset Button directly
@@ -163,7 +163,7 @@ def runsim_AC(measurement_results, plots=False):
 # ======================
 # Runs the OP simulation
 # ======================
-def runsim_OP(measurement_results, plots=False):
+def runsim_OP(measurement_results, plots=False, log_dir=None):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -203,9 +203,9 @@ def runsim_OP(measurement_results, plots=False):
     measurement_results['Power'] = power
     measurement_results['V_CMFB'] = v_cmfb
 
-    if plots:
+    if plots and log_dir is not None:
         # Write all operating point values to a text file
-        with open('op_results.txt', 'w') as f:
+        with open(os.path.join(log_dir, 'op_results.txt'), 'w') as f:
             f.write("Operating Point Analysis Results:\n")
             f.write(f"Quiescent Current (I_Q): {abs(iq)*1e6:.2f} uA\n")
             f.write(f"Power Consumption: {power*1e6:.2f} uW\n")
@@ -235,7 +235,7 @@ def runsim_OP(measurement_results, plots=False):
 # ========================
 # Runs the SLEW simulation
 # ========================
-def runsim_SLEW(measurement_results, plots=False):
+def runsim_SLEW(measurement_results, plots=False, log_dir=None):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -280,7 +280,7 @@ def runsim_SLEW(measurement_results, plots=False):
 
     measurement_results['SR'] = float(slew)
 
-    if plots:
+    if plots and log_dir is not None:
         _, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
         ax1.plot(time*1e6, vin, color='blue', linestyle='-')
@@ -296,7 +296,7 @@ def runsim_SLEW(measurement_results, plots=False):
         if slew > 0:
             ax2.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5)
 
-        plt.savefig('Slew_plot.png')
+        plt.savefig(os.path.join(log_dir, 'Slew_plot.png'))
         plt.tight_layout()
 
     # Hit the Ngspice C-API Reset Button directly
@@ -311,7 +311,7 @@ def runsim_SLEW(measurement_results, plots=False):
 # ========================
 # Runs the CMRR simulation
 # ========================
-def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
+def runsim_CMRR(gain_dm_db, measurement_results, plots=False, log_dir=None):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -355,7 +355,7 @@ def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
 
     measurement_results['CMRR_dB'] = float(cmrr_1k)
 
-    if plots:
+    if plots and log_dir is not None:
         _, ax = plt.subplots(figsize=(12, 8))
 
         ax.semilogx(freq, cmrr_db, color='blue', linestyle='-')
@@ -369,7 +369,7 @@ def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
         ax.xaxis.set_major_locator(FixedLocator(ticks))
         ax.xaxis.set_major_formatter(FixedFormatter(labels)) 
 
-        plt.savefig('CMRR_plot.png')
+        plt.savefig(os.path.join(log_dir, 'CMRR_plot.png'))
         plt.tight_layout()
 
     # Hit the Ngspice C-API Reset Button directly
@@ -384,7 +384,7 @@ def runsim_CMRR(gain_dm_db, measurement_results, plots=False):
 # ========================
 # Runs the PSRR simulation
 # ========================
-def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
+def runsim_PSRR(gain_dm_db, measurement_results, plots=False, log_dir=None):
 
     circuit = Circuit('FDDA_CMFB Simulation')
     circuit.raw_spice ="""
@@ -429,7 +429,7 @@ def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
 
     measurement_results['PSRR_dB'] = float(psrr_1k)
 
-    if plots:
+    if plots and log_dir is not None:
         _, ax = plt.subplots(figsize=(12, 8))
 
         ax.semilogx(freq, psrr_db, color='blue', linestyle='-')
@@ -445,7 +445,7 @@ def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
 
         ax.axhline(y=0, color='red', linestyle='--')  
 
-        plt.savefig('PSRR_plot.png')
+        plt.savefig(os.path.join(log_dir, 'PSRR_plot.png'))
         plt.tight_layout()
 
     # Hit the Ngspice C-API Reset Button directly
@@ -460,7 +460,7 @@ def runsim_PSRR(gain_dm_db, measurement_results, plots=False):
 # ===========================================================
 # Top-level function to evaluate a design given the variables
 # ===========================================================
-def evaluate_design(current_params, plots=False):
+def evaluate_design(current_params, plots=False, log_dir=None):
     """
     Accepts the generated variables, runs the simulation, 
     and returns the binary result.
@@ -492,30 +492,30 @@ def evaluate_design(current_params, plots=False):
         generate_spice(rounded_params)  # Generate the SPICE file for the current parameters
         
         # Run the AC simulation and verify gain, gain-bandwidth, and phase margin specs
-        gain_dm_db = runsim_AC(measurement_results=current_results, plots=plots)
+        gain_dm_db = runsim_AC(measurement_results=current_results, plots=plots, log_dir=log_dir)
         specs_met = (current_results['Gain_dB'] >= Gain_dc_spec_dB and
                         current_results['GBW'] >= GBW_spec and
                         current_results['PM'] >= PM_spec)
 
         # Only if past specs are met, run the SLEW simulation and verify slew rate spec
         if specs_met:
-            runsim_SLEW(measurement_results=current_results, plots=plots)
+            runsim_SLEW(measurement_results=current_results, plots=plots, log_dir=log_dir)
             specs_met = (current_results['SR'] >= SR_spec)
 
         # Only if past specs are met, run the OP simulation and verify power spec
         if specs_met:
             # Run the OP simulation and verify specs
-            runsim_OP(measurement_results=current_results, plots=plots)
+            runsim_OP(measurement_results=current_results, plots=plots, log_dir=log_dir)
             specs_met = (current_results['Power'] <= Power_spec)
 
         # Only if past specs are met, run the CMRR simulation and verify CMRR spec
         if specs_met:
-            runsim_CMRR(gain_dm_db, measurement_results=current_results, plots=plots)
+            runsim_CMRR(gain_dm_db, measurement_results=current_results, plots=plots, log_dir=log_dir)
             specs_met = (current_results['CMRR_dB'] >= CMRR_spec_dB)
 
         # Only if past specs are met, run the PSRR simulation and verify PSRR spec
         if specs_met:
-            runsim_PSRR(gain_dm_db, measurement_results=current_results, plots=plots)
+            runsim_PSRR(gain_dm_db, measurement_results=current_results, plots=plots, log_dir=log_dir)
             specs_met = (current_results['PSRR_dB'] >= PSRR_spec_dB)
 
         Area_active = get_Area(rounded_params, rounded_params)
