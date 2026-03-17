@@ -1,14 +1,6 @@
 ** sch_path: /foss/designs/PROJECTS/os-ina-pso-mixdes_2026/Xschem Simulations/FDDA_CMFB/FDDA.sch
-**.subckt FDDA V_PP V_PN V_NP V_NN VDD V_CMFB VSS V_OP V_ON
-*.ipin V_PP
-*.ipin V_PN
-*.ipin V_NP
-*.ipin V_NN
-*.iopin VDD
-*.ipin V_CMFB
-*.iopin VSS
-*.opin V_OP
-*.opin V_ON
+.subckt FDDA V_PP V_PN V_NP V_NN VDD V_CMFB VSS V_OP V_ON
+*.PININFO V_PP:I V_PN:I V_NP:I V_NN:I VDD:B V_CMFB:I VSS:B V_OP:O V_ON:O
 XMP1 net5 V_PP net1 net1 sky130_fd_pr__pfet_01v8 L={L_1} W={W_1} nf=1 ad='int((1 + 1)/2) * {W_1} / 1 * 0.29' as='int((1 + 2)/2) * {W_1} / 1 * 0.29'
 + pd='2*int((1 + 1)/2) * ({W_1} / 1 + 0.29)' ps='2*int((1 + 2)/2) * ({W_1} / 1 + 0.29)' nrd='0.29 / {W_1} ' nrs='0.29 / {W_1} ' sa=0
 + sb=0 sd=0 mult=1 m=1
@@ -55,5 +47,4 @@ V4 V_B4 VSS {V_B4}
 V3 V_B3 VSS {V_B3}
 V2 V_B2 VSS {V_B2}
 V1 V_B1 VSS {V_B1}
-**.ends
-.end
+.ends
