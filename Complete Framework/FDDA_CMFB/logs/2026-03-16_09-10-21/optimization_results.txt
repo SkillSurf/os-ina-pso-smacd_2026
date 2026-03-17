@@ -1,0 +1,53 @@
+======================================================================
+FDDA-CMFB OPTIMIZATION RESULTS
+======================================================================
+
+DESIGN SPECIFICATIONS:
+  VDD = 1.8 V
+  CL = 1.00 pF
+  Gain ≥ 72.00 dB
+  GBW ≥ 1.00 MHz
+  Phase Margin ≥ 60.00°
+  Slew Rate ≥ 1.00 V/μs
+  Power ≤ 40.00 μW
+  CMRR @ 1kHz ≥ 120.00 dB
+  PSRR @ 1kHz ≥ 60.00 dB
+
+OPTIMAL DESIGN PARAMETERS:
+  gm/ID_1 = 17.92 S/A
+  gm/ID_2 = 14.48 S/A
+  gm/ID_3 = 11.32 S/A
+  gm/ID_4 = 12.98 S/A
+  gm/ID_5 = 13.41 S/A
+  gm/ID_6 = 10.95 S/A
+  I_T     = 2.41 μA
+  V_A     = 1.50 V
+  V_B     = 0.30 V
+
+OPTIMAL TRANSISTOR SIZING:
+  W_1 = 75.64 μm,  L_1 = 0.30 μm
+  W_2 = 0.84 μm,  L_2 = 0.40 μm
+  W_3 = 0.69 μm,  L_3 = 1.00 μm
+  W_4 = 0.66 μm,  L_4 = 3.00 μm
+  W_5 = 2.48 μm,  L_5 = 2.00 μm
+  W_6 = 2.55 μm,  L_6 = 0.70 μm
+  W_7 = 10.88 μm,  L_7 = 0.15 μm
+  W_8 = 3.94 μm,  L_8 = 0.40 μm
+  V_B1 = 0.6819 V
+  V_B2 = 0.6928 V
+  V_B3 = 1.0545 V
+  V_B4 = 0.2817 V
+
+OPTIMAL AREA: 129.86 μm²
+
+ACHIEVED SPECIFICATIONS:
+  Gain         = 72.33 dB
+  GBW          = 1.05 MHz
+  Phase Margin = 84.81°
+  Slew Rate    = 1.02 V/μs
+  Power        = 19.65 μW
+  CMRR @ 1kHz  = 203.83 dB
+  PSRR @ 1kHz  = 226.18 dB
+
+OPTIMIZATION TIME: 74772.27 seconds
+FINAL SIMULATOR CHECK: PASSED
