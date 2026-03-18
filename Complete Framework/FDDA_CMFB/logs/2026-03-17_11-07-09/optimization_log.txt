@@ -1,0 +1,454 @@
+2026-03-17 11:07:09 - INFO - PARTICLE GENERATION STARTED
+
+2026-03-17 14:42:28 - INFO - Initial Particle 1 | Active Area: 500.4893 μm²
+gm/ID_1 = 19.7921 S/A, gm/ID_2 = 14.8350 S/A, gm/ID_3 = 12.1323 S/A
+gm/ID_4 = 13.5924 S/A, gm/ID_5 = 12.1852 S/A, gm/ID_6 = 12.1230 S/A, I_T = 3.4081 μA
+L_1 = 0.30 μm, L_2 = 0.30 μm, L_3 = 0.90 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.70 μm, L_7 = 0.80 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 2 | Active Area: 429.4869 μm²
+gm/ID_1 = 19.7466 S/A, gm/ID_2 = 13.6666 S/A, gm/ID_3 = 13.5847 S/A
+gm/ID_4 = 12.6712 S/A, gm/ID_5 = 12.2045 S/A, gm/ID_6 = 12.5730 S/A, I_T = 3.0692 μA
+L_1 = 0.30 μm, L_2 = 0.90 μm, L_3 = 1.00 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.50 μm, L_7 = 0.50 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 3 | Active Area: 526.8826 μm²
+gm/ID_1 = 19.3269 S/A, gm/ID_2 = 13.7919 S/A, gm/ID_3 = 13.9587 S/A
+gm/ID_4 = 12.3233 S/A, gm/ID_5 = 11.6850 S/A, gm/ID_6 = 11.0959 S/A, I_T = 4.0455 μA
+L_1 = 0.30 μm, L_2 = 0.60 μm, L_3 = 3.00 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.16 μm, L_7 = 0.70 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 4 | Active Area: 537.2753 μm²
+gm/ID_1 = 18.7596 S/A, gm/ID_2 = 13.8082 S/A, gm/ID_3 = 12.1150 S/A
+gm/ID_4 = 13.2989 S/A, gm/ID_5 = 11.7220 S/A, gm/ID_6 = 11.1475 S/A, I_T = 4.2477 μA
+L_1 = 0.30 μm, L_2 = 2.00 μm, L_3 = 1.00 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 0.90 μm, L_7 = 0.90 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 5 | Active Area: 454.7299 μm²
+gm/ID_1 = 19.2699 S/A, gm/ID_2 = 14.5716 S/A, gm/ID_3 = 12.6756 S/A
+gm/ID_4 = 12.8983 S/A, gm/ID_5 = 12.7346 S/A, gm/ID_6 = 12.0634 S/A, I_T = 4.1486 μA
+L_1 = 0.30 μm, L_2 = 1.00 μm, L_3 = 0.60 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 0.16 μm, L_7 = 0.40 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 6 | Active Area: 358.8939 μm²
+gm/ID_1 = 18.2507 S/A, gm/ID_2 = 13.4639 S/A, gm/ID_3 = 12.5867 S/A
+gm/ID_4 = 12.3434 S/A, gm/ID_5 = 11.9220 S/A, gm/ID_6 = 12.0648 S/A, I_T = 3.7101 μA
+L_1 = 0.30 μm, L_2 = 2.00 μm, L_3 = 1.00 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.15 μm, L_7 = 0.20 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 7 | Active Area: 547.0770 μm²
+gm/ID_1 = 19.6471 S/A, gm/ID_2 = 13.5137 S/A, gm/ID_3 = 13.6206 S/A
+gm/ID_4 = 13.4910 S/A, gm/ID_5 = 12.9852 S/A, gm/ID_6 = 12.6786 S/A, I_T = 3.9076 μA
+L_1 = 0.30 μm, L_2 = 0.70 μm, L_3 = 0.80 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.15 μm, L_7 = 0.70 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 8 | Active Area: 313.1392 μm²
+gm/ID_1 = 19.1965 S/A, gm/ID_2 = 13.6605 S/A, gm/ID_3 = 12.5288 S/A
+gm/ID_4 = 13.6380 S/A, gm/ID_5 = 12.7533 S/A, gm/ID_6 = 12.9891 S/A, I_T = 2.6742 μA
+L_1 = 0.30 μm, L_2 = 0.50 μm, L_3 = 0.80 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 0.80 μm, L_7 = 0.90 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 9 | Active Area: 479.9441 μm²
+gm/ID_1 = 18.7612 S/A, gm/ID_2 = 13.5506 S/A, gm/ID_3 = 12.3712 S/A
+gm/ID_4 = 12.0261 S/A, gm/ID_5 = 11.7316 S/A, gm/ID_6 = 11.5680 S/A, I_T = 3.9592 μA
+L_1 = 0.30 μm, L_2 = 2.00 μm, L_3 = 0.70 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 1.00 μm, L_7 = 0.80 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 10 | Active Area: 389.6869 μm²
+gm/ID_1 = 18.9865 S/A, gm/ID_2 = 13.8278 S/A, gm/ID_3 = 13.4740 S/A
+gm/ID_4 = 13.9725 S/A, gm/ID_5 = 12.6738 S/A, gm/ID_6 = 12.7363 S/A, I_T = 2.9489 μA
+L_1 = 0.30 μm, L_2 = 1.00 μm, L_3 = 0.70 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 3.00 μm, L_7 = 0.40 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 11 | Active Area: 910.3924 μm²
+gm/ID_1 = 19.4542 S/A, gm/ID_2 = 14.8388 S/A, gm/ID_3 = 12.6901 S/A
+gm/ID_4 = 13.4526 S/A, gm/ID_5 = 11.7195 S/A, gm/ID_6 = 11.3882 S/A, I_T = 4.1948 μA
+L_1 = 0.30 μm, L_2 = 3.00 μm, L_3 = 1.00 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 1.00 μm, L_7 = 0.90 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 12 | Active Area: 305.5895 μm²
+gm/ID_1 = 18.1700 S/A, gm/ID_2 = 13.1997 S/A, gm/ID_3 = 13.1216 S/A
+gm/ID_4 = 13.3337 S/A, gm/ID_5 = 11.9206 S/A, gm/ID_6 = 11.7410 S/A, I_T = 3.3814 μA
+L_1 = 0.30 μm, L_2 = 1.00 μm, L_3 = 0.80 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 0.90 μm, L_7 = 1.00 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 13 | Active Area: 376.3750 μm²
+gm/ID_1 = 18.1842 S/A, gm/ID_2 = 14.7228 S/A, gm/ID_3 = 12.9768 S/A
+gm/ID_4 = 13.5085 S/A, gm/ID_5 = 11.4327 S/A, gm/ID_6 = 11.7141 S/A, I_T = 3.7732 μA
+L_1 = 0.30 μm, L_2 = 2.00 μm, L_3 = 0.50 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 0.30 μm, L_7 = 0.30 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 14 | Active Area: 381.2711 μm²
+gm/ID_1 = 18.0308 S/A, gm/ID_2 = 13.5989 S/A, gm/ID_3 = 12.3214 S/A
+gm/ID_4 = 12.2172 S/A, gm/ID_5 = 11.2276 S/A, gm/ID_6 = 11.2311 S/A, I_T = 2.7752 μA
+L_1 = 0.30 μm, L_2 = 0.20 μm, L_3 = 3.00 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.90 μm, L_7 = 2.00 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 15 | Active Area: 770.9304 μm²
+gm/ID_1 = 18.1765 S/A, gm/ID_2 = 14.0222 S/A, gm/ID_3 = 13.2527 S/A
+gm/ID_4 = 12.3649 S/A, gm/ID_5 = 12.6051 S/A, gm/ID_6 = 11.4363 S/A, I_T = 3.8698 μA
+L_1 = 0.30 μm, L_2 = 0.30 μm, L_3 = 2.00 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.30 μm, L_7 = 3.00 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 16 | Active Area: 657.8840 μm²
+gm/ID_1 = 19.7933 S/A, gm/ID_2 = 14.3362 S/A, gm/ID_3 = 13.9823 S/A
+gm/ID_4 = 12.0630 S/A, gm/ID_5 = 12.8505 S/A, gm/ID_6 = 11.4838 S/A, I_T = 4.3044 μA
+L_1 = 0.30 μm, L_2 = 0.50 μm, L_3 = 0.60 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.70 μm, L_7 = 0.90 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 17 | Active Area: 538.0104 μm²
+gm/ID_1 = 18.2309 S/A, gm/ID_2 = 13.8621 S/A, gm/ID_3 = 13.7347 S/A
+gm/ID_4 = 12.3780 S/A, gm/ID_5 = 11.9913 S/A, gm/ID_6 = 12.3766 S/A, I_T = 3.6307 μA
+L_1 = 0.30 μm, L_2 = 3.00 μm, L_3 = 0.60 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 0.70 μm, L_7 = 0.90 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 18 | Active Area: 296.1133 μm²
+gm/ID_1 = 18.6086 S/A, gm/ID_2 = 13.9157 S/A, gm/ID_3 = 13.1616 S/A
+gm/ID_4 = 12.0039 S/A, gm/ID_5 = 11.4633 S/A, gm/ID_6 = 12.8429 S/A, I_T = 3.3243 μA
+L_1 = 0.30 μm, L_2 = 0.90 μm, L_3 = 0.80 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 0.80 μm, L_7 = 0.60 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 19 | Active Area: 383.6046 μm²
+gm/ID_1 = 18.0745 S/A, gm/ID_2 = 13.5763 S/A, gm/ID_3 = 13.9543 S/A
+gm/ID_4 = 12.6667 S/A, gm/ID_5 = 11.7378 S/A, gm/ID_6 = 11.3151 S/A, I_T = 3.7728 μA
+L_1 = 0.30 μm, L_2 = 0.60 μm, L_3 = 3.00 μm, L_4 = 3.00 μm, L_5 = 2.00 μm, L_6 = 3.00 μm, L_7 = 0.50 μm
+
+2026-03-17 14:42:28 - INFO - Initial Particle 20 | Active Area: 620.1201 μm²
+gm/ID_1 = 19.7180 S/A, gm/ID_2 = 13.6357 S/A, gm/ID_3 = 13.0054 S/A
+gm/ID_4 = 12.0595 S/A, gm/ID_5 = 12.6476 S/A, gm/ID_6 = 11.7104 S/A, I_T = 4.2960 μA
+L_1 = 0.30 μm, L_2 = 0.90 μm, L_3 = 0.90 μm, L_4 = 3.00 μm, L_5 = 3.00 μm, L_6 = 0.19 μm, L_7 = 0.70 μm
+
+2026-03-17 14:42:28 - INFO - PARTICLE GENERATION COMPLETED
+
+2026-03-17 14:42:28 - INFO - Time taken to generate 20 particles: 12919.23 seconds | 3.59 hours
+
+2026-03-17 14:42:28 - INFO - OPTIMIZATION STARTED
+
+2026-03-17 14:42:28 - INFO - Iteration 1 | Global Best Area: 296.1133 μm²
+    Particle : [18.6086, 13.9157, 13.1616, 12.0039, 11.4633, 12.8429, 0.3, 0.9, 0.8, 3.0, 2.0, 0.8, 0.6, 3.3243]
+    Specs    :
+        W_1     : 157.84 μm
+        L_1     : 0.30 μm
+        W_2     : 1.96 μm
+        L_2     : 0.90 μm
+        W_3     : 1.23 μm
+        L_3     : 0.80 μm
+        W_4     : 0.76 μm
+        L_4     : 3.00 μm
+        W_5     : 2.35 μm
+        L_5     : 2.00 μm
+        W_6     : 5.74 μm
+        L_6     : 0.80 μm
+        W_7     : 21.56 μm
+        L_7     : 0.60 μm
+        W_8     : 9.39 μm
+        L_8     : 0.90 μm
+        V_B1    : 0.7083 V
+        V_B2    : 0.7231 V
+        V_B3    : 1.0697 V
+        V_B4    : 0.3300 V
+
+2026-03-17 15:15:38 - INFO - Iteration 2 | Global Best Area: 221.4214 μm²
+    Particle : [18.0000, 15.0000, 13.6158, 12.8369, 11.0000, 12.5522, 0.3, 0.4, 3.0, 3.0, 2.0, 0.7, 0.4, 3.1665]
+    Specs    :
+        W_1     : 104.89 μm
+        L_1     : 0.30 μm
+        W_2     : 1.34 μm
+        L_2     : 0.40 μm
+        W_3     : 5.06 μm
+        L_3     : 3.00 μm
+        W_4     : 0.85 μm
+        L_4     : 3.00 μm
+        W_5     : 2.05 μm
+        L_5     : 2.00 μm
+        W_6     : 4.69 μm
+        L_6     : 0.70 μm
+        W_7     : 19.36 μm
+        L_7     : 0.40 μm
+        W_8     : 6.34 μm
+        L_8     : 0.40 μm
+        V_B1    : 0.7109 V
+        V_B2    : 0.7311 V
+        V_B3    : 1.0566 V
+        V_B4    : 0.3101 V
+
+2026-03-17 16:05:11 - INFO - Iteration 4 | Global Best Area: 210.4931 μm²
+    Particle : [17.9278, 14.0000, 14.5836, 12.4804, 10.9525, 11.8453, 0.3, 0.6, 1.0, 3.0, 3.0, 0.9, 0.4, 3.0758]
+    Specs    :
+        W_1     : 97.37 μm
+        L_1     : 0.30 μm
+        W_2     : 1.27 μm
+        L_2     : 0.60 μm
+        W_3     : 2.17 μm
+        L_3     : 1.00 μm
+        W_4     : 0.77 μm
+        L_4     : 3.00 μm
+        W_5     : 3.04 μm
+        L_5     : 3.00 μm
+        W_6     : 4.95 μm
+        L_6     : 0.90 μm
+        W_7     : 19.10 μm
+        L_7     : 0.40 μm
+        W_8     : 6.00 μm
+        L_8     : 0.60 μm
+        V_B1    : 0.6883 V
+        V_B2    : 0.7198 V
+        V_B3    : 1.0621 V
+        V_B4    : 0.3536 V
+
+2026-03-17 16:25:35 - INFO - Iteration 5 | Global Best Area: 185.2033 μm²
+    Particle : [17.9683, 13.6292, 13.5836, 13.2278, 11.9525, 11.7124, 0.3, 0.6, 0.6, 3.0, 2.0, 0.5, 0.6, 2.7943]
+    Specs    :
+        W_1     : 90.75 μm
+        L_1     : 0.30 μm
+        W_2     : 1.03 μm
+        L_2     : 0.60 μm
+        W_3     : 0.89 μm
+        L_3     : 0.60 μm
+        W_4     : 0.81 μm
+        L_4     : 3.00 μm
+        W_5     : 2.17 μm
+        L_5     : 2.00 μm
+        W_6     : 2.55 μm
+        L_6     : 0.50 μm
+        W_7     : 18.08 μm
+        L_7     : 0.60 μm
+        W_8     : 4.86 μm
+        L_8     : 0.60 μm
+        V_B1    : 0.7172 V
+        V_B2    : 0.7151 V
+        V_B3    : 1.0507 V
+        V_B4    : 0.3549 V
+
+2026-03-17 17:02:14 - INFO - Iteration 7 | Global Best Area: 183.4088 μm²
+    Particle : [17.9826, 14.6292, 13.0885, 14.2278, 12.4157, 12.7124, 0.3, 0.4, 1.0, 3.0, 2.0, 0.15, 0.18, 3.1691]
+    Specs    :
+        W_1     : 103.84 μm
+        L_1     : 0.30 μm
+        W_2     : 1.16 μm
+        L_2     : 0.40 μm
+        W_3     : 1.43 μm
+        L_3     : 1.00 μm
+        W_4     : 1.11 μm
+        L_4     : 3.00 μm
+        W_5     : 2.69 μm
+        L_5     : 2.00 μm
+        W_6     : 1.82 μm
+        L_6     : 0.15 μm
+        W_7     : 30.38 μm
+        L_7     : 0.18 μm
+        W_8     : 5.48 μm
+        L_8     : 0.40 μm
+        V_B1    : 0.9596 V
+        V_B2    : 0.7078 V
+        V_B3    : 1.0363 V
+        V_B4    : 0.3205 V
+
+2026-03-17 17:23:05 - INFO - Iteration 8 | Global Best Area: 177.7148 μm²
+    Particle : [17.9058, 15.6292, 12.9102, 14.7610, 12.0400, 13.0550, 0.3, 0.5, 0.8, 3.0, 2.0, 0.8, 0.2, 2.9491]
+    Specs    :
+        W_1     : 92.08 μm
+        L_1     : 0.30 μm
+        W_2     : 1.87 μm
+        L_2     : 0.50 μm
+        W_3     : 1.02 μm
+        L_3     : 0.80 μm
+        W_4     : 1.14 μm
+        L_4     : 3.00 μm
+        W_5     : 2.33 μm
+        L_5     : 2.00 μm
+        W_6     : 5.63 μm
+        L_6     : 0.80 μm
+        W_7     : 25.46 μm
+        L_7     : 0.20 μm
+        W_8     : 8.82 μm
+        L_8     : 0.50 μm
+        V_B1    : 0.7152 V
+        V_B2    : 0.7137 V
+        V_B3    : 1.0289 V
+        V_B4    : 0.3245 V
+
+2026-03-17 18:29:09 - INFO - Iteration 12 | Global Best Area: 165.5839 μm²
+    Particle : [17.9516, 15.6365, 12.7425, 14.0039, 11.3668, 12.7700, 0.3, 0.5, 1.0, 3.0, 2.0, 0.5, 0.18, 2.8260]
+    Specs    :
+        W_1     : 90.82 μm
+        L_1     : 0.30 μm
+        W_2     : 1.79 μm
+        L_2     : 0.50 μm
+        W_3     : 1.16 μm
+        L_3     : 1.00 μm
+        W_4     : 0.95 μm
+        L_4     : 3.00 μm
+        W_5     : 1.96 μm
+        L_5     : 2.00 μm
+        W_6     : 3.27 μm
+        L_6     : 0.50 μm
+        W_7     : 26.85 μm
+        L_7     : 0.18 μm
+        W_8     : 8.48 μm
+        L_8     : 0.50 μm
+        V_B1    : 0.7369 V
+        V_B2    : 0.7247 V
+        V_B3    : 1.0395 V
+        V_B4    : 0.3131 V
+
+2026-03-17 19:02:53 - INFO - Iteration 14 | Global Best Area: 158.6825 μm²
+    Particle : [17.9767, 14.9799, 12.7642, 14.0076, 12.3668, 13.7700, 0.3, 0.2, 1.0, 3.0, 2.0, 0.5, 0.18, 2.7777]
+    Specs    :
+        W_1     : 90.69 μm
+        L_1     : 0.30 μm
+        W_2     : 0.86 μm
+        L_2     : 0.20 μm
+        W_3     : 1.15 μm
+        L_3     : 1.00 μm
+        W_4     : 0.93 μm
+        L_4     : 3.00 μm
+        W_5     : 2.34 μm
+        L_5     : 2.00 μm
+        W_6     : 4.15 μm
+        L_6     : 0.50 μm
+        W_7     : 23.66 μm
+        L_7     : 0.18 μm
+        W_8     : 4.33 μm
+        L_8     : 0.20 μm
+        V_B1    : 0.7562 V
+        V_B2    : 0.7085 V
+        V_B3    : 1.0394 V
+        V_B4    : 0.3135 V
+
+2026-03-17 20:54:44 - INFO - Iteration 20 | Global Best Area: 143.0814 μm²
+    Particle : [17.9706, 15.1989, 12.9740, 13.8809, 12.5461, 13.4188, 0.3, 0.4, 1.0, 3.0, 2.0, 0.7, 0.18, 2.3713]
+    Specs    :
+        W_1     : 77.12 μm
+        L_1     : 0.30 μm
+        W_2     : 1.09 μm
+        L_2     : 0.40 μm
+        W_3     : 1.04 μm
+        L_3     : 1.00 μm
+        W_4     : 0.78 μm
+        L_4     : 3.00 μm
+        W_5     : 2.07 μm
+        L_5     : 2.00 μm
+        W_6     : 4.37 μm
+        L_6     : 0.70 μm
+        W_7     : 22.43 μm
+        L_7     : 0.18 μm
+        W_8     : 5.16 μm
+        L_8     : 0.40 μm
+        V_B1    : 0.7278 V
+        V_B2    : 0.7057 V
+        V_B3    : 1.0412 V
+        V_B4    : 0.3180 V
+
+2026-03-18 13:08:32 - INFO - Total number of iterations in this run: 60
+
+2026-03-18 13:08:32 - INFO - Total optimization time: 80763.77 seconds | 22.43 hours
+
+2026-03-18 13:09:08 - INFO - Iteration 0: Global Best Area = 296.1133 μm², Average Area = 488.8948 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 1: Global Best Area = 296.1133 μm², Average Area = 465.7349 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 2: Global Best Area = 221.4214 μm², Average Area = 479.3284 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 3: Global Best Area = 221.4214 μm², Average Area = 419.5615 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 4: Global Best Area = 210.4931 μm², Average Area = 417.9205 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 5: Global Best Area = 185.2033 μm², Average Area = 389.7175 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 6: Global Best Area = 185.2033 μm², Average Area = 410.4117 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 7: Global Best Area = 183.4088 μm², Average Area = 367.1673 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 8: Global Best Area = 177.7148 μm², Average Area = 361.2937 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 9: Global Best Area = 177.7148 μm², Average Area = 341.8683 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 10: Global Best Area = 177.7148 μm², Average Area = 358.8022 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 11: Global Best Area = 177.7148 μm², Average Area = 322.3685 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 12: Global Best Area = 165.5839 μm², Average Area = 291.6591 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 13: Global Best Area = 165.5839 μm², Average Area = 264.6544 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 14: Global Best Area = 158.6825 μm², Average Area = 288.0950 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 15: Global Best Area = 158.6825 μm², Average Area = 252.1581 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 16: Global Best Area = 158.6825 μm², Average Area = 315.7863 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 17: Global Best Area = 158.6825 μm², Average Area = 309.9032 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 18: Global Best Area = 158.6825 μm², Average Area = 262.8417 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 19: Global Best Area = 158.6825 μm², Average Area = 290.7827 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 20: Global Best Area = 143.0814 μm², Average Area = 261.9388 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 21: Global Best Area = 143.0814 μm², Average Area = 278.9816 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 22: Global Best Area = 143.0814 μm², Average Area = 227.3156 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 23: Global Best Area = 143.0814 μm², Average Area = 372.0120 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 24: Global Best Area = 143.0814 μm², Average Area = 340.7091 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 25: Global Best Area = 143.0814 μm², Average Area = 386.0717 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 26: Global Best Area = 143.0814 μm², Average Area = 350.8682 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 27: Global Best Area = 143.0814 μm², Average Area = 257.6096 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 28: Global Best Area = 143.0814 μm², Average Area = 304.7985 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 29: Global Best Area = 143.0814 μm², Average Area = 268.0618 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 30: Global Best Area = 143.0814 μm², Average Area = 304.6448 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 31: Global Best Area = 143.0814 μm², Average Area = 280.9495 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 32: Global Best Area = 143.0814 μm², Average Area = 295.2955 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 33: Global Best Area = 143.0814 μm², Average Area = 302.1013 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 34: Global Best Area = 143.0814 μm², Average Area = 315.1997 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 35: Global Best Area = 143.0814 μm², Average Area = 266.9041 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 36: Global Best Area = 143.0814 μm², Average Area = 302.4001 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 37: Global Best Area = 143.0814 μm², Average Area = 290.4500 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 38: Global Best Area = 143.0814 μm², Average Area = 282.7372 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 39: Global Best Area = 143.0814 μm², Average Area = 337.2583 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 40: Global Best Area = 143.0814 μm², Average Area = 428.6850 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 41: Global Best Area = 143.0814 μm², Average Area = 448.7103 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 42: Global Best Area = 143.0814 μm², Average Area = 418.0649 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 43: Global Best Area = 143.0814 μm², Average Area = 421.1495 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 44: Global Best Area = 143.0814 μm², Average Area = 355.4616 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 45: Global Best Area = 143.0814 μm², Average Area = 502.6477 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 46: Global Best Area = 143.0814 μm², Average Area = 254.9282 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 47: Global Best Area = 143.0814 μm², Average Area = 284.5216 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 48: Global Best Area = 143.0814 μm², Average Area = 360.0949 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 49: Global Best Area = 143.0814 μm², Average Area = 258.2798 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 50: Global Best Area = 143.0814 μm², Average Area = 296.7096 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 51: Global Best Area = 143.0814 μm², Average Area = 343.2870 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 52: Global Best Area = 143.0814 μm², Average Area = 415.2445 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 53: Global Best Area = 143.0814 μm², Average Area = 432.2534 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 54: Global Best Area = 143.0814 μm², Average Area = 395.1819 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 55: Global Best Area = 143.0814 μm², Average Area = 316.5012 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 56: Global Best Area = 143.0814 μm², Average Area = 458.9434 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 57: Global Best Area = 143.0814 μm², Average Area = 276.7187 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 58: Global Best Area = 143.0814 μm², Average Area = 420.4111 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 59: Global Best Area = 143.0814 μm², Average Area = 318.9420 μm²
+
+2026-03-18 13:09:08 - INFO - Iteration 60: Global Best Area = 143.0814 μm², Average Area = 339.9554 μm²
+
+2026-03-18 13:09:09 - INFO - OPTIMIZATION COMPLETED
+
+2026-03-18 13:09:09 - INFO - Total run time: 93683.01 seconds | 26.02 hours
+
