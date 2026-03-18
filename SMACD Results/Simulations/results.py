@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator, FixedFormatter, LogLocator
+import scienceplots
 
 from params import *
 
@@ -14,20 +15,7 @@ dir = os.path.dirname(os.path.abspath(__file__))
 dll_path = os.path.join(dir, "..", "..", "pyspice", "ngspice-44_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")  # Ngspice 44
 Shared.NgSpiceShared.LIBRARY_PATH = os.path.abspath(dll_path)
 
-# --- IEEE Standard Formatting ---
-plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman'],
-    'font.size': 8,          # Standard IEEE text size
-    'axes.labelsize': 8,     # Axis labels
-    'axes.titlesize': 8,
-    'xtick.labelsize': 8,    # Tick labels should be slightly smaller
-    'ytick.labelsize': 8,
-    'legend.fontsize': 8,
-    'figure.dpi': 300,       # High resolution for inline viewing
-    'lines.linewidth': 1.5,
-    'grid.alpha': 0.5
-})
+plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 
 # =============================================================
 # To handle latest ngspice versions that crash on 'run' command
@@ -275,35 +263,33 @@ def runsim_SLEW(measurement_results):
     measurement_results['SR'] = float(slew)
     measurement_results['Out_Swing'] = float(v_swing)
 
-    _, ax = plt.subplots(figsize=(3.7, 2.2))
+    with plt.style.context(['science', 'ieee']):
 
-    l1 = ax.plot(time*1e6, vin, label='Input', color='blue', linewidth=1.1)
-    l2 = ax.plot(time*1e6, vout, label='Output', color='red', linewidth=1.1)
-    ax.set_xlabel('Time [μs]')
-    ax.set_ylabel('Voltage [V]')
+        # Plot the transient slew response
+        fig, ax = plt.subplots()
 
-    ax.grid(True, which="both", ls="-", linewidth=0.5)
-    ax.set_yticks([-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8])
-    ax.set_xticks([0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20])
-    ax.tick_params(axis='both', which='major', direction='out', width=0.5)
-    # Match the frame to the tick width
-    for spine in ax.spines.values():
-        spine.set_linewidth(0.5)
+        l1 = ax.plot(time*1e6, vin, label='Input', color='blue', linestyle='--')
+        l2 = ax.plot(time*1e6, vout, label='Output', color='red', linestyle='-')
 
-    ax.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5, s=5)
-    ax.axvline(x=t_90*1e6, color='black', linestyle='--', linewidth=0.5)
-    ax.axhline(y=v_10, color='black', linestyle='--', linewidth=0.5)
+        ax.scatter([t_10*1e6, t_90*1e6], [v_10, v_90], color='black', zorder=5, s=5)
+        ax.axvline(x=t_90*1e6, color='black', linestyle='--', linewidth=0.5)
+        ax.axhline(y=v_10, color='black', linestyle='--', linewidth=0.5)
 
-    lns = l1 + l2
-    ax.legend(lns, [l.get_label() for l in lns], loc='best')
+        ax.set_xlabel(r'Time [$\mu$s]')
+        ax.set_ylabel(r'Voltage [V]')
 
-    ax.set_xlim(0, 20)
-    ax.set_ylim(-2, 2)
+        ax.set_xlim(0, 20)
+        ax.set_ylim(-2, 2)
 
-    # ax.set_title("Slew Response of the FDDA")
-    plt.tight_layout()
-    plt.savefig('Plots/SLEW_RESPONSE.png')
-    plt.savefig('Plots/SLEW_RESPONSE.eps', format='eps', bbox_inches='tight') 
+        ax.set_yticks([-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8])
+        ax.set_xticks([0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20])        
+
+        lns = l1 + l2
+        ax.legend(lns, [l.get_label() for l in lns], loc='best')
+
+        fig.set_figheight(2)
+        plt.tight_layout()
+        plt.savefig('Plots/SLEW_RESPONSE.pdf', format='pdf', bbox_inches='tight')
 
 # ========================
 # Runs the CMRR simulation
@@ -484,38 +470,32 @@ def runsim_NOISE(measurement_results):
 
     measurement_results['Noise_in'] = float(noise_1k)
 
-    # Plot the noise spectrum
-    _, ax = plt.subplots(figsize=(3.7, 2.2))
+    with plt.style.context(['science', 'ieee', 'grid']):
 
-    ax.loglog(freq, noise, color='black', linewidth=1.1)
-    ax.set_xlabel('Frequency [Hz]')
-    ax.set_ylabel(r'Input-Referred Noise [V/$\sqrt{\mathrm{Hz}}$]')
+        # Plot the noise spectrum
+        fig, ax = plt.subplots()
 
-    ticks = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-    labels = [r'10$^0$', r'10$^1$', r'10$^2$', r'10$^3$', r'10$^4$', r'10$^5$', r'10$^6$', r'10$^7$', r'10$^8$']
-    ax.xaxis.set_major_locator(FixedLocator(ticks))
-    ax.xaxis.set_major_formatter(FixedFormatter(labels))
+        ax.loglog(freq, noise, color='black', linestyle='-')
 
-    ax.scatter([1e3], [noise_1k], color='red', zorder=5, s=5)
-    ax.axvline(x=1e3, color='red', linestyle='--', linewidth=0.5)
-    ax.axhline(y=noise_1k, color='red', linestyle='--', linewidth=0.5)
+        ax.scatter([1e3], [noise_1k], color='red', zorder=5, s=5)
+        ax.axvline(x=1e3, color='red', linestyle='--', linewidth=0.5)
+        ax.axhline(y=noise_1k, color='red', linestyle='--', linewidth=0.5)
 
-    ax.tick_params(axis='both', which='major', direction='out', width=0.5)
-    ax.tick_params(axis='both', which='minor', direction='out', width=0.3)
-    # Match the frame to the tick width
-    for spine in ax.spines.values():
-        spine.set_linewidth(0.5)
+        ax.set_xlabel(r'Frequency [Hz]')
+        ax.set_ylabel(r'Input-Referred Noise [V/$\sqrt{\text{Hz}}$]')
 
-    ax.grid(True, axis='both', which='major', linestyle='-', linewidth=0.5)
-    ax.xaxis.set_minor_locator(LogLocator(base=10.0, subs=(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), numticks=12))
-    ax.grid(True, axis='both', which='minor', linestyle='--', linewidth=0.3)
+        ax.set_xlim(1e-1, 1e8)
+        ax.set_ylim(10**np.floor(np.log10(min(noise))), 10**np.ceil(np.log10(noise[0])))
 
-    ax.set_xlim(1e-1, 1e8)
-    ax.set_ylim(10**np.floor(np.log10(min(noise))), 10**np.ceil(np.log10(noise[0])))
+        ax.set_xticks([1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000])
 
-    plt.tight_layout()
-    plt.savefig('Plots/NOISE_SPECTRUM.png')
-    plt.savefig('Plots/NOISE_SPECTRUM.eps', format='eps', bbox_inches='tight') 
+        ax.grid(True, axis='both', which='major', linestyle='-', alpha=0.3)
+        ax.xaxis.set_minor_locator(LogLocator(base=10.0, subs=(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), numticks=12))
+        ax.grid(True, axis='both', which='minor', linestyle=':', alpha=0.2)
+        
+        fig.set_figheight(2)
+        plt.tight_layout()
+        plt.savefig('Plots/NOISE_SPECTRUM.pdf', format='pdf', bbox_inches='tight') 
 
     return
 
@@ -608,49 +588,41 @@ def get_Area(W, L):
 
 def create_Plot(freq, fdda_gain_db, fdda_phase, cmrr_db, psrr_db):
     
-    # Plot all frequency dependant parameters in one figure
-    _, ax = plt.subplots(figsize=(3.7, 2.2))
+    with plt.style.context(['science', 'ieee', 'grid']):
 
-    l1 = ax.semilogx(freq, fdda_gain_db, label='Gain', color='red', linestyle='-', linewidth=1.1)
-    l2 = ax.semilogx(freq, cmrr_db, label='CMRR', color='black', linestyle=':', linewidth=1.1)
-    l3 = ax.semilogx(freq, psrr_db, label='PSRR', color='green', linestyle='-.', linewidth=1.1)
-    ax.set_ylabel('Magnitude [dB]')
-    ax.set_xlabel('Frequency [Hz]') 
-    ax.set_yticks([-20, 0, 20, 40, 60, 80, 100, 120])
-    ax.set_ylim(-20, 120)
-    ax.set_xlim(1e-1, 1e8)
+        # Plot all frequency dependant parameters in one figure
+        fig, ax = plt.subplots()
+        tx = ax.twinx()
 
-    tx = ax.twinx()
-    l4 = tx.semilogx(freq, fdda_phase, label='Phase', color='blue', linestyle='--', linewidth=1.1)
-    tx.set_ylabel('Phase [°]')
-    tx.set_yticks([-180, -150, -120, -90, -60, -30, 0, 30])
-    tx.set_ylim(-180, 30)
+        l1 = ax.semilogx(freq, fdda_gain_db, label='Gain', color='red', linestyle='-')
+        l2 = ax.semilogx(freq, cmrr_db, label='CMRR', color='black', linestyle=':')
+        l3 = ax.semilogx(freq, psrr_db, label='PSRR', color='green', linestyle='-.')
+        l4 = tx.semilogx(freq, fdda_phase, label='Phase', color='blue', linestyle='--')
 
-    ticks = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
-    labels = [r'10$^0$', r'10$^1$', r'10$^2$', r'10$^3$', r'10$^4$', r'10$^5$', r'10$^6$', r'10$^7$', r'10$^8$']
-    ax.xaxis.set_major_locator(FixedLocator(ticks))
-    ax.xaxis.set_major_formatter(FixedFormatter(labels))
-    ax.tick_params(axis='both', which='major', direction='out', width=0.5)
-    ax.tick_params(axis='x', which='minor', direction='out', width=0.3)
-    tx.tick_params(axis='y', which='major', direction='out', width=0.5, length=2)
-    # Match the frame to the tick width
-    for spine in ax.spines.values():
-        spine.set_linewidth(0.5)
-    for spine in tx.spines.values():
-        spine.set_linewidth(0.5)
+        ax.set_ylabel(r'Magnitude [dB]')
+        ax.set_xlabel(r'Frequency [Hz]')
+        tx.set_ylabel(r'Phase [$^{\circ}$]')
 
-    ax.grid(True, axis='both', which='major', linestyle='-', linewidth=0.5)
-    ax.xaxis.set_minor_locator(LogLocator(base=10.0, subs=(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), numticks=12))
-    ax.grid(True, axis='both', which='minor', linestyle='--', linewidth=0.3)
-    tx.grid(False)
+        ax.set_ylim(-25, 125)
+        ax.set_xlim(1e-1, 1e8)
+        tx.set_ylim(-187.5, 37.5)
 
-    lns = l1 + l4 + l2 + l3
-    ax.legend(lns, [l.get_label() for l in lns], loc='best')
+        ax.set_yticks([-20, 0, 20, 40, 60, 80, 100, 120])
+        tx.set_yticks([-180, -150, -120, -90, -60, -30, 0, 30])
+        tx.set_xticks([0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000])
+        
 
-    # ax.set_title("Frequency Response Plot of Differential Gain, Phase, CMRR, and PSRR for the FDDA")
-    plt.tight_layout()
-    plt.savefig('Plots/FREQUENCY_RESPONSE.png')
-    plt.savefig('Plots/FREQUENCY_RESPONSE.eps', format='eps', bbox_inches='tight')    
+        ax.grid(True, axis='both', which='major', linestyle='-', alpha=0.2)
+        ax.xaxis.set_minor_locator(LogLocator(base=10.0, subs=(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), numticks=12))
+        ax.grid(True, axis='x', which='minor', linestyle=':', alpha=0.1)
+        tx.grid(False)
+
+        lns = l1 + l4 + l2 + l3
+        ax.legend(lns, [l.get_label() for l in lns], loc='best')
+
+        fig.set_figheight(2)
+        plt.tight_layout()
+        plt.savefig('Plots/FREQUENCY_RESPONSE.pdf', format='pdf', bbox_inches='tight')   
 
 # ===========================================================
 # Top-level function to evaluate a design given the variables
