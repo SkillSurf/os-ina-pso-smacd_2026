@@ -11,6 +11,13 @@ from PySpice.Spice.Netlist import Circuit
 from PySpice.Unit import u_V, u_pF, u_GH, u_GF, u_Hz, u_MHz, u_ns, u_us
 import PySpice.Spice.NgSpice.Shared as Shared
 
+# ==================================================================================================================
+# Set the simulation mode: 'CIRCUIT' for raw SPICE, 'LVS' for LVS-extracted netlist, 'PEX' for PEX-extracted netlist
+# ==================================================================================================================
+# MODE = 'CIRCUIT'
+# MODE = 'LVS'
+MODE = 'PEX'
+
 dir = os.path.dirname(os.path.abspath(__file__))
 dll_path = os.path.join(dir, "..", "..", "pyspice", "ngspice-44_dll_64", "Spice64_dll", "dll-vs", "ngspice{}.dll")  # Ngspice 44
 Shared.NgSpiceShared.LIBRARY_PATH = os.path.abspath(dll_path)
@@ -83,15 +90,20 @@ def runsim_AC(measurement_results):
 .include lvs.spice
 .include pex.spice
 """
-    # circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
-    # circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
-
-    circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
-    circuit.V('VB1', 'V_B1', circuit.gnd, 0.7056@u_V)
-    circuit.V('VB2', 'V_B2', circuit.gnd, 0.7057@u_V)
-    circuit.V('VB3', 'V_B3', circuit.gnd, 1.0395@u_V)
-    circuit.V('VB4', 'V_B4', circuit.gnd, 0.3061@u_V)
-    circuit.V('VCM', 'V_CM', circuit.gnd, 0.9@u_V)
+    if MODE == 'CIRCUIT':
+        circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+        circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
+    else:
+        if MODE == 'LVS':
+            circuit.X('X1', 'FDDA_CMFB', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        elif MODE == 'PEX':
+            circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        else: raise ValueError("Invalid MODE. Choose from 'CIRCUIT', 'LVS', or 'PEX'.")
+        circuit.V('VB1', 'V_B1', circuit.gnd, params['V_B1']@u_V)
+        circuit.V('VB2', 'V_B2', circuit.gnd, params['V_B2']@u_V)
+        circuit.V('VB3', 'V_B3', circuit.gnd, params['V_B3']@u_V)
+        circuit.V('VB4', 'V_B4', circuit.gnd, params['V_B4']@u_V)
+        circuit.V('VCM', 'V_CM', circuit.gnd, params['V_CM']@u_V)
 
     circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
 
@@ -146,15 +158,20 @@ def runsim_OP(measurement_results):
 .include lvs.spice
 .include pex.spice
 """
-    # circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
-    # circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
-
-    circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
-    circuit.V('VB1', 'V_B1', circuit.gnd, 0.7056@u_V)
-    circuit.V('VB2', 'V_B2', circuit.gnd, 0.7057@u_V)
-    circuit.V('VB3', 'V_B3', circuit.gnd, 1.0395@u_V)
-    circuit.V('VB4', 'V_B4', circuit.gnd, 0.3061@u_V)
-    circuit.V('VCM', 'V_CM', circuit.gnd, 0.9@u_V)
+    if MODE == 'CIRCUIT':
+        circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+        circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
+    else:
+        if MODE == 'LVS':
+            circuit.X('X1', 'FDDA_CMFB', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        elif MODE == 'PEX':
+            circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        else: raise ValueError("Invalid MODE. Choose from 'CIRCUIT', 'LVS', or 'PEX'.")
+        circuit.V('VB1', 'V_B1', circuit.gnd, params['V_B1']@u_V)
+        circuit.V('VB2', 'V_B2', circuit.gnd, params['V_B2']@u_V)
+        circuit.V('VB3', 'V_B3', circuit.gnd, params['V_B3']@u_V)
+        circuit.V('VB4', 'V_B4', circuit.gnd, params['V_B4']@u_V)
+        circuit.V('VCM', 'V_CM', circuit.gnd, params['V_CM']@u_V)
 
     circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
 
@@ -217,16 +234,21 @@ def runsim_SLEW(measurement_results):
 .include lvs.spice
 .include pex.spice
 """
-    # # Form the closed-loop configuration (Unity gain)
-    # circuit.X('X1', 'FDDA', 'V_PP', 'V_OP', 'V_NP', 'V_ON', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
-    # circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
-
-    circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_OP', 'V_NP', 'V_ON', 'V_OP', 'V_CM', 'V_ON')
-    circuit.V('VB1', 'V_B1', circuit.gnd, 0.7056@u_V)
-    circuit.V('VB2', 'V_B2', circuit.gnd, 0.7057@u_V)
-    circuit.V('VB3', 'V_B3', circuit.gnd, 1.0395@u_V)
-    circuit.V('VB4', 'V_B4', circuit.gnd, 0.3061@u_V)
-    circuit.V('VCM', 'V_CM', circuit.gnd, 0.9@u_V)
+    # Form the closed-loop configuration (Unity gain)
+    if MODE == 'CIRCUIT':
+        circuit.X('X1', 'FDDA', 'V_PP', 'V_OP', 'V_NP', 'V_ON', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+        circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
+    else:
+        if MODE == 'LVS':
+            circuit.X('X1', 'FDDA_CMFB', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_OP', 'V_NP', 'V_ON', 'V_OP', 'V_CM', 'V_ON')
+        elif MODE == 'PEX':
+            circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_OP', 'V_NP', 'V_ON', 'V_OP', 'V_CM', 'V_ON')
+        else: raise ValueError("Invalid MODE. Choose from 'CIRCUIT', 'LVS', or 'PEX'.")
+        circuit.V('VB1', 'V_B1', circuit.gnd, params['V_B1']@u_V)
+        circuit.V('VB2', 'V_B2', circuit.gnd, params['V_B2']@u_V)
+        circuit.V('VB3', 'V_B3', circuit.gnd, params['V_B3']@u_V)
+        circuit.V('VB4', 'V_B4', circuit.gnd, params['V_B4']@u_V)
+        circuit.V('VCM', 'V_CM', circuit.gnd, params['V_CM']@u_V)
 
     circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
 
@@ -288,6 +310,7 @@ def runsim_SLEW(measurement_results):
         ax.legend(lns, [l.get_label() for l in lns], loc='best')
 
         fig.set_figheight(2)
+        fig.set_figwidth(4.125)
         plt.tight_layout()
         plt.savefig('Plots/SLEW_RESPONSE.pdf', format='pdf', bbox_inches='tight')
 
@@ -303,15 +326,20 @@ def runsim_CMRR(gain_dm_db, measurement_results):
 .include lvs.spice
 .include pex.spice
 """
-    # circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
-    # circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
-
-    circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
-    circuit.V('VB1', 'V_B1', circuit.gnd, 0.7056@u_V)
-    circuit.V('VB2', 'V_B2', circuit.gnd, 0.7057@u_V)
-    circuit.V('VB3', 'V_B3', circuit.gnd, 1.0395@u_V)
-    circuit.V('VB4', 'V_B4', circuit.gnd, 0.3061@u_V)
-    circuit.V('VCM', 'V_CM', circuit.gnd, 0.9@u_V)
+    if MODE == 'CIRCUIT':
+        circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+        circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
+    else:
+        if MODE == 'LVS':
+            circuit.X('X1', 'FDDA_CMFB', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        elif MODE == 'PEX':
+            circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        else: raise ValueError("Invalid MODE. Choose from 'CIRCUIT', 'LVS', or 'PEX'.")
+        circuit.V('VB1', 'V_B1', circuit.gnd, params['V_B1']@u_V)
+        circuit.V('VB2', 'V_B2', circuit.gnd, params['V_B2']@u_V)
+        circuit.V('VB3', 'V_B3', circuit.gnd, params['V_B3']@u_V)
+        circuit.V('VB4', 'V_B4', circuit.gnd, params['V_B4']@u_V)
+        circuit.V('VCM', 'V_CM', circuit.gnd, params['V_CM']@u_V)
 
     circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
 
@@ -361,15 +389,20 @@ def runsim_PSRR(gain_dm_db, measurement_results):
 .include lvs.spice
 .include pex.spice
 """
-    # circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
-    # circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
-
-    circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
-    circuit.V('VB1', 'V_B1', circuit.gnd, 0.7056@u_V)
-    circuit.V('VB2', 'V_B2', circuit.gnd, 0.7057@u_V)
-    circuit.V('VB3', 'V_B3', circuit.gnd, 1.0395@u_V)
-    circuit.V('VB4', 'V_B4', circuit.gnd, 0.3061@u_V)
-    circuit.V('VCM', 'V_CM', circuit.gnd, 0.9@u_V)
+    if MODE == 'CIRCUIT':
+        circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+        circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
+    else:
+        if MODE == 'LVS':
+            circuit.X('X1', 'FDDA_CMFB', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        elif MODE == 'PEX':
+            circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        else: raise ValueError("Invalid MODE. Choose from 'CIRCUIT', 'LVS', or 'PEX'.")
+        circuit.V('VB1', 'V_B1', circuit.gnd, params['V_B1']@u_V)
+        circuit.V('VB2', 'V_B2', circuit.gnd, params['V_B2']@u_V)
+        circuit.V('VB3', 'V_B3', circuit.gnd, params['V_B3']@u_V)
+        circuit.V('VB4', 'V_B4', circuit.gnd, params['V_B4']@u_V)
+        circuit.V('VCM', 'V_CM', circuit.gnd, params['V_CM']@u_V)
 
     # Define VDD as AC source for PSRR analysis
     circuit.V('VDDac', 'VDD', circuit.gnd, 'DC 1.8 AC 1')
@@ -420,15 +453,20 @@ def runsim_NOISE(measurement_results):
 .include lvs.spice
 .include pex.spice
 """
-    # circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
-    # circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
-
-    circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
-    circuit.V('VB1', 'V_B1', circuit.gnd, 0.7056@u_V)
-    circuit.V('VB2', 'V_B2', circuit.gnd, 0.7057@u_V)
-    circuit.V('VB3', 'V_B3', circuit.gnd, 1.0395@u_V)
-    circuit.V('VB4', 'V_B4', circuit.gnd, 0.3061@u_V)
-    circuit.V('VCM', 'V_CM', circuit.gnd, 0.9@u_V)
+    if MODE == 'CIRCUIT':
+        circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB', circuit.gnd, 'V_OP', 'V_ON')
+        circuit.X('X2', 'CMFB', 'V_CMFB', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
+    else:
+        if MODE == 'LVS':
+            circuit.X('X1', 'FDDA_CMFB', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        elif MODE == 'PEX':
+            circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
+        else: raise ValueError("Invalid MODE. Choose from 'CIRCUIT', 'LVS', or 'PEX'.")
+        circuit.V('VB1', 'V_B1', circuit.gnd, params['V_B1']@u_V)
+        circuit.V('VB2', 'V_B2', circuit.gnd, params['V_B2']@u_V)
+        circuit.V('VB3', 'V_B3', circuit.gnd, params['V_B3']@u_V)
+        circuit.V('VB4', 'V_B4', circuit.gnd, params['V_B4']@u_V)
+        circuit.V('VCM', 'V_CM', circuit.gnd, params['V_CM']@u_V)
 
     circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
 
@@ -494,6 +532,7 @@ def runsim_NOISE(measurement_results):
         ax.grid(True, axis='both', which='minor', linestyle=':', alpha=0.2)
         
         fig.set_figheight(2)
+        fig.set_figwidth(4.125)
         plt.tight_layout()
         plt.savefig('Plots/NOISE_SPECTRUM.pdf', format='pdf', bbox_inches='tight') 
 
@@ -513,14 +552,6 @@ def runsim_CMFB(measurement_results):
 """
     circuit.X('X1', 'FDDA', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'VDD', 'V_CMFB_IN', circuit.gnd, 'V_OP', 'V_ON')
     circuit.X('X2', 'CMFB', 'V_CMFB_OUT', 'V_OP', 'V_ON', circuit.gnd, 'VDD')
-
-    # circuit.X('X1', 'FDDA_CMFB_PEX', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
-    # circuit.X('X1', 'FDDA_CMFB', 'V_B2', 'VDD', circuit.gnd, 'V_B4', 'V_B3', 'V_B1', 'V_PP', 'V_PN', 'V_NP', 'V_NN', 'V_OP', 'V_CM', 'V_ON')
-    # circuit.V('VB1', 'V_B1', circuit.gnd, 0.7056@u_V)
-    # circuit.V('VB2', 'V_B2', circuit.gnd, 0.7057@u_V)
-    # circuit.V('VB3', 'V_B3', circuit.gnd, 1.0395@u_V)
-    # circuit.V('VB4', 'V_B4', circuit.gnd, 0.3061@u_V)
-    # circuit.V('VCM', 'V_CM', circuit.gnd, 0.9@u_V)
 
     circuit.V('VDD', 'VDD', circuit.gnd, 1.8@u_V)
 
@@ -621,6 +652,7 @@ def create_Plot(freq, fdda_gain_db, fdda_phase, cmrr_db, psrr_db):
         ax.legend(lns, [l.get_label() for l in lns], loc='best')
 
         fig.set_figheight(2)
+        fig.set_figwidth(4.125)
         plt.tight_layout()
         plt.savefig('Plots/FREQUENCY_RESPONSE.pdf', format='pdf', bbox_inches='tight')   
 
@@ -653,8 +685,8 @@ def evaluate_design(current_params, plots=False):
     # Create a new results dictionary for this specific run
     current_results = {}
 
-    # # Run the sequence
-    # generate_spice(rounded_params)  # Generate the SPICE file for the current parameters
+    # Run the sequence
+    generate_spice(rounded_params)  # Generate the SPICE file for the current parameters
     
     # Run the AC simulation and measure gain, gain-bandwidth, and phase margin
     fdda_gain_db, fdda_phase, freq = runsim_AC(measurement_results=current_results)
@@ -690,18 +722,18 @@ def evaluate_design(current_params, plots=False):
 
     return current_results
     
-params = {'W_1': 73.91, 'L_1': 0.3,
-          'W_2': 0.9, 'L_2': 0.8,
-          'W_3': 0.62, 'L_3': 0.8,
-          'W_4': 0.75, 'L_4': 3,
-          'W_5': 1.95, 'L_5': 2,
-          'W_6': 5.12, 'L_6': 1,
-          'W_7': 21.08, 'L_7': 0.2,
-          'W_8': 4.25, 'L_8': 0.8,
-          'V_B1': 0.7056,
-          'V_B2': 0.7057,
-          'V_B3': 1.0395,
-          'V_B4': 0.3061,
+params = {'W_1': 75.64, 'L_1': 0.3,
+          'W_2': 0.84, 'L_2': 0.4,
+          'W_3': 0.69, 'L_3': 1,
+          'W_4': 0.66, 'L_4': 3,
+          'W_5': 2.48, 'L_5': 2,
+          'W_6': 2.55, 'L_6': 0.7,
+          'W_7': 10.88, 'L_7': 0.15,
+          'W_8': 3.94, 'L_8': 0.4,
+          'V_B1': 0.6819,
+          'V_B2': 0.6928,
+          'V_B3': 1.0545,
+          'V_B4': 0.2817,
           'V_CM': 0.9}
 
 if __name__ == "__main__":
